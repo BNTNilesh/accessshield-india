@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+VENV="$ROOT/.venv"
+
+find_python() {
+  # Prefer stable versions with prebuilt wheels; avoid broken default python3 (often 3.14+)
+  for cmd in python3.12 python3.11 python3.13 python3; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+      local version
+      version="$("$cmd" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+      local major minor
+      major="${version%%.*}"
+      minor="${version#*.}"
+      if (( major > 3 || (major == 3 && minor >= 11) )); then
+        echo "$cmd"
+        return 0
+      fi
+    fi
+  done
+  echo "Python 3.11+ required. Install with: brew install python@3.12" >&2
+  exit 1
+}
+
+PYTHON="$(find_python)"
+echo "Using $("$PYTHON" --version) ($PYTHON)"
+
+if [[ -d "$VENV" ]]; then
+  venv_py="$("$VENV/bin/python" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "broken")"
+  selected_py="$("$PYTHON" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+  if [[ "$venv_py" != "$selected_py" ]]; then
+    echo "Recreating venv (was Python $venv_py, need $selected_py) ..."
+    rm -rf "$VENV"
+  fi
+fi
+
+if [[ ! -d "$VENV" ]]; then
+  echo "Creating Python venv at apps/ai-service/.venv ..."
+  "$PYTHON" -m venv "$VENV"
+fi
+
+# shellcheck source=/dev/null
+source "$VENV/bin/activate"
+
+if ! python -c "import uvicorn" >/dev/null 2>&1; then
+  echo "Installing ai-service Python dependencies (first run may take a minute) ..."
+  pip install -q --upgrade pip
+  pip install -q -e "$ROOT[dev]"
+fi
+
+cd "$ROOT"
+
+PORT="${AI_SERVICE_PORT:-8000}"
+if lsof -ti ":$PORT" >/dev/null 2>&1; then
+  echo "Port $PORT already in use. Run 'pnpm dev:stop' from the repo root, then try again." >&2
+  exit 1
+fi
+
+exec uvicorn app.main:app --reload --host 0.0.0.0 --port "$PORT"
