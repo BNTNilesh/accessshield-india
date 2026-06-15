@@ -13,8 +13,9 @@ import { logger } from './lib/logger';
 import { sendProblem } from './lib/problem-details';
 import { createAuthMiddleware } from './middleware/auth';
 import { requestIdMiddleware } from './middleware/request-id';
+import { createAssetsRouter } from './routes/assets';
 import { createHealthRouter } from './routes/health';
-import { scansRouter } from './routes/scans';
+import { createScannerRouter, closeRabbitMQ } from './scanner/orchestrator';
 
 const PORT = Number(process.env.PORT ?? 4000);
 
@@ -40,9 +41,14 @@ async function bootstrap() {
   const healthRouter = createHealthRouter(db, redis);
   app.use(healthRouter);
 
-  const authMiddleware = createAuthMiddleware(secrets.supabaseUrl);
+  const authMiddleware = createAuthMiddleware(secrets.supabaseUrl, db);
   app.use('/api/v1', authMiddleware);
-  app.use('/api/v1/scans', scansRouter);
+
+  const assetsRouter = createAssetsRouter(db);
+  app.use('/api/v1/assets', assetsRouter);
+
+  const scannerRouter = createScannerRouter(db, redis);
+  app.use('/api/v1/scans', scannerRouter);
 
   app.use((_req, res) => {
     sendProblem(res, 404, 'not-found', 'Resource not found');
@@ -72,6 +78,18 @@ async function bootstrap() {
     }
     process.exit(1);
   });
+
+  const gracefulShutdown = async () => {
+    logger.info('Shutting down gracefully...');
+    server.close();
+    await redis.quit();
+    await closeRabbitMQ();
+    logger.info('Shutdown complete');
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
 }
 
 bootstrap().catch((err: unknown) => {

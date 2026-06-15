@@ -12,6 +12,7 @@
     "test:a11y": "vitest run --config vitest.a11y.config.ts"
   },
   "dependencies": {
+    "@accessshield/db": "workspace:*",
     "@accessshield/types": "workspace:*",
     "@accessshield/ui": "workspace:*",
     "@supabase/ssr": "^0.4.0",
@@ -30,6 +31,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
+    "dotenv": "^16.4.5",
     "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.4",

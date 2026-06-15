@@ -6,6 +6,7 @@ VENV="$ROOT/.venv"
 
 find_python() {
   # Prefer stable versions with prebuilt wheels; avoid broken default python3 (often 3.14+)
+  # Prefer 3.12/3.11 (pinned deps tested there); 3.13 needs pillow>=11 / asyncpg>=0.30
   for cmd in python3.12 python3.11 python3.13 python3; do
     if command -v "$cmd" >/dev/null 2>&1; then
       local version
@@ -13,7 +14,7 @@ find_python() {
       local major minor
       major="${version%%.*}"
       minor="${version#*.}"
-      if (( major > 3 || (major == 3 && minor >= 11) )); then
+      if (( major > 3 || (major == 3 && minor >= 11) )) && (( major < 3 || (major == 3 && minor <= 13) )); then
         echo "$cmd"
         return 0
       fi
@@ -51,10 +52,10 @@ fi
 
 cd "$ROOT"
 
-PORT="${AI_SERVICE_PORT:-8000}"
+PORT="${AI_SERVICE_PORT:-8001}"
 if lsof -ti ":$PORT" >/dev/null 2>&1; then
   echo "Port $PORT already in use. Run 'pnpm dev:stop' from the repo root, then try again." >&2
   exit 1
 fi
 
-exec uvicorn app.main:app --reload --host 0.0.0.0 --port "$PORT"
+exec uvicorn main:app --reload --host 0.0.0.0 --port "$PORT"

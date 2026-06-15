@@ -1,0 +1,122 @@
+import { createClient } from '@/lib/supabase/client';
+import type {
+  ApiResponse,
+  Asset,
+  CreateAssetInput,
+  CreateScanInput,
+  CreateScanResult,
+  ScanDetail,
+  ViolationRow,
+} from './types';
+import { ApiError } from './types';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+/**
+ * Retrieve the current Supabase access token for API calls.
+ */
+export async function getAccessToken(): Promise<string> {
+  const supabase = createClient();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error || !session?.access_token) {
+    throw new Error('Not authenticated — please sign in again.');
+  }
+
+  return session.access_token;
+}
+
+async function apiFetch<T>(path: string, token: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...init?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    let problem: ApiError['problem'];
+    try {
+      problem = (await response.json()) as ApiError['problem'];
+    } catch {
+      problem = {
+        type: 'https://api.accessshield.in/problems/unknown',
+        title: 'Request failed',
+        status: response.status,
+        detail: response.statusText,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    throw new ApiError(problem);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+/** List assets for the current organisation */
+export async function listAssets(token: string): Promise<Asset[]> {
+  const response = await apiFetch<ApiResponse<Asset[]>>('/api/v1/assets', token);
+  return response.data;
+}
+
+/** Register a new scannable asset */
+export async function createAsset(token: string, input: CreateAssetInput): Promise<Asset> {
+  const response = await apiFetch<ApiResponse<Asset>>('/api/v1/assets', token, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return response.data;
+}
+
+/** Queue a new accessibility scan */
+export async function createScan(token: string, input: CreateScanInput): Promise<CreateScanResult> {
+  const response = await apiFetch<ApiResponse<CreateScanResult>>('/api/v1/scans', token, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return response.data;
+}
+
+/** Fetch scan status and optional live progress */
+export async function getScan(token: string, scanId: string): Promise<ScanDetail> {
+  const response = await apiFetch<ApiResponse<ScanDetail>>(`/api/v1/scans/${scanId}`, token);
+  return response.data;
+}
+
+/** Fetch paginated violations for a completed scan */
+export async function listViolations(
+  token: string,
+  scanId: string,
+  params?: { page?: number; limit?: number; severity?: string },
+): Promise<{ rows: ViolationRow[]; meta: ApiResponse<ViolationRow[]>['meta'] }> {
+  const search = new URLSearchParams();
+  if (params?.page) search.set('page', String(params.page));
+  if (params?.limit) search.set('limit', String(params.limit));
+  if (params?.severity) search.set('severity', params.severity);
+
+  const query = search.toString();
+  const path = `/api/v1/scans/${scanId}/violations${query ? `?${query}` : ''}`;
+  const response = await apiFetch<ApiResponse<ViolationRow[]>>(path, token);
+  return { rows: response.data, meta: response.meta };
+}
+
+/** Request cancellation of a pending or running scan */
+export async function cancelScan(token: string, scanId: string): Promise<void> {
+  await apiFetch<ApiResponse<{ message: string }>>(`/api/v1/scans/${scanId}/cancel`, token, {
+    method: 'POST',
+  });
+}
+
+/** Check API health (no auth required) */
+export async function checkApiHealth(): Promise<{ status: string; db: string; redis: string }> {
+  const response = await fetch(`${API_BASE}/health`);
+  if (!response.ok) {
+    throw new Error('API health check failed');
+  }
+  return response.json() as Promise<{ status: string; db: string; redis: string }>;
+}

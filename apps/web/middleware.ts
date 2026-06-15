@@ -1,5 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
+import { parseAccessShieldClaims } from './src/lib/auth/claims';
+
+// Edge middleware cannot query Postgres — JWT claims only here; dashboard uses DB fallback in RSC.
 
 const PROTECTED_PREFIXES = ['/dashboard'];
 const AUTH_ROUTES = ['/login', '/signup', '/auth'];
@@ -39,6 +42,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
@@ -57,19 +64,17 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && isProtected) {
-    const appMetadata = user.app_metadata as Record<string, unknown>;
-    const userRole = appMetadata['user_role'] as string | undefined;
-    const orgId = appMetadata['org_id'] as string | undefined;
+    const { user_role: userRole, org_id: orgId } = parseAccessShieldClaims(
+      session?.access_token,
+      user.app_metadata as Record<string, unknown>,
+    );
 
-    if (!userRole || !orgId) {
-      const errorUrl = request.nextUrl.clone();
-      errorUrl.pathname = '/auth/error';
-      errorUrl.searchParams.set('reason', 'missing_claims');
-      return NextResponse.redirect(errorUrl);
+    if (userRole) {
+      response.headers.set('x-user-role', userRole);
     }
-
-    response.headers.set('x-user-role', userRole);
-    response.headers.set('x-org-id', orgId);
+    if (orgId) {
+      response.headers.set('x-org-id', orgId);
+    }
   }
 
   return response;

@@ -27,6 +27,9 @@ export default function LoginPage() {
       return;
     }
 
+    // Pick up latest App Metadata / custom claims in the access token
+    await supabase.auth.refreshSession();
+
     router.push('/dashboard');
     router.refresh();
   }
