@@ -246,6 +246,7 @@ async function crawlHomepage(browser: Browser, baseUrl: string): Promise<string[
     const context = await browser.newContext({
       userAgent: 'AccessShield-Scanner/1.0',
       viewport: { width: 1280, height: 800 },
+      bypassCSP: true,
     });
 
     page = await context.newPage();

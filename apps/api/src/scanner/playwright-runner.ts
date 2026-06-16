@@ -46,11 +46,8 @@ export async function createBrowser(): Promise<Browser> {
       '--no-sandbox',
       '--disable-dev-shm-usage',
       '--disable-setuid-sandbox',
-      '--disable-accelerated-2d-canvas',
       '--disable-gpu',
       '--no-first-run',
-      '--no-zygote',
-      '--single-process',
       '--disable-extensions',
     ],
   });
@@ -258,6 +255,8 @@ export async function scanPage(
     viewport: DESKTOP_VIEWPORT,
     ignoreHTTPSErrors: true,
     javaScriptEnabled: true,
+    // A11Y: scanners must inject axe-core; strict CSP blocks script tags without this.
+    bypassCSP: true,
   });
 
   const page = await context.newPage();
@@ -269,7 +268,7 @@ export async function scanPage(
 
     try {
       await page.goto(url, {
-        waitUntil: 'networkidle',
+        waitUntil: 'load',
         timeout: NAVIGATION_TIMEOUT,
       });
     } catch (navError) {
@@ -283,6 +282,8 @@ export async function scanPage(
         timeout: NAVIGATION_TIMEOUT,
       });
     }
+
+    await page.waitForSelector('body', { timeout: 10000 }).catch(() => {});
 
     await page.waitForTimeout(PAGE_SETTLE_TIME);
 

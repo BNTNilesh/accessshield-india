@@ -1,0 +1,160 @@
+'use client';
+
+import Link from 'next/link';
+import { DataTable, Badge, type DataTableColumn } from '@accessshield/ui';
+import { ExternalLink } from 'lucide-react';
+import { formatIndianDate, truncate } from '@/lib/utils';
+import type { ScanListItem } from '@/lib/api/types';
+
+const STATUS_VARIANT: Record<ScanListItem['status'], 'success' | 'accent' | 'outline' | 'default'> =
+  {
+    completed: 'success',
+    running: 'accent',
+    pending: 'outline',
+    failed: 'default',
+  };
+
+function statusLabel(status: ScanListItem['status']): string {
+  switch (status) {
+    case 'pending':
+      return 'Queued';
+    case 'running':
+      return 'In progress';
+    case 'completed':
+      return 'Completed';
+    case 'failed':
+      return 'Failed';
+    default:
+      return status;
+  }
+}
+
+export interface ScanHistoryTableProps {
+  scans: ScanListItem[];
+  isLoading: boolean;
+  total: number;
+  showAsset?: boolean;
+}
+
+export function ScanHistoryTable({
+  scans,
+  isLoading,
+  total,
+  showAsset = true,
+}: ScanHistoryTableProps) {
+  const columns: DataTableColumn<ScanListItem>[] = [
+    ...(showAsset
+      ? [
+          {
+            id: 'asset',
+            header: 'Asset',
+            accessor: (scan: ScanListItem) => (
+              <div>
+                <Link
+                  href={`/dashboard/scans/${scan.id}`}
+                  className="font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                >
+                  {scan.assetName ?? 'Unknown asset'}
+                </Link>
+                {scan.assetUrl && (
+                  <p className="mt-0.5 text-xs text-text-tertiary">{truncate(scan.assetUrl, 48)}</p>
+                )}
+              </div>
+            ),
+          } satisfies DataTableColumn<ScanListItem>,
+        ]
+      : []),
+    {
+      id: 'date',
+      header: 'Date',
+      sortable: true,
+      sortValue: (scan) => scan.completedAt ?? scan.createdAt,
+      accessor: (scan) => (
+        <time dateTime={scan.completedAt ?? scan.createdAt}>
+          {formatIndianDate(scan.completedAt ?? scan.createdAt)}
+        </time>
+      ),
+    },
+    {
+      id: 'pagesScanned',
+      header: 'Pages',
+      accessor: (scan) => scan.pagesScanned,
+    },
+    {
+      id: 'score',
+      header: 'Score',
+      sortable: true,
+      sortValue: (scan) => scan.score ?? -1,
+      accessor: (scan) =>
+        scan.score !== null ? (
+          <span className="font-semibold text-text-primary">{scan.score}</span>
+        ) : (
+          <span className="text-text-tertiary">—</span>
+        ),
+    },
+    {
+      id: 'violations',
+      header: 'Issues',
+      sortable: true,
+      sortValue: (scan) => scan.violationCount,
+      accessor: (scan) => scan.violationCount,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessor: (scan) => (
+        <Badge
+          variant={STATUS_VARIANT[scan.status]}
+          className={
+            scan.status === 'failed' ? 'bg-error-100 text-error-700 border-error-200' : undefined
+          }
+        >
+          {statusLabel(scan.status)}
+        </Badge>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'View',
+      accessor: (scan) => (
+        <Link
+          href={`/dashboard/scans/${scan.id}`}
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-primary-600 hover:bg-primary-50 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+          aria-label={`View scan results for ${scan.assetName ?? 'asset'}`}
+        >
+          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      ),
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div
+        className="rounded-lg border border-border bg-white p-12 text-center"
+        role="status"
+        aria-live="polite"
+      >
+        <p className="text-text-secondary">Loading scan history…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <DataTable
+        columns={columns}
+        data={scans}
+        emptyMessage="No scans yet. Run a scan from an asset to see results here."
+        caption={`Scan history (${total} total)`}
+        getRowId={(scan) => scan.id}
+        pageSize={20}
+      />
+      {total > scans.length && (
+        <p className="mt-4 text-sm text-text-tertiary" role="status">
+          Showing {scans.length} of {total} scans
+        </p>
+      )}
+    </div>
+  );
+}

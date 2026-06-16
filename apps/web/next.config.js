@@ -23,6 +23,12 @@ const nextConfig = {
   transpilePackages: ['@accessshield/ui', '@accessshield/types', '@accessshield/db'],
   reactStrictMode: true,
   poweredByHeader: false,
+  // .env.local lives at monorepo root — expose to Next.js client, server, and edge middleware
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000',
+  },
 };
 
 module.exports = nextConfig;

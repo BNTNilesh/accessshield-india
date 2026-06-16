@@ -5,7 +5,9 @@ import type {
   CreateAssetInput,
   CreateScanInput,
   CreateScanResult,
+  ListScansParams,
   ScanDetail,
+  ScanListItem,
   ViolationRow,
 } from './types';
 import { ApiError } from './types';
@@ -88,6 +90,23 @@ export async function getScan(token: string, scanId: string): Promise<ScanDetail
   return response.data;
 }
 
+/** Fetch paginated scan history for the organisation */
+export async function listScans(
+  token: string,
+  params?: ListScansParams,
+): Promise<{ rows: ScanListItem[]; meta: ApiResponse<ScanListItem[]>['meta'] }> {
+  const search = new URLSearchParams();
+  if (params?.page) search.set('page', String(params.page));
+  if (params?.limit) search.set('limit', String(params.limit));
+  if (params?.status) search.set('status', params.status);
+  if (params?.asset_id) search.set('asset_id', params.asset_id);
+
+  const query = search.toString();
+  const path = `/api/v1/scans${query ? `?${query}` : ''}`;
+  const response = await apiFetch<ApiResponse<ScanListItem[]>>(path, token);
+  return { rows: response.data, meta: response.meta };
+}
+
 /** Fetch paginated violations for a completed scan */
 export async function listViolations(
   token: string,
@@ -119,4 +138,31 @@ export async function checkApiHealth(): Promise<{ status: string; db: string; re
     throw new Error('API health check failed');
   }
   return response.json() as Promise<{ status: string; db: string; redis: string }>;
+}
+
+/** Dashboard aggregated stats */
+export interface DashboardStats {
+  score: number | null;
+  scoreDelta: number | null;
+  openIssues: number;
+  criticalIssues: number;
+  assetsCount: number;
+  lastScanDate: string | null;
+  recentActivity: DashboardActivity[];
+}
+
+export interface DashboardActivity {
+  id: string;
+  action: string;
+  resourceType: string;
+  resourceId: string | null;
+  userId: string | null;
+  userName: string | null;
+  description: string;
+  createdAt: string;
+}
+
+export async function getDashboardStats(token: string): Promise<DashboardStats> {
+  const response = await apiFetch<ApiResponse<DashboardStats>>('/api/v1/dashboard/stats', token);
+  return response.data;
 }

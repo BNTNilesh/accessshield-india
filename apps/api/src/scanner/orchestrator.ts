@@ -606,6 +606,8 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
           .select({
             id: scans.id,
             assetId: scans.assetId,
+            assetName: assets.name,
+            assetUrl: assets.url,
             status: scans.status,
             wcagLevel: scans.wcagLevel,
             wcagVersion: scans.wcagVersion,
@@ -614,9 +616,11 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
             score: scans.score,
             startedAt: scans.startedAt,
             completedAt: scans.completedAt,
+            errorMessage: scans.errorMessage,
             createdAt: scans.createdAt,
           })
           .from(scans)
+          .leftJoin(assets, and(eq(scans.assetId, assets.id), eq(assets.organisationId, orgId)))
           .where(and(...conditions))
           .orderBy(desc(scans.createdAt))
           .limit(limit)

@@ -22,6 +22,8 @@ import { runAxeWithRetry, getAltTextCandidates, getFixCandidates } from './axe-r
 import { createConcurrencyLimit } from './concurrency';
 import { discoverUrlsWithBrowser } from './crawler';
 import { createBrowser, scanPage, closeScanContext, closeBrowser } from './playwright-runner';
+import { runGIGWChecks } from './rules/gigw';
+import { runIS17802Rules } from './rules/is17802';
 import { buildScanScoreResult } from './score';
 import type { RawViolation, ScanJobMessage, ScanProgress, ScanCancelMessage } from './types';
 
@@ -280,6 +282,8 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
     const allViolations: RawViolation[] = [];
     const limit = createConcurrencyLimit(CONCURRENT_PAGES);
     let pagesScanned = 0;
+    let pagesFailed = 0;
+    const pageFailureMessages: string[] = [];
 
     const scanPromises = urls.map((url, index) =>
       limit(async () => {
@@ -299,6 +303,16 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
           );
 
           const pageViolations = await runAxeWithRetry(page, config, assetId, url);
+
+          if (config.standards.includes('IS17802')) {
+            const isViolations = await runIS17802Rules(page, url, assetId);
+            pageViolations.push(...isViolations);
+          }
+
+          if (config.standards.includes('GIGW3')) {
+            const gigwViolations = await runGIGWChecks(page, url, assetId, config);
+            pageViolations.push(...gigwViolations);
+          }
 
           await closeScanContext(context);
 
@@ -341,8 +355,10 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
             'Page scan complete',
           );
         } catch (err) {
+          pagesFailed++;
+          const message = err instanceof Error ? err.message : 'Unknown page scan error';
+          pageFailureMessages.push(`${url}: ${message}`);
           logger.error({ err, scanId, url }, 'Page scan failed');
-          pagesScanned++;
         }
       }),
     );
@@ -355,6 +371,13 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
     if (isScanCancelled(scanId)) {
       logger.info({ scanId }, 'Scan cancelled after page scanning');
       return;
+    }
+
+    if (pagesScanned === 0 && urls.length > 0) {
+      const summary =
+        pageFailureMessages.slice(0, 3).join('; ') ||
+        'No pages could be analyzed. Check site availability and scanner logs.';
+      throw new Error(`All ${urls.length} page(s) failed to scan. ${summary}`.substring(0, 1000));
     }
 
     const seenFingerprints = new Set<string>();
@@ -440,6 +463,9 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
       orgId,
     );
 
+    const partialFailureNote =
+      pagesFailed > 0 ? `${pagesFailed} of ${urls.length} page(s) could not be analyzed.` : null;
+
     await db
       .update(scans)
       .set({
@@ -448,6 +474,7 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
         score: Math.round(scoreResult.score),
         violationCount: deduplicatedViolations.length,
         pagesScanned,
+        errorMessage: partialFailureNote,
       })
       .where(and(eq(scans.id, scanId), eq(scans.organisationId, orgId)));
 

@@ -2,37 +2,58 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Button } from '@accessshield/ui';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button, Input, Alert } from '@accessshield/ui';
 import { createClient } from '@/lib/supabase/client';
+
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  remember: z.boolean().optional(),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    setLoading(true);
+    setError('');
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
 
-    if (authError) {
-      setError(authError.message);
-      setIsLoading(false);
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
       return;
     }
 
     // Pick up latest App Metadata / custom claims in the access token
     await supabase.auth.refreshSession();
 
-    router.push('/dashboard');
+    router.push(redirectTo);
     router.refresh();
-  }
+  };
 
   async function handleGoogleSignIn() {
     const supabase = createClient();
@@ -45,56 +66,85 @@ export default function LoginPage() {
   }
 
   return (
-    <main id="main-content" className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold text-gray-900">Sign in to AccessShield</h1>
+    <main
+      id="main-content"
+      className="flex min-h-screen items-center justify-center px-4 bg-bg-secondary"
+      aria-labelledby="login-heading"
+    >
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h1 id="login-heading" className="text-3xl font-bold text-gray-900">
+            Sign in to AccessShield India
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link
+              href="/signup"
+              className="font-medium text-primary-600 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+            >
+              Start free trial →
+            </Link>
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
+        <div className="rounded-lg border border-gray-200 bg-white px-8 py-10 shadow">
           {error && (
-            <div role="alert" className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+            <Alert
+              variant="error"
+              title="Sign in failed"
+              className="mb-6"
+              role="alert"
+              aria-live="assertive"
+            >
               {error}
-            </div>
+            </Alert>
           )}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <Input
+              label="Email address"
               type="email"
               autoComplete="email"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+              aria-required="true"
+              {...register('email')}
+              error={errors.email?.message}
             />
-          </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
+            <Input
+              label="Password"
               type="password"
               autoComplete="current-password"
               required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+              aria-required="true"
+              {...register('password')}
+              error={errors.password?.message}
             />
-          </div>
 
-          <Button type="submit" className="w-full" isLoading={isLoading}>
-            Sign in
-          </Button>
-        </form>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  {...register('remember')}
+                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+                />
+                <span className="text-sm text-gray-700">Remember me</span>
+              </label>
 
-        <div className="mt-6">
-          <div className="relative">
+              <Link
+                href="/forgot-password"
+                className="text-sm font-medium text-primary-600 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </form>
+
+          <div className="relative mt-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300" />
             </div>
@@ -104,21 +154,32 @@ export default function LoginPage() {
           </div>
 
           <Button
-            type="button"
-            variant="secondary"
-            className="mt-4 w-full"
+            variant="outline"
+            className="mt-6 w-full"
             onClick={handleGoogleSignIn}
+            aria-label="Sign in with Google account"
           >
-            Sign in with Google
+            <svg className="mr-2 h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="currentColor"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Continue with Google
           </Button>
         </div>
-
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-medium text-brand-600 hover:text-brand-500">
-            Sign up
-          </Link>
-        </p>
       </div>
     </main>
   );

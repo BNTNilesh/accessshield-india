@@ -14,6 +14,7 @@ import { sendProblem } from './lib/problem-details';
 import { createAuthMiddleware } from './middleware/auth';
 import { requestIdMiddleware } from './middleware/request-id';
 import { createAssetsRouter } from './routes/assets';
+import { createDashboardRouter } from './routes/dashboard';
 import { createHealthRouter } from './routes/health';
 import { createScannerRouter, closeRabbitMQ } from './scanner/orchestrator';
 
@@ -46,6 +47,9 @@ async function bootstrap() {
 
   const assetsRouter = createAssetsRouter(db);
   app.use('/api/v1/assets', assetsRouter);
+
+  const dashboardRouter = createDashboardRouter(db);
+  app.use('/api/v1/dashboard', dashboardRouter);
 
   const scannerRouter = createScannerRouter(db, redis);
   app.use('/api/v1/scans', scannerRouter);

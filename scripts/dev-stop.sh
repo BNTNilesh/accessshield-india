@@ -2,7 +2,7 @@
 # Stop local dev servers on default AccessShield ports.
 set -euo pipefail
 
-PORTS=(3000 4000 8000)
+PORTS=(3000 4000 8000 8001)
 
 for port in "${PORTS[@]}"; do
   pids=$(lsof -ti ":$port" 2>/dev/null || true)

@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, type RenderOptions } from '@testing-library/react';
+import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
 import { configureAxe, toHaveNoViolations } from 'jest-axe';
 import type { ReactElement } from 'react';
 
@@ -20,7 +20,7 @@ export const axe = configureAxe({
 });
 
 // Custom render function (if needed for providers in the future)
-const customRender = (ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) =>
+const customRender = (ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>): RenderResult =>
   render(ui, { ...options });
 
 export { customRender as render };

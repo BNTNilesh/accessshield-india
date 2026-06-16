@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import { parseAccessShieldClaims } from './src/lib/auth/claims';
+import { getSupabaseEnv } from './src/lib/supabase/env';
 
 // Edge middleware cannot query Postgres — JWT claims only here; dashboard uses DB fallback in RSC.
 
@@ -12,40 +13,36 @@ export async function middleware(request: NextRequest) {
     request: { headers: request.headers },
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options });
-          response = NextResponse.next({ request: { headers: request.headers } });
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options });
-          response = NextResponse.next({ request: { headers: request.headers } });
-          response.cookies.set({ name, value: '', ...options });
-        },
+  const { url, anonKey } = getSupabaseEnv();
+
+  const supabase = createServerClient(url, anonKey, {
+    cookies: {
+      get(name: string) {
+        return request.cookies.get(name)?.value;
       },
-      auth: {
-        flowType: 'pkce',
-        detectSessionInUrl: true,
+      set(name: string, value: string, options: CookieOptions) {
+        request.cookies.set({ name, value, ...options });
+        response = NextResponse.next({ request: { headers: request.headers } });
+        response.cookies.set({ name, value, ...options });
+      },
+      remove(name: string, options: CookieOptions) {
+        request.cookies.set({ name, value: '', ...options });
+        response = NextResponse.next({ request: { headers: request.headers } });
+        response.cookies.set({ name, value: '', ...options });
       },
     },
-  );
+    auth: {
+      flowType: 'pkce',
+      detectSessionInUrl: true,
+    },
+  });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // getSession reads the cookie locally — avoids a network round-trip per request (getUser).
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
+  const user = session?.user ?? null;
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
@@ -81,5 +78,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  // Only run auth middleware on routes that need it — marketing pages skip Supabase entirely.
+  matcher: ['/dashboard/:path*', '/login', '/signup', '/auth/:path*'],
 };

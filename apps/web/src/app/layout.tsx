@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { SkipLink } from '@accessshield/ui';
+import { Toaster } from 'sonner';
+import { QueryProvider } from '@/providers/QueryProvider';
+import { UiProviders } from '@/providers/UiProviders';
 import './globals.css';
 
 const inter = Inter({
@@ -22,8 +24,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-white font-sans text-gray-900 antialiased">
-        <SkipLink />
-        {children}
+        <QueryProvider>
+          <UiProviders>{children}</UiProviders>
+          <Toaster position="top-right" />
+        </QueryProvider>
       </body>
     </html>
   );
