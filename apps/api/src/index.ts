@@ -13,9 +13,12 @@ import { logger } from './lib/logger';
 import { sendProblem } from './lib/problem-details';
 import { createAuthMiddleware } from './middleware/auth';
 import { requestIdMiddleware } from './middleware/request-id';
+import { createCertificationRouter } from './certification/routes';
+import { createReportingRouter } from './reporting/orchestrator';
 import { createAssetsRouter } from './routes/assets';
 import { createDashboardRouter } from './routes/dashboard';
 import { createHealthRouter } from './routes/health';
+import { createIssuesRouter } from './routes/issues';
 import { createScannerRouter, closeRabbitMQ } from './scanner/orchestrator';
 
 const PORT = Number(process.env.PORT ?? 4000);
@@ -51,8 +54,18 @@ async function bootstrap() {
   const dashboardRouter = createDashboardRouter(db);
   app.use('/api/v1/dashboard', dashboardRouter);
 
+  const issuesRouter = createIssuesRouter(db);
+  app.use('/api/v1/issues', issuesRouter);
+
   const scannerRouter = createScannerRouter(db, redis);
   app.use('/api/v1/scans', scannerRouter);
+
+  const reportingRouter = createReportingRouter(db);
+  app.use('/api/v1/reports', reportingRouter);
+
+  // Certification routes: /api/v1/certificates AND public /verify/:token
+  const certificationRouter = createCertificationRouter(db);
+  app.use(certificationRouter);
 
   app.use((_req, res) => {
     sendProblem(res, 404, 'not-found', 'Resource not found');

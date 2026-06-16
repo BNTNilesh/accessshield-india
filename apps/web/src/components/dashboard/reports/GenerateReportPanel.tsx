@@ -1,23 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useId, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, X, Download, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAccessToken } from '@/lib/api/client';
-import type {
-  Asset,
-  ScanDetail,
-  ReportType,
-  ReportFormat,
-  GenerateReportInput,
-} from '@/lib/api/types';
+import { getAccessToken, listScans, downloadReportFile } from '@/lib/api/client';
+import { useAssets } from '@/lib/hooks/useApi';
+import type { ReportType, ReportFormat, GenerateReportInput } from '@/lib/api/types';
 import { Button } from '@accessshield/ui';
-import { Select } from '@accessshield/ui';
 import { RadioGroup } from '@accessshield/ui';
 import { Input } from '@accessshield/ui';
 import { Badge } from '@accessshield/ui';
 import { Tooltip } from '@accessshield/ui';
+import { useQuery } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 const REPORT_TYPES = [
   {
@@ -58,23 +54,61 @@ const FORMAT_OPTIONS = [
   { value: 'html', label: 'HTML' },
 ];
 
-async function fetchAssets(token: string): Promise<Asset[]> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/assets`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error('Failed to fetch assets');
-  const json = await response.json();
-  return json.data;
+interface NativeSelectProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder: string;
+  required?: boolean;
+  disabled?: boolean;
+  hint?: string;
 }
 
-async function fetchScansForAsset(token: string, assetId: string): Promise<ScanDetail[]> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/scans?assetId=${assetId}&status=completed`,
-    { headers: { Authorization: `Bearer ${token}` } },
+function NativeSelect({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+  required,
+  disabled,
+  hint,
+}: NativeSelectProps) {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-text-secondary">
+        {label}
+        {required && (
+          <span className="ml-0.5 text-error-700" aria-label="required">
+            *
+          </span>
+        )}
+      </label>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        disabled={disabled}
+        className={cn(
+          'flex w-full min-h-11 rounded-md border border-border bg-white px-3 py-2 text-base text-text-primary',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2',
+          'disabled:cursor-not-allowed disabled:opacity-60',
+        )}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {hint && <p className="text-sm text-text-tertiary">{hint}</p>}
+    </div>
   );
-  if (!response.ok) throw new Error('Failed to fetch scans');
-  const json = await response.json();
-  return json.data;
 }
 
 async function generateReport(token: string, input: GenerateReportInput) {
@@ -84,13 +118,23 @@ async function generateReport(token: string, input: GenerateReportInput) {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      report_type: input.reportType,
+      asset_id: input.assetId,
+      scan_id: input.scanId,
+      format: input.format,
+    }),
   });
-  if (!response.ok) throw new Error('Failed to generate report');
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null);
+    throw new Error(problem?.detail ?? 'Failed to generate report');
+  }
   return response.json();
 }
 
 export function GenerateReportPanel() {
+  const assetSelectId = useId();
+  const scanSelectId = useId();
   const queryClient = useQueryClient();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [reportType, setReportType] = useState<ReportType>('executive');
@@ -99,25 +143,39 @@ export function GenerateReportPanel() {
   const [format, setFormat] = useState<ReportFormat>('pdf');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [generatedReportUrl, setGeneratedReportUrl] = useState<string | null>(null);
+  const [generatedReport, setGeneratedReport] = useState<{
+    id: string;
+    title: string;
+    format: ReportFormat;
+  } | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const { data: assets = [] } = useQuery({
-    queryKey: ['assets'],
+  const { data: assets = [] } = useAssets();
+
+  const { data: scansData, isLoading: scansLoading } = useQuery({
+    queryKey: ['scans', 'report', assetId],
     queryFn: async () => {
       const token = await getAccessToken();
-      return fetchAssets(token);
+      return listScans(token, { asset_id: assetId, status: 'completed', limit: 50 });
     },
+    enabled: Boolean(assetId),
   });
 
-  const { data: scans = [] } = useQuery({
-    queryKey: ['scans', assetId],
-    queryFn: async () => {
-      if (!assetId) return [];
-      const token = await getAccessToken();
-      return fetchScansForAsset(token, assetId);
-    },
-    enabled: !!assetId,
-  });
+  const scans = scansData?.rows ?? [];
+
+  useEffect(() => {
+    if (!assetId) {
+      setScanId('');
+      return;
+    }
+    if (scans.length > 0) {
+      setScanId((current) =>
+        current && scans.some((scan) => scan.id === current) ? current : scans[0]!.id,
+      );
+    } else {
+      setScanId('');
+    }
+  }, [assetId, scans]);
 
   const generateMutation = useMutation({
     mutationFn: async (input: GenerateReportInput) => {
@@ -125,7 +183,11 @@ export function GenerateReportPanel() {
       return generateReport(token, input);
     },
     onSuccess: (data) => {
-      setGeneratedReportUrl(data.data.downloadUrl);
+      setGeneratedReport({
+        id: data.data.reportId,
+        title: data.data.title,
+        format: data.data.format as ReportFormat,
+      });
       queryClient.invalidateQueries({ queryKey: ['reports'] });
     },
   });
@@ -146,8 +208,20 @@ export function GenerateReportPanel() {
 
   function handleClose() {
     setIsPanelOpen(false);
-    setGeneratedReportUrl(null);
+    setGeneratedReport(null);
     generateMutation.reset();
+  }
+
+  async function handleDownloadReport() {
+    if (!generatedReport) return;
+    setIsDownloading(true);
+    try {
+      const ext = generatedReport.format === 'pdf' ? 'pdf' : 'html';
+      const safeName = generatedReport.title.replace(/[^\w.-]+/g, '_');
+      await downloadReportFile(generatedReport.id, `${safeName}.${ext}`);
+    } finally {
+      setIsDownloading(false);
+    }
   }
 
   const assetOptions = assets.map((asset) => ({
@@ -161,8 +235,10 @@ export function GenerateReportPanel() {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-    })} — Score: ${scan.score ?? 'N/A'}/100`,
+    })} — Score: ${scan.score ?? 'N/A'}/100 (${scan.violationCount} issues)`,
   }));
+
+  const canGenerate = Boolean(assetId && scanId && !generateMutation.isPending);
 
   return (
     <>
@@ -179,7 +255,6 @@ export function GenerateReportPanel() {
       <AnimatePresence>
         {isPanelOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -189,7 +264,6 @@ export function GenerateReportPanel() {
               aria-hidden="true"
             />
 
-            {/* Panel */}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -199,12 +273,14 @@ export function GenerateReportPanel() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="generate-report-title"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-white px-6 py-4">
                 <h2 id="generate-report-title" className="text-xl font-bold text-text-primary">
                   Generate Report
                 </h2>
                 <button
+                  type="button"
                   onClick={handleClose}
                   className="rounded-md p-2 text-text-secondary hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
                   aria-label="Close panel"
@@ -214,7 +290,7 @@ export function GenerateReportPanel() {
               </div>
 
               <div className="p-6">
-                {generatedReportUrl ? (
+                {generatedReport ? (
                   <div className="space-y-4 text-center py-8">
                     <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-success-100">
                       <Download className="h-8 w-8 text-success-700" aria-hidden="true" />
@@ -226,17 +302,21 @@ export function GenerateReportPanel() {
                       Your report is ready to download
                     </p>
                     <div className="flex gap-3 justify-center">
-                      <Button asChild variant="primary" size="lg">
-                        <a href={generatedReportUrl} download>
-                          <Download className="mr-2 h-5 w-5" aria-hidden="true" />
-                          Download Report
-                        </a>
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        onClick={() => void handleDownloadReport()}
+                        disabled={isDownloading}
+                        aria-busy={isDownloading}
+                      >
+                        <Download className="mr-2 h-5 w-5" aria-hidden="true" />
+                        {isDownloading ? 'Downloading…' : 'Download Report'}
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="lg"
                         onClick={() => {
-                          setGeneratedReportUrl(null);
+                          setGeneratedReport(null);
                           generateMutation.reset();
                         }}
                       >
@@ -259,7 +339,6 @@ export function GenerateReportPanel() {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Report Type */}
                     <div>
                       <label className="block text-sm font-semibold text-text-primary mb-3">
                         Report Type{' '}
@@ -292,7 +371,7 @@ export function GenerateReportPanel() {
                                 <span className="font-medium text-text-primary">{type.label}</span>
                                 {type.enterprise && (
                                   <Tooltip content="Available on Enterprise plan only">
-                                    <Badge variant="secondary" className="text-xs">
+                                    <Badge variant="outline" className="text-xs">
                                       Enterprise
                                     </Badge>
                                   </Tooltip>
@@ -305,63 +384,88 @@ export function GenerateReportPanel() {
                       </div>
                     </div>
 
-                    {/* Asset */}
-                    <Select
+                    <NativeSelect
+                      id={assetSelectId}
                       label="Asset"
-                      options={assetOptions}
                       value={assetId}
                       onChange={(value) => {
                         setAssetId(value);
                         setScanId('');
                       }}
+                      options={assetOptions}
+                      placeholder="Select an asset"
+                      disabled={assetOptions.length === 0}
+                      hint={
+                        assetOptions.length === 0
+                          ? 'Add an asset first from the Assets page'
+                          : undefined
+                      }
                       required
                     />
 
-                    {/* Scan */}
                     {assetId && (
-                      <Select
+                      <NativeSelect
+                        id={scanSelectId}
                         label="Scan"
-                        options={scanOptions}
                         value={scanId}
                         onChange={setScanId}
+                        options={scanOptions}
+                        placeholder={
+                          scansLoading
+                            ? 'Loading scans…'
+                            : scanOptions.length === 0
+                              ? 'No completed scans for this asset'
+                              : 'Select a scan'
+                        }
+                        disabled={scansLoading || scanOptions.length === 0}
+                        hint={
+                          scansLoading
+                            ? 'Loading completed scans…'
+                            : scanOptions.length === 0
+                              ? 'Run a scan on this asset before generating a report'
+                              : 'Latest scan is selected automatically'
+                        }
                         required
                       />
                     )}
 
-                    {/* Format */}
                     <RadioGroup
-                      label="Report Format"
+                      legend="Report Format"
                       options={FORMAT_OPTIONS}
                       value={format}
-                      onChange={(value) => setFormat(value as ReportFormat)}
-                      aria-label="Report format"
+                      onValueChange={(value) => setFormat(value as ReportFormat)}
                       required
                     />
 
-                    {/* Date Range (Optional) */}
                     <div className="grid gap-4 sm:grid-cols-2">
                       <Input
                         type="date"
                         label="From Date (optional)"
                         value={dateFrom}
                         onChange={(e) => setDateFrom(e.target.value)}
-                        pattern="\d{2}/\d{2}/\d{4}"
                       />
                       <Input
                         type="date"
                         label="To Date (optional)"
                         value={dateTo}
                         onChange={(e) => setDateTo(e.target.value)}
-                        pattern="\d{2}/\d{2}/\d{4}"
                       />
                     </div>
+
+                    {generateMutation.isError && (
+                      <p role="alert" className="text-sm text-error-700">
+                        {generateMutation.error instanceof Error
+                          ? generateMutation.error.message
+                          : 'Failed to generate report'}
+                      </p>
+                    )}
 
                     <Button
                       type="submit"
                       variant="primary"
                       size="lg"
                       className="w-full"
-                      disabled={!assetId || !scanId || generateMutation.isPending}
+                      disabled={!canGenerate}
                     >
                       <FileText className="mr-2 h-5 w-5" aria-hidden="true" />
                       Generate Report

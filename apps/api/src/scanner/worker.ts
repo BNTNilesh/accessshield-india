@@ -26,6 +26,7 @@ import { runGIGWChecks } from './rules/gigw';
 import { runIS17802Rules } from './rules/is17802';
 import { buildScanScoreResult } from './score';
 import type { RawViolation, ScanJobMessage, ScanProgress, ScanCancelMessage } from './types';
+import { syncIssuesFromViolations } from '../services/issue-sync';
 
 /** Concurrent page scan limit */
 const CONCURRENT_PAGES = 3;
@@ -441,6 +442,8 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
 
       logger.info({ scanId, batchStart: i, batchSize: batch.length }, 'Violation batch inserted');
     }
+
+    await syncIssuesFromViolations(db, orgId);
 
     const [previousScan] = await db
       .select({ id: scans.id })

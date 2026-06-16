@@ -96,7 +96,7 @@ export function IssueList({ searchParams }: IssueListProps) {
   }
 
   const { issues, meta } = data;
-  const from = ((meta?.page ?? 1) - 1) * (meta?.limit ?? 25) + 1;
+  const from = ((meta?.page ?? 1) - 1) * (meta?.pageSize ?? meta?.limit ?? 25) + 1;
   const to = Math.min(from + issues.length - 1, meta?.total ?? issues.length);
 
   return (
@@ -266,7 +266,7 @@ export function IssueList({ searchParams }: IssueListProps) {
       </div>
 
       {/* Pagination */}
-      {meta && meta.total && meta.total > (meta.limit ?? 25) && (
+      {meta && meta.total && meta.total > (meta.pageSize ?? meta?.limit ?? 25) && (
         <div
           className="flex items-center justify-between rounded-lg border border-border bg-white px-4 py-3"
           role="navigation"

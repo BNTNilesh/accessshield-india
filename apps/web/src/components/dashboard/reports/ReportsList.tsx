@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Download, Trash2, FileCode } from 'lucide-react';
-import { getAccessToken } from '@/lib/api/client';
+import { getAccessToken, downloadReportFile } from '@/lib/api/client';
 import type { Report } from '@/lib/api/types';
 import { Badge } from '@accessshield/ui';
 import { Button } from '@accessshield/ui';
@@ -187,14 +187,16 @@ export function ReportsList() {
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <Button
-                        asChild
                         variant="outline"
                         size="sm"
                         aria-label={`Download ${report.title} as ${report.format.toUpperCase()}`}
+                        onClick={() => {
+                          const ext = report.format === 'pdf' ? 'pdf' : 'html';
+                          const safeName = report.title.replace(/[^\w.-]+/g, '_');
+                          void downloadReportFile(report.id, `${safeName}.${ext}`);
+                        }}
                       >
-                        <a href={report.storagePath ?? '#'} download>
-                          <Download className="h-4 w-4" aria-hidden="true" />
-                        </a>
+                        <Download className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       <Button
                         variant="ghost"

@@ -293,7 +293,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
         )}
       </label>
       <SelectPrimitive.Root
-        value={value}
+        value={value || undefined}
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         disabled={disabled}
@@ -317,7 +317,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
         </SelectPrimitive.Trigger>
         <SelectPrimitive.Portal>
           <SelectPrimitive.Content
-            className="z-50 overflow-hidden rounded-md border border-border bg-white shadow-lg"
+            className="z-[100] overflow-hidden rounded-md border border-border bg-white shadow-lg"
             position="popper"
             sideOffset={4}
           >

@@ -131,6 +131,38 @@ export async function cancelScan(token: string, scanId: string): Promise<void> {
   });
 }
 
+/** Download a generated report file (authenticated — required for local dev storage). */
+export async function downloadReportFile(reportId: string, filename: string): Promise<void> {
+  const token = await getAccessToken();
+
+  let response = await fetch(`${API_BASE}/api/v1/reports/${reportId}/file`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (response.status === 404) {
+    const meta = await apiFetch<ApiResponse<{ downloadUrl: string }>>(
+      `/api/v1/reports/${reportId}/download`,
+      token,
+    );
+    if (meta.data.downloadUrl) {
+      window.open(meta.data.downloadUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error('Failed to download report');
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(objectUrl);
+}
+
 /** Check API health (no auth required) */
 export async function checkApiHealth(): Promise<{ status: string; db: string; redis: string }> {
   const response = await fetch(`${API_BASE}/health`);
