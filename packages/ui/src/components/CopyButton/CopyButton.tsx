@@ -8,6 +8,8 @@ export interface CopyButtonProps {
   text: string;
   label?: string;
   className?: string;
+  size?: string;
+  variant?: string;
 }
 
 export function CopyButton({ text, label = 'Copy to clipboard', className }: CopyButtonProps) {

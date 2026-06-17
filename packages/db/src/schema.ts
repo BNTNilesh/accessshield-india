@@ -393,6 +393,27 @@ export const auditLogs = pgTable(
   }),
 );
 
+// ─── Waitlist Signups ────────────────────────────────────────────────────────
+
+export const waitlistSignups = pgTable(
+  'waitlist_signups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: varchar('name', { length: 255 }).notNull(),
+    email: varchar('email', { length: 255 }).notNull(),
+    company: varchar('company', { length: 255 }).notNull(),
+    companySize: varchar('company_size', { length: 50 }).notNull(),
+    phone: varchar('phone', { length: 20 }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    emailIdx: index('waitlist_signups_email_idx').on(table.email),
+    createdIdx: index('waitlist_signups_created_idx').on(table.createdAt),
+  }),
+);
+
 // ─── Relations ───────────────────────────────────────────────────────────────
 
 export const organisationsRelations = relations(organisations, ({ many }) => ({

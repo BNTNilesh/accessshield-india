@@ -2,6 +2,16 @@
 -- Auth UID: f378b2fc-5b9c-4103-8fde-b35c91aa518c
 -- Re-run safe: uses fixed UUIDs with ON CONFLICT
 
+INSERT INTO organisations (id, name, slug, plan_tier, is_active)
+VALUES (
+  '00000000-0000-0000-0000-000000000001',
+  'Public Scans',
+  'public-scans-system',
+  'starter',
+  false
+)
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO organisations (id, name, slug, plan_tier, billing_email, is_active)
 VALUES (
   '11111111-1111-1111-1111-111111111111',

@@ -12,6 +12,17 @@ import type {
 } from './types';
 import { ApiError } from './types';
 
+export type {
+  Asset,
+  CreateAssetInput,
+  CreateScanInput,
+  CreateScanResult,
+  ListScansParams,
+  ScanDetail,
+  ScanListItem,
+  ViolationRow,
+} from './types';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 /**

@@ -13,9 +13,11 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   sleep 2
 fi
 
-echo "Applying schema migration..."
+echo "Applying schema migrations..."
 docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
   < "$ROOT/packages/db/migrations/0000_graceful_trish_tilby.sql"
+docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+  < "$ROOT/packages/db/migrations/0001_add_public_scans_and_waitlist.sql"
 
 echo "Seeding dev data..."
 docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \

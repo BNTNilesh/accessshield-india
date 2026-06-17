@@ -6,8 +6,13 @@ import { cn, focusRing } from '../../lib/cn';
 import { XIcon } from '../../lib/icons';
 
 export interface ModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  /** Preferred open prop */
+  open?: boolean;
+  /** Alias for open — used by portal screens */
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Alias for onOpenChange(false) */
+  onClose?: () => void;
   title: string;
   description?: string;
   children: ReactNode;
@@ -18,7 +23,9 @@ export interface ModalProps {
 
 export function Modal({
   open,
+  isOpen,
   onOpenChange,
+  onClose,
   title,
   description,
   children,
@@ -27,9 +34,17 @@ export function Modal({
 }: ModalProps) {
   const titleId = 'modal-title';
   const descriptionId = 'modal-description';
+  const resolvedOpen = open ?? isOpen ?? false;
+
+  const handleOpenChange = (next: boolean) => {
+    onOpenChange?.(next);
+    if (!next) {
+      onClose?.();
+    }
+  };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={resolvedOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" />
         <Dialog.Content

@@ -303,21 +303,30 @@ export function ScannerTestLab() {
     {
       id: 'wcag',
       header: 'WCAG',
-      accessor: (row) => row.wcagCriteria.join(', ') || '—',
+      accessor: (row) => row.wcagCriteria?.join(', ') || '—',
     },
     {
       id: 'page',
       header: 'Page',
-      accessor: (row) => (
-        <a
-          href={row.pageUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary-600 underline-offset-2 hover:underline"
-        >
-          {new URL(row.pageUrl).pathname || row.pageUrl}
-        </a>
-      ),
+      accessor: (row) =>
+        row.pageUrl ? (
+          <a
+            href={row.pageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-600 underline-offset-2 hover:underline"
+          >
+            {(() => {
+              try {
+                return new URL(row.pageUrl).pathname || row.pageUrl;
+              } catch {
+                return row.pageUrl;
+              }
+            })()}
+          </a>
+        ) : (
+          '—'
+        ),
     },
     {
       id: 'description',
@@ -331,16 +340,19 @@ export function ScannerTestLab() {
     {
       id: 'help',
       header: 'Help',
-      accessor: (row) => (
-        <a
-          href={row.helpUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary-600 underline-offset-2 hover:underline"
-        >
-          Docs
-        </a>
-      ),
+      accessor: (row) =>
+        row.helpUrl ? (
+          <a
+            href={row.helpUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary-600 underline-offset-2 hover:underline"
+          >
+            Docs
+          </a>
+        ) : (
+          '—'
+        ),
     },
   ];
 

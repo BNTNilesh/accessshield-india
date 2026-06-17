@@ -46,7 +46,7 @@ export function ViolationTable({ violations, isLoading, total }: ViolationTableP
       accessor: (violation) =>
         violation.wcagCriteria && violation.wcagCriteria.length > 0 ? (
           <a
-            href={`https://www.w3.org/WAI/WCAG22/Understanding/${violation.wcagCriteria[0].replace(/\./g, '')}`}
+            href={`https://www.w3.org/WAI/WCAG22/Understanding/${violation.wcagCriteria[0]!.replace(/\./g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"

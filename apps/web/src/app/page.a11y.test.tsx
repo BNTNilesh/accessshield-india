@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { describe, expect, it, vi } from 'vitest';
-import HomePage from './page';
+import HomePage from './(marketing)/page';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -18,6 +18,10 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   ),
+}));
+
+vi.mock('@/components/marketing/home/BlogPreviewSection', () => ({
+  BlogPreviewSection: () => null,
 }));
 
 describe('HomePage accessibility', () => {

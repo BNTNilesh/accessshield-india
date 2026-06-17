@@ -16,10 +16,18 @@ import { requestIdMiddleware } from './middleware/request-id';
 import { createCertificationRouter } from './certification/routes';
 import { createReportingRouter } from './reporting/orchestrator';
 import { createAssetsRouter } from './routes/assets';
+import { createBillingRouter } from './routes/billing';
 import { createDashboardRouter } from './routes/dashboard';
 import { createHealthRouter } from './routes/health';
+import { createIntegrationsRouter } from './routes/integrations';
 import { createIssuesRouter } from './routes/issues';
+import { createNotificationsRouter } from './routes/notifications';
+import { createOrganisationRouter } from './routes/organisation';
+import { createUsersRouter } from './routes/users';
+import { createWidgetRouter } from './routes/widget';
 import { createScannerRouter, closeRabbitMQ } from './scanner/orchestrator';
+import { createPublicScanRouter } from './routes/public-scan';
+import { createPublicWaitlistRouter } from './routes/public-waitlist';
 
 const PORT = Number(process.env.PORT ?? 4000);
 
@@ -45,6 +53,24 @@ async function bootstrap() {
   const healthRouter = createHealthRouter(db, redis);
   app.use(healthRouter);
 
+  // API has no HTML UI — point browsers at the web app
+  app.get('/', (_req, res) => {
+    const webUrl = process.env.CORS_ORIGIN ?? 'http://localhost:3000';
+    res.json({
+      service: 'AccessShield API',
+      status: 'running',
+      health: '/health',
+      webApp: webUrl,
+      freeScanTool: `${webUrl}/scan`,
+    });
+  });
+
+  const publicScanRouter = createPublicScanRouter(db, redis);
+  app.use('/api/v1/public/scan', publicScanRouter);
+
+  const publicWaitlistRouter = createPublicWaitlistRouter(db, redis);
+  app.use('/api/v1/public/waitlist', publicWaitlistRouter);
+
   const authMiddleware = createAuthMiddleware(secrets.supabaseUrl, db);
   app.use('/api/v1', authMiddleware);
 
@@ -66,6 +92,24 @@ async function bootstrap() {
   // Certification routes: /api/v1/certificates AND public /verify/:token
   const certificationRouter = createCertificationRouter(db);
   app.use(certificationRouter);
+
+  const organisationRouter = createOrganisationRouter(db);
+  app.use('/api/v1/organisation', organisationRouter);
+
+  const usersRouter = createUsersRouter(db);
+  app.use('/api/v1/users', usersRouter);
+
+  const billingRouter = createBillingRouter(db);
+  app.use('/api/v1', billingRouter);
+
+  const notificationsRouter = createNotificationsRouter(db, redis);
+  app.use('/api/v1/notifications', notificationsRouter);
+
+  const widgetRouter = createWidgetRouter(db, redis);
+  app.use('/api/v1/widget', widgetRouter);
+
+  const integrationsRouter = createIntegrationsRouter(db);
+  app.use('/api/v1/integrations', integrationsRouter);
 
   app.use((_req, res) => {
     sendProblem(res, 404, 'not-found', 'Resource not found');

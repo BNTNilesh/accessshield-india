@@ -22,13 +22,13 @@ describe('Button', () => {
   it('renders primary variant by default', () => {
     const { getByRole } = render(<Button>Default</Button>);
     const button = getByRole('button');
-    expect(button).toHaveClass('bg-primary');
+    expect(button).toHaveClass('bg-primary-600');
   });
 
   it('renders secondary variant with border', () => {
     const { getByRole } = render(<Button variant="secondary">Secondary</Button>);
     const button = getByRole('button');
-    expect(button).toHaveClass('border');
+    expect(button).toHaveClass('border-2');
   });
 
   it('renders danger variant', () => {

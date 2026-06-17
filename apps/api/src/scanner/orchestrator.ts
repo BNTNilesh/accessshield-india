@@ -20,6 +20,7 @@ import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 import type { ComplianceStandard, ScanJobMessage, ScanProgress, WcagLevel } from './types';
 import { DEFAULT_SCAN_CONFIG, PLAN_SCAN_LIMITS } from './types';
+import { closeScanQueue, publishScanJob } from './queue';
 
 /** Zod schema for POST /scans request body */
 const createScanSchema = z.object({
@@ -43,13 +44,12 @@ const listViolationsSchema = z.object({
   standard: z.enum(['WCAG22', 'IS17802', 'GIGW3', 'SEBI']).optional(),
 });
 
-/** RabbitMQ connection state */
+/** RabbitMQ connection state for cancel queue only */
 let rabbitConnection: Awaited<ReturnType<typeof amqp.connect>> | null = null;
 let rabbitChannel: Awaited<
   ReturnType<Awaited<ReturnType<typeof amqp.connect>>['createChannel']>
 > | null = null;
 
-const SCANS_QUEUE = 'scans';
 const CANCEL_QUEUE = 'scan_cancellations';
 
 /**
@@ -70,7 +70,6 @@ async function ensureRabbitMQ() {
     const channel = await conn.createChannel();
     rabbitChannel = channel;
 
-    await channel.assertQueue(SCANS_QUEUE, { durable: true });
     await channel.assertQueue(CANCEL_QUEUE, { durable: true });
 
     conn.on('close', () => {
@@ -89,18 +88,6 @@ async function ensureRabbitMQ() {
     logger.error({ err }, 'Failed to connect to RabbitMQ');
     throw err;
   }
-}
-
-/**
- * Publish a scan job to RabbitMQ queue.
- * Message is persistent to survive broker restarts.
- */
-async function publishScanJob(message: ScanJobMessage): Promise<void> {
-  const channel = await ensureRabbitMQ();
-  const content = Buffer.from(JSON.stringify(message));
-
-  channel.sendToQueue(SCANS_QUEUE, content, { persistent: true });
-  logger.info({ scanId: message.scanId, assetId: message.assetId }, 'Scan job published to queue');
 }
 
 /**
@@ -661,6 +648,7 @@ export async function closeRabbitMQ(): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (rabbitConnection as any).close();
     }
+    await closeScanQueue();
     logger.info('RabbitMQ connection closed');
   } catch (err) {
     logger.warn({ err }, 'Error during RabbitMQ cleanup');

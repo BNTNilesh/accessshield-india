@@ -51,19 +51,21 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
       </div>
 
       <Tabs
+        defaultValue="overview"
+        ariaLabel="Asset sections"
         items={[
           {
-            id: 'overview',
+            value: 'overview',
             label: 'Overview',
             content: <AssetOverview assetId={id} />,
           },
           {
-            id: 'configuration',
+            value: 'configuration',
             label: 'Configuration',
             content: <AssetConfiguration asset={asset} />,
           },
           {
-            id: 'widget',
+            value: 'widget',
             label: 'Widget',
             content: <AssetWidget assetId={id} />,
           },

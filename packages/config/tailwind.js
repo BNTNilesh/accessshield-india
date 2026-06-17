@@ -9,8 +9,11 @@ module.exports = {
           dark: '#1A3A5C',
           light: '#EBF3FB',
           50: '#F4F8FD',
+          100: '#EBF3FB',
+          500: '#2E75B6',
           600: '#1A56A0',
           700: '#1A3A5C',
+          800: '#0D2E5A',
           900: '#0D2E5A',
         },
         accent: {

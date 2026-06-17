@@ -1,5 +1,6 @@
 'use client';
 
+import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -19,7 +20,7 @@ import { cn } from '@/lib/utils';
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  icon: LucideIcon;
 }
 
 const NAV_ITEMS: NavItem[] = [

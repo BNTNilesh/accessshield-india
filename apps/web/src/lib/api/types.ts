@@ -52,6 +52,10 @@ export interface CreateAssetInput {
 
 // ─── Scans ───────────────────────────────────────────────────────────────
 
+export type ComplianceStandard = 'WCAG22' | 'IS17802' | 'GIGW3' | 'SEBI';
+export type ScanType = 'full' | 'incremental' | 'single_page';
+export type WcagLevel = 'A' | 'AA' | 'AAA';
+
 export interface ScanDetail {
   id: string;
   organisationId: string;
@@ -77,10 +81,11 @@ export interface ScanDetail {
 
 export interface CreateScanInput {
   asset_id: string;
-  wcag_level?: string;
+  wcag_level?: WcagLevel | string;
   wcag_version?: string;
   max_pages?: number;
-  scan_type?: 'full' | 'incremental' | 'single_page';
+  scan_type?: ScanType;
+  standards?: ComplianceStandard[];
 }
 
 export interface CreateScanResult {
@@ -195,6 +200,7 @@ export interface IssueFilters {
   wcagCriterion?: string;
   dateFrom?: string;
   dateTo?: string;
+  page?: string;
 }
 
 export interface IssueStats {

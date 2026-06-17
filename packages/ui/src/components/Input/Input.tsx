@@ -1,15 +1,17 @@
 'use client';
 
-import { forwardRef, useId, type InputHTMLAttributes } from 'react';
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn, focusRing } from '../../lib/cn';
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
-  label: string;
+  /** Optional when a visible label is rendered elsewhere */
+  label?: string;
   hint?: string;
   error?: string;
   showCharCount?: boolean;
   maxLength?: number;
   containerClassName?: string;
+  leftIcon?: ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -27,12 +29,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       id: externalId,
       value,
       defaultValue,
+      leftIcon,
       ...props
     },
     ref,
   ) => {
     const generatedId = useId();
-    const id = externalId ?? generatedId;
+    const id = externalId ?? props.name ?? generatedId;
     const hintId = hint ? `${id}-hint` : undefined;
     const errorId = error ? `${id}-error` : undefined;
     const countId = showCharCount ? `${id}-count` : undefined;
@@ -48,34 +51,45 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div className={cn('space-y-1.5', containerClassName)}>
-        <label htmlFor={id} className="text-sm font-medium text-text-secondary">
-          {label}
-          {required && (
-            <span aria-label="required" className="ml-0.5 text-error-700">
-              *
+        {label && (
+          <label htmlFor={id} className="text-sm font-medium text-text-secondary">
+            {label}
+            {required && (
+              <span aria-label="required" className="ml-0.5 text-error-700">
+                *
+              </span>
+            )}
+          </label>
+        )}
+        <div className="relative">
+          {leftIcon && (
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+              {leftIcon}
             </span>
           )}
-        </label>
-        <input
-          ref={ref}
-          id={id}
-          required={required}
-          disabled={disabled}
-          maxLength={maxLength}
-          aria-required={required || undefined}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy}
-          className={cn(
-            'w-full min-h-11 rounded-md border px-3 py-2 text-base text-text-primary',
-            focusRing,
-            error ? 'border-error-700' : 'border-border',
-            disabled && 'cursor-not-allowed bg-gray-50 opacity-60',
-            className,
-          )}
-          value={value}
-          defaultValue={defaultValue}
-          {...props}
-        />
+          <input
+            ref={ref}
+            id={id}
+            required={required}
+            disabled={disabled}
+            maxLength={maxLength}
+            aria-required={required || undefined}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
+            aria-label={!label ? props['aria-label'] : undefined}
+            className={cn(
+              'w-full min-h-11 rounded-md border px-3 py-2 text-base text-text-primary',
+              focusRing,
+              error ? 'border-error-700' : 'border-border',
+              disabled && 'cursor-not-allowed bg-gray-50 opacity-60',
+              leftIcon && 'pl-10',
+              className,
+            )}
+            value={value}
+            defaultValue={defaultValue}
+            {...props}
+          />
+        </div>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
             {hint && !error && (

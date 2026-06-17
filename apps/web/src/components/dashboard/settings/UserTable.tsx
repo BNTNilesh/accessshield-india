@@ -152,7 +152,7 @@ export function UserTable() {
                           className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-700"
                           aria-hidden="true"
                         >
-                          {user.fullName?.[0] ?? user.email[0].toUpperCase()}
+                          {user.fullName?.[0] ?? user.email[0]?.toUpperCase() ?? '?'}
                         </div>
                         <span className="font-medium text-text-primary">
                           {user.fullName ?? 'N/A'}

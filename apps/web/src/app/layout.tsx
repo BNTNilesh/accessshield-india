@@ -21,8 +21,36 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'AccessShield India',
+    url: 'https://accessshield.in',
+    description:
+      'AI-powered digital accessibility compliance platform for Indian organisations. WCAG 2.2 AA, IS 17802, and SEBI compliance.',
+    logo: 'https://accessshield.in/logo.png',
+    foundingDate: '2024',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Bengaluru',
+      addressRegion: 'Karnataka',
+      addressCountry: 'IN',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'Customer Support',
+      email: 'support@accessshield.in',
+    },
+  };
+
   return (
     <html lang="en" className={inter.variable}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+      </head>
       <body className="min-h-screen bg-white font-sans text-gray-900 antialiased">
         <QueryProvider>
           <UiProviders>{children}</UiProviders>

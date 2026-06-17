@@ -13,11 +13,14 @@ export interface SelectOption {
 }
 
 export interface SelectProps {
-  label: string;
+  label?: string;
   options: SelectOption[];
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string) => void;
+  /** Alias for onValueChange */
+  onChange?: (value: string) => void;
+  name?: string;
   placeholder?: string;
   hint?: string;
   error?: string;
@@ -235,6 +238,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
     value,
     defaultValue,
     onValueChange,
+    onChange,
+    name,
     placeholder = 'Select an option',
     hint,
     error,
@@ -278,14 +283,18 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
 
   const handleValueChange = (newValue: string) => {
     onValueChange?.(newValue);
+    onChange?.(newValue);
     const option = options.find((o) => o.value === newValue);
     if (option) announce(`${option.label} selected`);
   };
 
+  const resolvedLabel = label ?? 'Select option';
+
   return (
     <div className={cn('space-y-1.5', className)}>
+      {name && <input type="hidden" name={name} value={value ?? defaultValue ?? ''} readOnly />}
       <label htmlFor={id} className="text-sm font-medium text-text-secondary">
-        {label}
+        {resolvedLabel}
         {required && (
           <span aria-label="required" className="ml-0.5 text-error-700">
             *
@@ -323,7 +332,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
           >
             {searchable && (
               <div className="border-b border-border p-2">
-                <SearchFilter options={options} label={label} />
+                <SearchFilter options={options} label={resolvedLabel} />
               </div>
             )}
             <SelectPrimitive.Viewport className="max-h-60 overflow-auto p-1">

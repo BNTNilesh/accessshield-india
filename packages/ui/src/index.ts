@@ -3,6 +3,7 @@ export { Alert, Toast, type AlertProps, type ToastProps } from './components/Ale
 export { Badge, type BadgeProps } from './components/Badge';
 export { Breadcrumb, type BreadcrumbProps, type BreadcrumbItem } from './components/Breadcrumb';
 export { Button, type ButtonProps } from './components/Button';
+export { buttonVariants } from './components/Button/buttonVariants';
 export { Card, type CardProps } from './components/Card';
 export {
   Checkbox,
