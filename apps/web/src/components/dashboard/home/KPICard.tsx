@@ -18,47 +18,41 @@ export interface KPICardProps {
 export function KPICard({ label, value, trend, icon: Icon, href }: KPICardProps) {
   const content = (
     <Card
-      className="hover:shadow-md transition-shadow"
+      className="group relative overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-gray-200 hover:border-primary-300 bg-gradient-to-br from-white to-gray-50"
       role="listitem"
       aria-label={`${label}: ${value}${trend ? `, ${trend.direction === 'up' ? 'up' : 'down'} ${Math.abs(trend.value)}%` : ''}`}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-text-secondary">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-text-primary">{value}</p>
+      <div className="flex items-start justify-between p-6">
+        <div className="flex-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">{label}</p>
+          <p className="text-4xl font-extrabold text-gray-900 mb-3">{value}</p>
           {trend && (
-            <div className="mt-2 flex items-center gap-1 text-sm">
+            <div
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border ${
+                trend.value > 0
+                  ? 'bg-green-50 text-green-700 border-green-200'
+                  : 'bg-red-50 text-red-700 border-red-200'
+              }`}
+            >
               {trend.direction === 'up' ? (
-                <>
-                  <TrendingUp
-                    className={`h-4 w-4 ${trend.value > 0 ? 'text-success-700' : 'text-error-700'}`}
-                    aria-hidden="true"
-                  />
-                  <span
-                    className={trend.value > 0 ? 'text-success-700' : 'text-error-700'}
-                  >{`${trend.value > 0 ? '+' : ''}${trend.value}%`}</span>
-                </>
+                <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />
               ) : (
-                <>
-                  <TrendingDown
-                    className={`h-4 w-4 ${trend.value < 0 ? 'text-error-700' : 'text-success-700'}`}
-                    aria-hidden="true"
-                  />
-                  <span
-                    className={trend.value < 0 ? 'text-error-700' : 'text-success-700'}
-                  >{`${trend.value}%`}</span>
-                </>
+                <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" />
               )}
-              <span className="text-text-tertiary">from last scan</span>
+              <span>{`${trend.value > 0 ? '+' : ''}${trend.value}%`}</span>
+              <span className="opacity-75">vs last scan</span>
             </div>
           )}
         </div>
         {Icon && (
-          <div className="rounded-lg bg-primary-100 p-2">
-            <Icon className="h-6 w-6 text-primary-600" aria-hidden="true" />
+          <div className="rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 p-4 shadow-md">
+            <Icon className="h-8 w-8 text-white" aria-hidden="true" />
           </div>
         )}
       </div>
+      {href && (
+        <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+      )}
     </Card>
   );
 
@@ -66,7 +60,7 @@ export function KPICard({ label, value, trend, icon: Icon, href }: KPICardProps)
     return (
       <Link
         href={href}
-        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-lg"
+        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-4 rounded-xl"
       >
         {content}
       </Link>

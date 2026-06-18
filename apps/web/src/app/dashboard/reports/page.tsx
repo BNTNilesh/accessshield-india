@@ -10,7 +10,9 @@ const GenerateReportPanel = dynamic(
     })),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-48 rounded-lg" aria-label="Loading report generator" />,
+    loading: () => (
+      <Skeleton className="h-12 w-56 rounded-md" aria-label="Loading report generator" />
+    ),
   },
 );
 
@@ -21,18 +23,22 @@ export const metadata = {
 
 export default function ReportsPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Reports</h1>
-        <p className="mt-2 text-base text-text-secondary">
+    <div className="space-y-8">
+      <div className="bg-gradient-to-r from-primary-50 to-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Reports</h1>
+        <p className="text-lg text-gray-600 font-medium">
           Generate comprehensive accessibility compliance reports for your assets
         </p>
       </div>
 
-      <GenerateReportPanel />
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6">
+        <GenerateReportPanel />
+      </div>
 
-      <Suspense fallback={<Skeleton className="h-96 rounded-lg" />}>
-        <ReportsList />
+      <Suspense fallback={<Skeleton className="h-96 rounded-xl" />}>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+          <ReportsList />
+        </div>
       </Suspense>
     </div>
   );

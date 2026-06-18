@@ -7,6 +7,7 @@ export interface AppSecrets {
   supabaseJwtSecret: string;
   supabaseUrl: string;
   supabaseAnonKey: string;
+  supabaseServiceRoleKey: string;
 }
 
 const SECRET_KEYS = [
@@ -16,6 +17,7 @@ const SECRET_KEYS = [
   'SUPABASE_JWT_SECRET',
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
 ] as const;
 
 function fromEnv(): AppSecrets {
@@ -31,6 +33,7 @@ function fromEnv(): AppSecrets {
     supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET!,
     supabaseUrl: process.env.SUPABASE_URL!,
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY!,
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
   };
 }
 
@@ -56,6 +59,7 @@ async function fromAwsSecretsManager(secretId: string, region: string): Promise<
     supabaseJwtSecret: parsed['SUPABASE_JWT_SECRET'] as string,
     supabaseUrl: parsed['SUPABASE_URL'] as string,
     supabaseAnonKey: parsed['SUPABASE_ANON_KEY'] as string,
+    supabaseServiceRoleKey: parsed['SUPABASE_SERVICE_ROLE_KEY'] as string,
   };
 }
 

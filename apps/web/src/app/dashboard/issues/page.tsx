@@ -3,6 +3,7 @@ import { IssueFilters } from '@/components/dashboard/issues/IssueFilters';
 import { IssueList } from '@/components/dashboard/issues/IssueList';
 import { IssueStats } from '@/components/dashboard/issues/IssueStats';
 import { Skeleton } from '@accessshield/ui';
+import type { IssueFilters as IssueFilterParams } from '@/lib/api/types';
 
 export const metadata = {
   title: 'Issues | AccessShield India',
@@ -10,17 +11,7 @@ export const metadata = {
 };
 
 interface IssuesPageProps {
-  searchParams: {
-    search?: string;
-    status?: string;
-    severity?: string;
-    assignee?: string;
-    assetId?: string;
-    wcagCriterion?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    page?: string;
-  };
+  searchParams: IssueFilterParams;
 }
 
 export default function IssuesPage({ searchParams }: IssuesPageProps) {

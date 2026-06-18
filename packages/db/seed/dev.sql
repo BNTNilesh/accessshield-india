@@ -78,3 +78,47 @@ ON CONFLICT (id) DO UPDATE SET
   description = EXCLUDED.description,
   is_active = EXCLUDED.is_active,
   updated_at = now();
+
+-- Platform org + sysadmin application user (auth user created via scripts/seed-sysadmin.sh)
+INSERT INTO organisations (id, name, slug, plan_tier, billing_email, is_active)
+VALUES (
+  '44444444-4444-4444-4444-444444444444',
+  'AccessShield Platform',
+  'platform',
+  'enterprise',
+  'sysadmin@accessshield.in',
+  true
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  slug = EXCLUDED.slug,
+  plan_tier = EXCLUDED.plan_tier,
+  billing_email = EXCLUDED.billing_email,
+  updated_at = now();
+
+-- auth_user_id placeholder — updated by seed-sysadmin.sh after Supabase user is created
+INSERT INTO users (
+  id,
+  organisation_id,
+  auth_user_id,
+  email,
+  full_name,
+  role,
+  is_active
+)
+VALUES (
+  '55555555-5555-5555-5555-555555555555',
+  '44444444-4444-4444-4444-444444444444',
+  '00000000-0000-0000-0000-000000000099',
+  'sysadmin@accessshield.in',
+  'System Administrator',
+  'super_admin',
+  true
+)
+ON CONFLICT (auth_user_id) DO UPDATE SET
+  organisation_id = EXCLUDED.organisation_id,
+  email = EXCLUDED.email,
+  full_name = EXCLUDED.full_name,
+  role = EXCLUDED.role,
+  is_active = EXCLUDED.is_active,
+  updated_at = now();

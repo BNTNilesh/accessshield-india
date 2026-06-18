@@ -39,7 +39,7 @@ export function MarketingNav() {
           <ButtonLink href="/login" size="md" variant="secondary">
             Sign in
           </ButtonLink>
-          <ButtonLink href="/waitlist" size="md" variant="primary">
+          <ButtonLink href="/signup" size="md" variant="primary">
             Start free trial
           </ButtonLink>
         </div>

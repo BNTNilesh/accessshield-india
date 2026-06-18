@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { apiUrl } from './base';
 import type {
   ApiResponse,
   Asset,
@@ -23,27 +24,36 @@ export type {
   ViolationRow,
 } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
-
 /**
  * Retrieve the current Supabase access token for API calls.
+ * Concurrent callers share one in-flight session read.
  */
-export async function getAccessToken(): Promise<string> {
-  const supabase = createClient();
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
+let tokenPromise: Promise<string> | null = null;
 
-  if (error || !session?.access_token) {
-    throw new Error('Not authenticated — please sign in again.');
+export async function getAccessToken(): Promise<string> {
+  if (!tokenPromise) {
+    tokenPromise = (async () => {
+      const supabase = createClient();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error || !session?.access_token) {
+        throw new Error('Not authenticated — please sign in again.');
+      }
+
+      return session.access_token;
+    })().finally(() => {
+      tokenPromise = null;
+    });
   }
 
-  return session.access_token;
+  return tokenPromise;
 }
 
 async function apiFetch<T>(path: string, token: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -146,7 +156,7 @@ export async function cancelScan(token: string, scanId: string): Promise<void> {
 export async function downloadReportFile(reportId: string, filename: string): Promise<void> {
   const token = await getAccessToken();
 
-  let response = await fetch(`${API_BASE}/api/v1/reports/${reportId}/file`, {
+  let response = await fetch(apiUrl(`/api/v1/reports/${reportId}/file`), {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -176,7 +186,7 @@ export async function downloadReportFile(reportId: string, filename: string): Pr
 
 /** Check API health (no auth required) */
 export async function checkApiHealth(): Promise<{ status: string; db: string; redis: string }> {
-  const response = await fetch(`${API_BASE}/health`);
+  const response = await fetch(apiUrl('/health'));
   if (!response.ok) {
     throw new Error('API health check failed');
   }

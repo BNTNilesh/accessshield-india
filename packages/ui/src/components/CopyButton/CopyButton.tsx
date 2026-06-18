@@ -2,17 +2,24 @@
 
 import { useCallback, useState } from 'react';
 import { cn, focusRing } from '../../lib/cn';
+import { getButtonStyle, getButtonThemeClassName } from '../Button/buttonTheme';
 import { CheckIcon, CopyIcon } from '../../lib/icons';
 
 export interface CopyButtonProps {
   text: string;
   label?: string;
   className?: string;
-  size?: string;
-  variant?: string;
+  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
 }
 
-export function CopyButton({ text, label = 'Copy to clipboard', className }: CopyButtonProps) {
+export function CopyButton({
+  text,
+  label = 'Copy to clipboard',
+  className,
+  size = 'sm',
+  variant = 'outline',
+}: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -29,14 +36,11 @@ export function CopyButton({ text, label = 'Copy to clipboard', className }: Cop
     <div className="inline-flex items-center gap-2">
       <button
         type="button"
+        data-as-btn={variant}
         onClick={() => void handleCopy()}
         aria-label={label}
-        className={cn(
-          'inline-flex min-h-11 min-w-11 items-center justify-center rounded-md',
-          'border border-border bg-white text-text-secondary hover:bg-primary-light hover:text-primary',
-          focusRing,
-          className,
-        )}
+        className={cn(getButtonThemeClassName(variant, size), focusRing, className)}
+        style={getButtonStyle(variant)}
       >
         {copied ? (
           <CheckIcon size={16} aria-hidden="true" />

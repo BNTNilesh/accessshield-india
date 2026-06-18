@@ -185,10 +185,10 @@ export function IssueCertificatePanel() {
         {isQualified && (
           <>
             <RadioGroup
-              label="Certification Level"
+              legend="Certification Level"
               options={LEVEL_OPTIONS}
               value={level}
-              onChange={(value) => setLevel(value as CertificateLevel)}
+              onValueChange={(value: string) => setLevel(value as CertificateLevel)}
               required
             />
 

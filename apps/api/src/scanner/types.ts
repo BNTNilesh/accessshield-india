@@ -153,11 +153,3 @@ export const DEFAULT_SCAN_CONFIG: Partial<ScanJobConfig> = {
   excludePaths: ['/api/', '/admin/', '/_next/', '/static/'],
   viewports: DEFAULT_VIEWPORTS,
 };
-
-/** Plan-based scan limits (scans per calendar month) */
-export const PLAN_SCAN_LIMITS: Record<string, number | null> = {
-  starter: 3,
-  professional: null, // unlimited
-  enterprise: null,
-  government: null,
-};

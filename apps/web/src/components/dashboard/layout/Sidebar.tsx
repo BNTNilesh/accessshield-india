@@ -11,9 +11,11 @@ import {
   FileText,
   Award,
   Settings,
+  Shield,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import type { UserRole } from '@accessshield/types';
 import { useUIStore } from '@/lib/stores/uiStore';
 import { cn } from '@/lib/utils';
 
@@ -33,31 +35,40 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  userRole?: UserRole;
+}
+
+export function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
+
+  const navItems: NavItem[] =
+    userRole === 'super_admin'
+      ? [...NAV_ITEMS, { href: '/dashboard/admin', label: 'Platform Admin', icon: Shield }]
+      : NAV_ITEMS;
 
   return (
     <aside
       className={cn(
-        'flex flex-col border-r border-border bg-white transition-all duration-300',
-        sidebarCollapsed ? 'w-16' : 'w-64',
+        'flex flex-col border-r border-gray-200 bg-white shadow-xl transition-all duration-300',
+        sidebarCollapsed ? 'w-20' : 'w-72',
       )}
       aria-label="Sidebar navigation"
     >
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between border-b border-border px-4">
+      <div className="flex h-20 items-center justify-between border-b border-gray-200 bg-gradient-to-r from-primary-50 to-white px-6 shadow-sm">
         {!sidebarCollapsed && (
           <Link
             href="/dashboard"
-            className="text-lg font-bold text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            className="text-xl font-extrabold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56A0] focus-visible:ring-offset-2 rounded"
           >
             AccessShield
           </Link>
         )}
         <button
           onClick={toggleSidebar}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary hover:bg-primary-50 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-primary-100 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56A0] focus-visible:ring-offset-2 transition-colors shadow-sm border border-gray-200"
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-expanded={!sidebarCollapsed}
         >
@@ -70,8 +81,8 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-2" aria-label="Main navigation">
-        {NAV_ITEMS.map((item) => {
+      <nav className="flex-1 space-y-2 p-4" aria-label="Main navigation">
+        {navItems.map((item) => {
           const isActive =
             item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -82,15 +93,13 @@ export function Sidebar() {
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2',
-                isActive
-                  ? 'border-l-4 border-primary-600 bg-primary-100 text-primary-700'
-                  : 'text-text-secondary hover:bg-gray-100 hover:text-text-primary',
-                sidebarCollapsed && 'justify-center',
+                'as-nav-item',
+                isActive && 'as-nav-item-active',
+                sidebarCollapsed && 'justify-center px-2',
               )}
               title={sidebarCollapsed ? item.label : undefined}
             >
-              <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+              <Icon className="h-5 w-5 shrink-0 text-current" aria-hidden="true" />
               {!sidebarCollapsed && <span>{item.label}</span>}
             </Link>
           );

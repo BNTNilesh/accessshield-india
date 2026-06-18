@@ -28,6 +28,8 @@ import { createWidgetRouter } from './routes/widget';
 import { createScannerRouter, closeRabbitMQ } from './scanner/orchestrator';
 import { createPublicScanRouter } from './routes/public-scan';
 import { createPublicWaitlistRouter } from './routes/public-waitlist';
+import { createPublicSignupRouter } from './routes/public-signup';
+import { createAdminRouter } from './routes/admin';
 
 const PORT = Number(process.env.PORT ?? 4000);
 
@@ -39,7 +41,14 @@ async function bootstrap() {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' }));
+  app.use(
+    cors({
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
+          : true,
+    }),
+  );
   app.use(express.json({ limit: '1mb' }));
   app.use(requestIdMiddleware);
   app.use(
@@ -71,6 +80,9 @@ async function bootstrap() {
   const publicWaitlistRouter = createPublicWaitlistRouter(db, redis);
   app.use('/api/v1/public/waitlist', publicWaitlistRouter);
 
+  const publicSignupRouter = createPublicSignupRouter(db, redis, secrets);
+  app.use('/api/v1/public/signup', publicSignupRouter);
+
   const authMiddleware = createAuthMiddleware(secrets.supabaseUrl, db);
   app.use('/api/v1', authMiddleware);
 
@@ -96,7 +108,7 @@ async function bootstrap() {
   const organisationRouter = createOrganisationRouter(db);
   app.use('/api/v1/organisation', organisationRouter);
 
-  const usersRouter = createUsersRouter(db);
+  const usersRouter = createUsersRouter(db, secrets);
   app.use('/api/v1/users', usersRouter);
 
   const billingRouter = createBillingRouter(db);
@@ -110,6 +122,9 @@ async function bootstrap() {
 
   const integrationsRouter = createIntegrationsRouter(db);
   app.use('/api/v1/integrations', integrationsRouter);
+
+  const adminRouter = createAdminRouter(db, secrets);
+  app.use('/api/v1/admin', adminRouter);
 
   app.use((_req, res) => {
     sendProblem(res, 404, 'not-found', 'Resource not found');

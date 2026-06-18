@@ -34,6 +34,9 @@ docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
 "
 
 echo ""
+echo "Optional — create sysadmin auth user:"
+echo "  SYSADMIN_INITIAL_PASSWORD=your-password bash scripts/seed-sysadmin.sh"
+echo ""
 echo "JWT claims (set in Supabase Auth → Users → test@accessshield.in → App Metadata):"
 echo '  { "user_role": "customer_admin", "org_id": "11111111-1111-1111-1111-111111111111" }'
 echo ""

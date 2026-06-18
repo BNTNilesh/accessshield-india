@@ -134,7 +134,7 @@ export function CommentThread({ issueId }: CommentThreadProps) {
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-700"
                     aria-hidden="true"
                   >
-                    {comment.user.fullName?.[0] ?? comment.user.email[0].toUpperCase()}
+                    {comment.user.fullName?.[0] ?? comment.user.email?.[0]?.toUpperCase() ?? '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

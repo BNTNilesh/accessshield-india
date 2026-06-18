@@ -2,6 +2,7 @@ import { t } from './i18n';
 import { LanguageModule } from './modules/language';
 import { NavigationModule } from './modules/navigation';
 import { ReadingModule } from './modules/reading';
+import { SpeechModule } from './modules/speech';
 import { VisualModule } from './modules/visual';
 import widgetStyles from './styles/widget.css';
 import type {
@@ -39,6 +40,7 @@ export class Widget {
 
   private visual: VisualModule;
   private reading: ReadingModule;
+  private speech: SpeechModule;
   private navigation: NavigationModule;
   private language: LanguageModule;
 
@@ -59,6 +61,7 @@ export class Widget {
 
     this.visual = new VisualModule(this.prefs);
     this.reading = new ReadingModule(this.prefs);
+    this.speech = new SpeechModule(this.prefs);
     this.navigation = new NavigationModule(this.prefs);
     this.language = new LanguageModule(this.prefs);
 
@@ -117,6 +120,7 @@ export class Widget {
 
     this.visual.render(content, this.lang);
     this.reading.render(content, this.lang);
+    this.speech.render(content, this.lang);
     this.navigation.render(content, this.lang);
     this.language.render(content, this.lang, (lang) => this.onLanguageChange(lang));
 
@@ -212,6 +216,7 @@ export class Widget {
     this.applyAllPreferences(prefs);
     this.visual.syncUI(prefs);
     this.reading.syncUI(prefs);
+    this.speech.syncUI(prefs);
     this.navigation.syncUI(prefs);
     this.language.syncUI(prefs);
   }
@@ -219,6 +224,7 @@ export class Widget {
   private applyAllPreferences(prefs: WidgetPreferences): void {
     this.visual.apply(prefs);
     this.reading.apply(prefs);
+    this.speech.apply(prefs);
     this.navigation.apply(prefs);
   }
 
@@ -241,6 +247,7 @@ export class Widget {
   private updateAllLabels(lang: Language): void {
     this.visual.updateLabels(lang);
     this.reading.updateLabels(lang);
+    this.speech.updateLabels(lang);
     this.navigation.updateLabels(lang);
     this.language.updateLabels(lang);
   }
@@ -249,11 +256,13 @@ export class Widget {
     this.prefs.resetAll();
     this.visual.reset();
     this.reading.reset();
+    this.speech.reset();
     this.navigation.reset();
     removeAllInjected();
     this.applyAllPreferences(this.prefs.get());
     this.visual.syncUI(this.prefs.get());
     this.reading.syncUI(this.prefs.get());
+    this.speech.syncUI(this.prefs.get());
     this.navigation.syncUI(this.prefs.get());
     this.language.syncUI(this.prefs.get());
   }
@@ -265,6 +274,7 @@ export class Widget {
     this.disableFocusTrap();
     this.visual.reset();
     this.reading.reset();
+    this.speech.reset();
     this.navigation.reset();
     removeAllInjected();
     this.host.remove();

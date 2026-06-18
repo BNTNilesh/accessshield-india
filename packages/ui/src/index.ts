@@ -3,7 +3,16 @@ export { Alert, Toast, type AlertProps, type ToastProps } from './components/Ale
 export { Badge, type BadgeProps } from './components/Badge';
 export { Breadcrumb, type BreadcrumbProps, type BreadcrumbItem } from './components/Breadcrumb';
 export { Button, type ButtonProps } from './components/Button';
-export { buttonVariants } from './components/Button/buttonVariants';
+export { buttonVariants, getButtonClassName } from './components/Button/buttonVariants';
+export {
+  getButtonThemeClassName,
+  getButtonStyle,
+  BUTTON_LAYOUT_CLASS,
+  BUTTON_SIZE_CLASS,
+  BUTTON_VARIANT_STYLE,
+  type ButtonThemeVariant,
+  type ButtonThemeSize,
+} from './components/Button/buttonTheme';
 export { Card, type CardProps } from './components/Card';
 export {
   Checkbox,

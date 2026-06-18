@@ -52,7 +52,7 @@ export default function ContactPage() {
         )}
         <p>
           New to AccessShield?{' '}
-          <Link href="/waitlist" className="font-medium text-primary-600 hover:text-primary-700">
+          <Link href="/signup" className="font-medium text-primary-600 hover:text-primary-700">
             Start your free trial
           </Link>{' '}
           or try our{' '}

@@ -27,7 +27,7 @@ export default function DocsPage() {
       <section>
         <h2 className="text-xl font-semibold text-text-primary">2. Create your account</h2>
         <p className="mt-2">
-          <Link href="/waitlist" className="text-primary-600 hover:text-primary-700">
+          <Link href="/signup" className="text-primary-600 hover:text-primary-700">
             Start a free trial
           </Link>{' '}
           to register assets, run unlimited scans (on paid plans), track issues, and generate

@@ -4,12 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { CreditCard, Download, TrendingUp } from 'lucide-react';
 import { getAccessToken } from '@/lib/api/client';
 import type { Organisation, Invoice } from '@/lib/api/types';
-import { Button } from '@accessshield/ui';
-import { Badge } from '@accessshield/ui';
-import { Progress } from '@accessshield/ui';
+import { Button, Badge, Progress, getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
 import { cn } from '@/lib/utils';
 
 const PLAN_NAMES = {
+  trial: 'Trial',
   starter: 'Starter',
   professional: 'Professional',
   enterprise: 'Enterprise',
@@ -247,16 +246,16 @@ export function BillingCard() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
+                        <a
+                          href={`/api/invoices/${invoice.id}/download`}
+                          download
+                          className={getButtonThemeClassName('ghost', 'sm')}
+                          data-as-btn="ghost"
+                          style={getButtonStyle('ghost')}
                           aria-label={`Download invoice ${invoice.invoiceNumber} as PDF`}
                         >
-                          <a href={`/api/invoices/${invoice.id}/download`} download>
-                            <Download className="h-4 w-4" aria-hidden="true" />
-                          </a>
-                        </Button>
+                          <Download className="h-4 w-4" aria-hidden="true" />
+                        </a>
                       </td>
                     </tr>
                   );

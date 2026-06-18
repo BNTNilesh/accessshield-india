@@ -1,26 +1,9 @@
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { DashboardHome } from '@/components/dashboard/home/DashboardHome';
-import { getDashboardStats, listAssets } from '@/lib/api/client';
-import { getServerAccessToken } from '@/lib/supabase/server';
+import { prefetchDashboardHome } from '@/lib/dashboard/prefetch';
 
 export default async function DashboardPage() {
-  const queryClient = new QueryClient();
-
-  try {
-    const token = await getServerAccessToken();
-    await Promise.all([
-      queryClient.prefetchQuery({
-        queryKey: ['dashboard-stats'],
-        queryFn: () => getDashboardStats(token),
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ['assets'],
-        queryFn: () => listAssets(token),
-      }),
-    ]);
-  } catch {
-    // Client hooks will surface auth/API errors after hydration.
-  }
+  const queryClient = await prefetchDashboardHome();
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

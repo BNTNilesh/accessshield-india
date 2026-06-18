@@ -26,7 +26,7 @@ export default function AboutPage() {
           invoicing, rupee pricing, and standards aligned with BIS and SEBI circulars.
         </p>
         <p>
-          <Link href="/waitlist" className="font-medium text-primary-600 hover:text-primary-700">
+          <Link href="/signup" className="font-medium text-primary-600 hover:text-primary-700">
             Start your free trial →
           </Link>
         </p>

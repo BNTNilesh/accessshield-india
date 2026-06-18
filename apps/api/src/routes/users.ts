@@ -1,5 +1,5 @@
 /**
- * Team / users API — list org members and invite (stub).
+ * Team / users API — list org members and invite.
  */
 
 import type { Database } from '@accessshield/db';
@@ -8,9 +8,14 @@ import type { ApiResponse } from '@accessshield/types';
 import { asc, eq } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
+import type { AppSecrets } from '../config/secrets';
+import { logger } from '../lib/logger';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
+import { createSupabaseAdminService } from '../services/supabase-admin';
+import { provisionOrgUser } from '../services/user-provisioning';
 
 const inviteUserSchema = z.object({
   email: z.string().email(),
@@ -18,8 +23,16 @@ const inviteUserSchema = z.object({
   fullName: z.string().min(1).max(255).optional(),
 });
 
-export function createUsersRouter(db: Database): ExpressRouter {
+function generateTemporaryPassword(): string {
+  return randomBytes(12).toString('base64url').slice(0, 16);
+}
+
+export function createUsersRouter(db: Database, secrets: AppSecrets): ExpressRouter {
   const router = Router();
+  const supabaseAdmin = createSupabaseAdminService({
+    supabaseUrl: secrets.supabaseUrl,
+    serviceRoleKey: secrets.supabaseServiceRoleKey,
+  });
 
   router.get(
     '/',
@@ -71,15 +84,45 @@ export function createUsersRouter(db: Database): ExpressRouter {
           return;
         }
 
-        // Email invite flow (Supabase + Resend) not wired in local dev yet.
-        sendProblem(
-          res,
-          501,
-          'not-implemented',
-          'User invites are not available yet',
-          'Email invitation service will be enabled in a future release',
-        );
+        const orgId = req.user!.org_id;
+        const data = parseResult.data;
+        const tempPassword = generateTemporaryPassword();
+        const fullName = data.fullName ?? data.email.split('@')[0] ?? 'Team member';
+
+        const result = await provisionOrgUser(db, supabaseAdmin, {
+          orgId,
+          email: data.email,
+          password: tempPassword,
+          fullName,
+          role: data.role,
+        });
+
+        logger.info({ orgId, userId: result.userId, email: data.email }, 'User invited');
+
+        const response: ApiResponse<{
+          userId: string;
+          email: string;
+          temporaryPassword?: string;
+          message: string;
+        }> = {
+          data: {
+            userId: result.userId,
+            email: data.email,
+            ...(process.env.NODE_ENV !== 'production' ? { temporaryPassword: tempPassword } : {}),
+            message:
+              process.env.NODE_ENV === 'production'
+                ? 'User created. Share login credentials through your secure channel.'
+                : 'User created. Temporary password returned in dev mode only.',
+          },
+          timestamp: new Date().toISOString(),
+        };
+
+        res.status(201).json(response);
       } catch (err) {
+        if (err instanceof Error && err.message === 'EMAIL_ALREADY_REGISTERED') {
+          sendProblem(res, 409, 'conflict', 'A user with this email already exists');
+          return;
+        }
         next(err);
       }
     },

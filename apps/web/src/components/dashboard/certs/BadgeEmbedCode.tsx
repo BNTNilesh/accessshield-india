@@ -16,10 +16,12 @@ interface BadgeEmbedCodeProps {
   certificate: Certificate;
 }
 
+const DEFAULT_BADGE_VARIANT = BADGE_VARIANTS[0]!;
+
 export function BadgeEmbedCode({ certificate }: BadgeEmbedCodeProps) {
   const [selectedVariant, setSelectedVariant] = useState('round');
 
-  const variant = BADGE_VARIANTS.find((v) => v.id === selectedVariant) ?? BADGE_VARIANTS[0];
+  const variant = BADGE_VARIANTS.find((v) => v.id === selectedVariant) ?? DEFAULT_BADGE_VARIANT;
   const badgeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/certificates/${certificate.certificateNumber}/badge?variant=${variant.id}`;
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify/${certificate.certificateNumber}`;
 

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input, Button, Badge, Progress } from '@accessshield/ui';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
+import { apiUrl } from '@/lib/api/base';
 import { ScoreRing } from './ScoreRing';
 
 const scanSchema = z.object({
@@ -14,8 +15,6 @@ const scanSchema = z.object({
 });
 
 type ScanFormData = z.infer<typeof scanSchema>;
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 type ScanState = 'form' | 'scanning' | 'results' | 'error';
 
@@ -58,7 +57,7 @@ export function ScanToolWidget() {
   const onSubmit = async (data: ScanFormData) => {
     try {
       setError('');
-      const response = await fetch(`${API_BASE}/api/v1/public/scan`, {
+      const response = await fetch(apiUrl('/api/v1/public/scan'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -90,7 +89,7 @@ export function ScanToolWidget() {
   const startPolling = (scanId: string) => {
     pollIntervalRef.current = setInterval(async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/v1/public/scan/${scanId}`);
+        const response = await fetch(apiUrl(`/api/v1/public/scan/${scanId}`));
         if (!response.ok) {
           clearInterval(pollIntervalRef.current!);
           setState('error');
@@ -410,7 +409,7 @@ export function ScanToolWidget() {
                 Sign up free to see all violations, get AI fix suggestions, and generate your
                 compliance report.
               </p>
-              <ButtonLink href="/waitlist" size="lg" variant="primary" className="mt-6">
+              <ButtonLink href="/signup" size="lg" variant="primary" className="mt-6">
                 Get full report free
               </ButtonLink>
             </div>

@@ -1,35 +1,44 @@
-import { cva } from 'class-variance-authority';
-import { focusRing } from '../../lib/cn';
+import { cva, type VariantProps } from 'class-variance-authority';
+import {
+  BUTTON_LAYOUT_CLASS,
+  BUTTON_SIZE_CLASS,
+  BUTTON_VARIANT_CLASS,
+  type ButtonThemeSize,
+  type ButtonThemeVariant,
+  getButtonThemeClassName,
+} from './buttonTheme';
 
-/** Shared button class variants — server-safe (no 'use client'). */
-export const buttonVariants = cva(
-  [
-    'inline-flex items-center justify-center rounded-md font-semibold no-underline transition-colors',
-    focusRing,
-    'disabled:cursor-not-allowed',
-  ],
-  {
-    variants: {
-      variant: {
-        primary:
-          'border-2 border-primary-700 bg-primary-600 text-white shadow-md hover:border-primary-800 hover:bg-primary-700 hover:shadow-lg',
-        secondary:
-          'border-2 border-primary-600 bg-white text-primary-700 shadow-sm hover:border-primary-700 hover:bg-primary-50',
-        outline:
-          'border-2 border-primary-600 bg-primary-50 text-primary-700 shadow-sm hover:border-primary-700 hover:bg-primary-100',
-        ghost: 'border-2 border-transparent bg-transparent text-primary-700 hover:bg-primary-50',
-        danger:
-          'border-2 border-red-900 bg-error-700 text-white shadow-sm hover:border-red-950 hover:bg-red-800',
-      },
-      size: {
-        sm: 'min-h-11 px-3 py-1.5 text-sm',
-        md: 'min-h-11 px-4 py-2 text-base',
-        lg: 'min-h-11 px-6 py-3 text-lg',
-      },
+/** Tailwind layout classes + plain CSS theme classes (globals.css) for reliable colors */
+export const buttonVariants = cva(BUTTON_LAYOUT_CLASS, {
+  variants: {
+    variant: {
+      primary: BUTTON_VARIANT_CLASS.primary,
+      secondary: BUTTON_VARIANT_CLASS.secondary,
+      outline: BUTTON_VARIANT_CLASS.outline,
+      ghost: BUTTON_VARIANT_CLASS.ghost,
+      onDark: BUTTON_VARIANT_CLASS.onDark,
+      danger: BUTTON_VARIANT_CLASS.danger,
     },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'md',
+    size: {
+      sm: `${BUTTON_SIZE_CLASS.sm} as-btn-sm`,
+      md: `${BUTTON_SIZE_CLASS.md} as-btn-md`,
+      lg: `${BUTTON_SIZE_CLASS.lg} as-btn-lg`,
     },
   },
-);
+  defaultVariants: {
+    variant: 'primary',
+    size: 'md',
+  },
+});
+
+export type ButtonVariantProps = VariantProps<typeof buttonVariants>;
+
+export function getButtonClassName(
+  variant: ButtonThemeVariant = 'primary',
+  size: ButtonThemeSize = 'md',
+  className?: string,
+): string {
+  return getButtonThemeClassName(variant, size, className);
+}
+
+export { BUTTON_VARIANT_STYLE, getButtonStyle, getButtonThemeClassName } from './buttonTheme';

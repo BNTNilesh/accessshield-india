@@ -338,7 +338,7 @@ export interface Organisation {
   gstin: string | null;
   billingEmail: string | null;
   isActive: boolean;
-  planTier: 'starter' | 'professional' | 'enterprise' | 'government';
+  planTier: 'trial' | 'starter' | 'professional' | 'enterprise' | 'government';
   createdAt: string;
   updatedAt: string;
 }

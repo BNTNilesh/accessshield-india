@@ -24,6 +24,8 @@ export interface WidgetPreferences {
   keyboardNavMode: boolean;
   skipNavigation: boolean;
   focusTracker: boolean;
+  textToSpeech: boolean;
+  speechRate: number;
   language: Language;
 }
 
@@ -54,5 +56,7 @@ export const DEFAULT_PREFERENCES: WidgetPreferences = {
   keyboardNavMode: false,
   skipNavigation: false,
   focusTracker: false,
+  textToSpeech: false,
+  speechRate: 1,
   language: 'en',
 };

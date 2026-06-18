@@ -101,7 +101,7 @@ export function IssueFilters({ searchParams }: IssueFiltersProps) {
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             aria-label="Search issues"
-            icon={<Search className="h-4 w-4" aria-hidden="true" />}
+            leftIcon={<Search className="h-4 w-4" aria-hidden="true" />}
           />
         </form>
 

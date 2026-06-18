@@ -3,10 +3,24 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { parseAccessShieldClaims } from './src/lib/auth/claims';
 import { getSupabaseEnv } from './src/lib/supabase/env';
 
-// Edge middleware cannot query Postgres — JWT claims only here; dashboard uses DB fallback in RSC.
+// Edge middleware cannot query Postgres — JWT claims only here; dashboard RSC reads forwarded headers.
 
 const PROTECTED_PREFIXES = ['/dashboard'];
 const AUTH_ROUTES = ['/login', '/signup', '/auth'];
+
+function forwardRequestHeaders(request: NextRequest, extra: Record<string, string>): Headers {
+  const requestHeaders = new Headers(request.headers);
+  for (const [key, value] of Object.entries(extra)) {
+    requestHeaders.set(key, value);
+  }
+  return requestHeaders;
+}
+
+function copyCookies(from: NextResponse, to: NextResponse): void {
+  for (const cookie of from.cookies.getAll()) {
+    to.cookies.set(cookie.name, cookie.value, cookie);
+  }
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -37,7 +51,6 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // getSession reads the cookie locally — avoids a network round-trip per request (getUser).
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -66,18 +79,23 @@ export async function middleware(request: NextRequest) {
       user.app_metadata as Record<string, unknown>,
     );
 
-    if (userRole) {
-      response.headers.set('x-user-role', userRole);
-    }
-    if (orgId) {
-      response.headers.set('x-org-id', orgId);
-    }
+    const extra: Record<string, string> = {};
+    if (userRole) extra['x-user-role'] = userRole;
+    if (orgId) extra['x-org-id'] = orgId;
+
+    const requestHeaders = forwardRequestHeaders(request, extra);
+    const nextResponse = NextResponse.next({ request: { headers: requestHeaders } });
+    copyCookies(response, nextResponse);
+
+    if (userRole) nextResponse.headers.set('x-user-role', userRole);
+    if (orgId) nextResponse.headers.set('x-org-id', orgId);
+
+    response = nextResponse;
   }
 
   return response;
 }
 
 export const config = {
-  // Only run auth middleware on routes that need it — marketing pages skip Supabase entirely.
   matcher: ['/dashboard/:path*', '/login', '/signup', '/auth/:path*'],
 };

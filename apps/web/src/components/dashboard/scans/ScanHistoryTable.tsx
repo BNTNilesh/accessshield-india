@@ -1,7 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { DataTable, Badge, type DataTableColumn } from '@accessshield/ui';
+import {
+  DataTable,
+  Badge,
+  getButtonStyle,
+  getButtonThemeClassName,
+  type DataTableColumn,
+} from '@accessshield/ui';
 import { ExternalLink } from 'lucide-react';
 import { formatIndianDate, truncate } from '@/lib/utils';
 import type { ScanListItem } from '@/lib/api/types';
@@ -85,12 +91,24 @@ export function ScanHistoryTable({
       header: 'Score',
       sortable: true,
       sortValue: (scan) => scan.score ?? -1,
-      accessor: (scan) =>
-        scan.score !== null ? (
-          <span className="font-semibold text-text-primary">{scan.score}</span>
-        ) : (
-          <span className="text-text-tertiary">—</span>
-        ),
+      accessor: (scan) => {
+        if (scan.score === null) {
+          return <span className="text-gray-400 font-medium">—</span>;
+        }
+        const scoreColor =
+          scan.score >= 80
+            ? 'bg-green-100 text-green-800 border-green-300'
+            : scan.score >= 50
+              ? 'bg-amber-100 text-amber-800 border-amber-300'
+              : 'bg-red-100 text-red-800 border-red-300';
+        return (
+          <span
+            className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold border ${scoreColor}`}
+          >
+            {scan.score}
+          </span>
+        );
+      },
     },
     {
       id: 'violations',
@@ -102,16 +120,20 @@ export function ScanHistoryTable({
     {
       id: 'status',
       header: 'Status',
-      accessor: (scan) => (
-        <Badge
-          variant={STATUS_VARIANT[scan.status]}
-          className={
-            scan.status === 'failed' ? 'bg-error-100 text-error-700 border-error-200' : undefined
-          }
-        >
-          {statusLabel(scan.status)}
-        </Badge>
-      ),
+      accessor: (scan) => {
+        const statusClasses = {
+          completed: 'bg-green-50 text-green-800 border border-green-300 font-semibold shadow-sm',
+          running:
+            'bg-blue-50 text-blue-800 border border-blue-300 font-semibold shadow-sm animate-pulse',
+          pending: 'bg-gray-50 text-gray-700 border border-gray-300 font-semibold shadow-sm',
+          failed: 'bg-red-50 text-red-800 border border-red-300 font-semibold shadow-sm',
+        };
+        return (
+          <Badge variant={STATUS_VARIANT[scan.status]} className={statusClasses[scan.status]}>
+            {statusLabel(scan.status)}
+          </Badge>
+        );
+      },
     },
     {
       id: 'actions',
@@ -119,7 +141,9 @@ export function ScanHistoryTable({
       accessor: (scan) => (
         <Link
           href={`/dashboard/scans/${scan.id}`}
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-primary-600 hover:bg-primary-50 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+          className={getButtonThemeClassName('outline', 'sm', 'min-w-11')}
+          data-as-btn="outline"
+          style={getButtonStyle('outline')}
           aria-label={`View scan results for ${scan.assetName ?? 'asset'}`}
         >
           <ExternalLink className="h-4 w-4" aria-hidden="true" />

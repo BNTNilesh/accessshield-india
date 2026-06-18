@@ -5,9 +5,7 @@ import { useState } from 'react';
 import { Award, ExternalLink, Copy, XCircle, AlertTriangle } from 'lucide-react';
 import { getAccessToken } from '@/lib/api/client';
 import type { Certificate, RevokeCertificateInput } from '@/lib/api/types';
-import { Badge } from '@accessshield/ui';
-import { Button } from '@accessshield/ui';
-import { Modal } from '@accessshield/ui';
+import { Badge, Button, getButtonStyle, getButtonThemeClassName, Modal } from '@accessshield/ui';
 import { BadgeEmbedCode } from './BadgeEmbedCode';
 import { cn } from '@/lib/utils';
 
@@ -204,17 +202,18 @@ export function CertificateList() {
                   <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
                   Copy embed code
                 </Button>
-                <Button asChild variant="outline" size="sm" className="w-full justify-start">
-                  <a
-                    href={`/verify/${cert.certificateNumber}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
-                    View public page
-                    <span className="sr-only">(opens in new tab)</span>
-                  </a>
-                </Button>
+                <a
+                  href={`/verify/${cert.certificateNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(getButtonThemeClassName('outline', 'sm'), 'w-full justify-start')}
+                  data-as-btn="outline"
+                  style={getButtonStyle('outline')}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
+                  View public page
+                  <span className="sr-only">(opens in new tab)</span>
+                </a>
                 {cert.status === 'active' && (
                   <Button
                     variant="ghost"

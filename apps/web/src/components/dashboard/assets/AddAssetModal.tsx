@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Modal, Input, Select, Button, Checkbox } from '@accessshield/ui';
@@ -37,6 +37,7 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     reset,
   } = useForm<AssetFormData>({
@@ -96,17 +97,24 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
           placeholder="https://example.com"
         />
 
-        <Select
-          label="Asset Type"
-          required
-          {...register('type')}
-          options={[
-            { value: 'website', label: 'Website' },
-            { value: 'web_app', label: 'Web Application' },
-            { value: 'mobile_app', label: 'Mobile App' },
-            { value: 'document', label: 'Document' },
-            { value: 'pdf', label: 'PDF' },
-          ]}
+        <Controller
+          name="type"
+          control={control}
+          render={({ field }) => (
+            <Select
+              label="Asset Type"
+              required
+              value={field.value}
+              onValueChange={field.onChange}
+              options={[
+                { value: 'website', label: 'Website' },
+                { value: 'web_app', label: 'Web Application' },
+                { value: 'mobile_app', label: 'Mobile App' },
+                { value: 'document', label: 'Document' },
+                { value: 'pdf', label: 'PDF' },
+              ]}
+            />
+          )}
         />
 
         <div>
@@ -131,22 +139,29 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
           max={500}
         />
 
-        <Select
-          label="Scan Schedule"
-          required
-          {...register('scanSchedule')}
-          options={[
-            { value: 'manual', label: 'Manual (on-demand)' },
-            { value: 'weekly', label: 'Weekly' },
-            { value: 'monthly', label: 'Monthly' },
-          ]}
+        <Controller
+          name="scanSchedule"
+          control={control}
+          render={({ field }) => (
+            <Select
+              label="Scan Schedule"
+              required
+              value={field.value}
+              onValueChange={field.onChange}
+              options={[
+                { value: 'manual', label: 'Manual (on-demand)' },
+                { value: 'weekly', label: 'Weekly' },
+                { value: 'monthly', label: 'Monthly' },
+              ]}
+            />
+          )}
         />
 
         <div className="flex gap-3 pt-4">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
-          <Button type="submit" disabled={isPending} className="flex-1">
+          <Button type="submit" variant="primary" disabled={isPending} className="flex-1">
             {isPending ? 'Creating...' : 'Create Asset'}
           </Button>
         </div>

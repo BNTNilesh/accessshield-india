@@ -42,8 +42,13 @@ async function inviteUser(token: string, input: InviteUserInput) {
     },
     body: JSON.stringify(input),
   });
-  if (!response.ok) throw new Error('Failed to invite user');
-  return response.json();
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error((body as { detail?: string }).detail ?? 'Failed to invite user');
+  }
+  return response.json() as Promise<{
+    data: { email: string; temporaryPassword?: string; message: string };
+  }>;
 }
 
 export function UserTable() {
@@ -52,6 +57,11 @@ export function UserTable() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('developer');
   const [inviteFullName, setInviteFullName] = useState('');
+  const [inviteSuccess, setInviteSuccess] = useState<{
+    email: string;
+    temporaryPassword?: string;
+    message: string;
+  } | null>(null);
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
@@ -66,12 +76,13 @@ export function UserTable() {
       const token = await getAccessToken();
       return inviteUser(token, input);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setInviteModalOpen(false);
       setInviteEmail('');
       setInviteRole('developer');
       setInviteFullName('');
+      setInviteSuccess(result.data);
     },
   });
 
@@ -81,6 +92,29 @@ export function UserTable() {
 
   return (
     <div className="space-y-6">
+      {inviteSuccess && (
+        <div
+          className="rounded-lg border border-success-100 bg-success-100 p-4 text-sm text-success-700"
+          role="status"
+        >
+          <p className="font-medium">{inviteSuccess.message}</p>
+          <p className="mt-1">
+            Invited <strong>{inviteSuccess.email}</strong>
+          </p>
+          {inviteSuccess.temporaryPassword && (
+            <p className="mt-2 font-mono">
+              Temporary password (dev only): {inviteSuccess.temporaryPassword}
+            </p>
+          )}
+          <button
+            type="button"
+            className="mt-3 text-sm font-medium underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600"
+            onClick={() => setInviteSuccess(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       {/* Invite section */}
       <div className="rounded-lg border border-border bg-white p-6">
         <div className="flex items-center justify-between mb-4">

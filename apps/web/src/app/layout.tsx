@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { Toaster } from 'sonner';
-import { QueryProvider } from '@/providers/QueryProvider';
 import { UiProviders } from '@/providers/UiProviders';
 import './globals.css';
+import '@/styles/button-theme.css';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -52,10 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-white font-sans text-gray-900 antialiased">
-        <QueryProvider>
-          <UiProviders>{children}</UiProviders>
-          <Toaster position="top-right" />
-        </QueryProvider>
+        <UiProviders>{children}</UiProviders>
       </body>
     </html>
   );

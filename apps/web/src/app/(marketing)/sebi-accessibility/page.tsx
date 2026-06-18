@@ -258,7 +258,7 @@ export default function SEBIAccessibilityPage() {
               statement • Annual renewal
             </p>
             <div className="mt-6">
-              <ButtonLink href="/waitlist?interest=sebi" size="lg" variant="primary">
+              <ButtonLink href="/signup?interest=sebi" size="lg" variant="primary">
                 Get SEBI report
               </ButtonLink>
             </div>

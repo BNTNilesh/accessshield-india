@@ -80,10 +80,16 @@ export function AIFixPanel({ issueId }: AIFixPanelProps) {
     });
   }
 
+  const tabItems = tabs.map((tab) => ({
+    value: tab.id,
+    label: tab.label,
+    content: tab.content,
+  }));
+
   return (
     <div className="rounded-lg border border-border bg-white p-6">
       <h2 className="text-lg font-semibold text-text-primary mb-4">AI-Powered Assistance</h2>
-      <Tabs tabs={tabs} defaultTab="fix" />
+      <Tabs items={tabItems} defaultValue="fix" ariaLabel="AI assistance" />
     </div>
   );
 }

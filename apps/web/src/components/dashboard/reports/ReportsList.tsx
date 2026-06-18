@@ -240,14 +240,13 @@ export function ReportsList() {
             Cancel
           </Button>
           <Button
-            variant="primary"
+            variant="danger"
             onClick={() => {
               if (reportToDelete) {
                 deleteMutation.mutate(reportToDelete.id);
               }
             }}
             disabled={deleteMutation.isPending}
-            className="bg-error-700 hover:bg-error-800"
           >
             Delete
           </Button>

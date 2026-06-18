@@ -19,7 +19,8 @@ import { logger } from '../lib/logger';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 import type { ComplianceStandard, ScanJobMessage, ScanProgress, WcagLevel } from './types';
-import { DEFAULT_SCAN_CONFIG, PLAN_SCAN_LIMITS } from './types';
+import { DEFAULT_SCAN_CONFIG, DEFAULT_VIEWPORTS } from './types';
+import { getScanLimit, isScanLimitDisabled } from '../lib/plan-limits';
 import { closeScanQueue, publishScanJob } from './queue';
 
 /** Zod schema for POST /scans request body */
@@ -113,13 +114,6 @@ function getMonthStart(): Date {
  * Check if organization has reached monthly scan limit.
  * Returns true if limit reached, false if scans available.
  */
-function isScanLimitDisabled(): boolean {
-  if (process.env.SCAN_LIMIT_DISABLED === 'true') {
-    return true;
-  }
-  return process.env.NODE_ENV !== 'production';
-}
-
 async function checkPlanLimits(
   db: Database,
   orgId: string,
@@ -135,7 +129,7 @@ async function checkPlanLimits(
     .limit(1);
 
   const planTier = org?.planTier ?? 'starter';
-  const planLimit = PLAN_SCAN_LIMITS[planTier] ?? PLAN_SCAN_LIMITS.starter ?? 3;
+  const planLimit = getScanLimit(planTier);
 
   if (planLimit === null) {
     return { limitReached: false, currentCount: 0, limit: null };

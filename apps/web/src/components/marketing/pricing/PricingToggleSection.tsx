@@ -44,7 +44,7 @@ export function PricingToggleSection() {
       ],
       cta: {
         text: 'Start free trial',
-        href: '/waitlist',
+        href: '/signup',
       },
     },
     {
@@ -65,7 +65,7 @@ export function PricingToggleSection() {
       ],
       cta: {
         text: 'Start free trial',
-        href: '/waitlist',
+        href: '/signup',
       },
     },
     {
@@ -85,7 +85,7 @@ export function PricingToggleSection() {
       ],
       cta: {
         text: 'Contact sales',
-        href: process.env.NEXT_PUBLIC_CALENDLY_URL || '#',
+        href: process.env.NEXT_PUBLIC_CALENDLY_URL || '/contact',
       },
     },
   ];
@@ -115,10 +115,10 @@ export function PricingToggleSection() {
             type="button"
             onClick={() => setBillingPeriod('monthly')}
             aria-pressed={billingPeriod === 'monthly'}
-            className={`rounded-md px-6 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 ${
+            className={`rounded-md px-6 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56A0] focus-visible:ring-offset-2 ${
               billingPeriod === 'monthly'
-                ? 'bg-primary-600 text-white'
-                : 'text-text-secondary hover:bg-gray-100'
+                ? 'border-2 border-[#1A3A5C] bg-[#1A56A0] text-white shadow-sm'
+                : 'border-2 border-transparent bg-white text-text-secondary hover:bg-gray-100'
             }`}
           >
             Monthly
@@ -127,10 +127,10 @@ export function PricingToggleSection() {
             type="button"
             onClick={() => setBillingPeriod('annual')}
             aria-pressed={billingPeriod === 'annual'}
-            className={`rounded-md px-6 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 ${
+            className={`rounded-md px-6 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56A0] focus-visible:ring-offset-2 ${
               billingPeriod === 'annual'
-                ? 'bg-primary-600 text-white'
-                : 'text-text-secondary hover:bg-gray-100'
+                ? 'border-2 border-[#1A3A5C] bg-[#1A56A0] text-white shadow-sm'
+                : 'border-2 border-transparent bg-white text-text-secondary hover:bg-gray-100'
             }`}
           >
             Annual

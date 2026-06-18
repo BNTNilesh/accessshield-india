@@ -9,10 +9,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./button.css": "./src/components/Button/button.css"
   },
   "scripts": {
-    "build": "tsc && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
+    "build": "rm -rf dist && tsc && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
     "dev": "tsc --watch",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit",

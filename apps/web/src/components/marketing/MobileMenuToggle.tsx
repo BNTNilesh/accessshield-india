@@ -111,7 +111,7 @@ export function MobileMenuToggle() {
                 Sign in
               </ButtonLink>
               <ButtonLink
-                href="/waitlist"
+                href="/signup"
                 size="lg"
                 variant="primary"
                 className="w-full"

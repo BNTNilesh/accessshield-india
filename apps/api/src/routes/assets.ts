@@ -5,12 +5,13 @@
  */
 
 import type { Database } from '@accessshield/db';
-import { assets } from '@accessshield/db';
+import { assets, organisations } from '@accessshield/db';
 import type { ApiResponse } from '@accessshield/types';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
+import { getAssetLimit } from '../lib/plan-limits';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 
@@ -85,6 +86,33 @@ export function createAssetsRouter(db: Database): ExpressRouter {
 
         const { name, url, type, description } = parseResult.data;
         const orgId = req.user!.org_id;
+
+        const [org] = await db
+          .select({ planTier: organisations.planTier })
+          .from(organisations)
+          .where(eq(organisations.id, orgId))
+          .limit(1);
+
+        const planTier = org?.planTier ?? 'starter';
+        const assetLimit = getAssetLimit(planTier);
+
+        if (assetLimit !== null) {
+          const [assetCountResult] = await db
+            .select({ count: count() })
+            .from(assets)
+            .where(and(eq(assets.organisationId, orgId), eq(assets.isActive, true)));
+
+          const currentCount = assetCountResult?.count ?? 0;
+          if (currentCount >= assetLimit) {
+            sendProblem(
+              res,
+              422,
+              'plan-limit-exceeded',
+              `Your ${planTier} plan allows up to ${assetLimit} asset(s). Upgrade to add more.`,
+            );
+            return;
+          }
+        }
 
         const [created] = await db
           .insert(assets)

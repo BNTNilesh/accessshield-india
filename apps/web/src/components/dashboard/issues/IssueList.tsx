@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { AlertCircle, AlertTriangle, Info, Minus, User, Calendar } from 'lucide-react';
 import { getAccessToken } from '@/lib/api/client';
 import type { Issue, IssueFilters } from '@/lib/api/types';
-import { Badge } from '@accessshield/ui';
-import { Button } from '@accessshield/ui';
+import { Badge, Button, getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
 import { cn } from '@/lib/utils';
 
 const SEVERITY_CONFIG = {
@@ -206,7 +205,9 @@ export function IssueList({ searchParams }: IssueListProps) {
                             className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-medium text-primary-700"
                             aria-hidden="true"
                           >
-                            {issue.assignee.fullName?.[0] ?? issue.assignee.email[0].toUpperCase()}
+                            {issue.assignee.fullName?.[0] ??
+                              issue.assignee.email?.[0]?.toUpperCase() ??
+                              '?'}
                           </div>
                           <span className="text-sm text-text-primary">
                             {issue.assignee.fullName ?? issue.assignee.email}
@@ -253,9 +254,14 @@ export function IssueList({ searchParams }: IssueListProps) {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/dashboard/issues/${issue.id}`}>View</Link>
-                      </Button>
+                      <Link
+                        href={`/dashboard/issues/${issue.id}`}
+                        className={getButtonThemeClassName('outline', 'sm')}
+                        data-as-btn="outline"
+                        style={getButtonStyle('outline')}
+                      >
+                        View
+                      </Link>
                     </td>
                   </tr>
                 );

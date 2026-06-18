@@ -14,14 +14,14 @@ export function CTABanner() {
           for the penalty notice — get compliant today.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <ButtonLink href="/scan" size="lg" variant="primary" className="min-w-[220px]">
+          <ButtonLink href="/scan" size="lg" variant="onDark" className="min-w-[220px]">
             Scan my website free
           </ButtonLink>
           <ButtonAnchor
             href={calendlyUrl || '/contact'}
             size="lg"
-            variant="secondary"
-            className="min-w-[220px] border-white bg-white text-primary-700 hover:border-primary-100 hover:bg-primary-50"
+            variant="onDark"
+            className="min-w-[220px] border-2 border-white bg-transparent text-white hover:bg-white/10"
             {...(calendlyUrl ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
           >
             Talk to an expert

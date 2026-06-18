@@ -18,6 +18,9 @@ const monorepoRoot = findMonorepoRoot(__dirname);
 config({ path: resolve(monorepoRoot, '.env.local') });
 config({ path: resolve(monorepoRoot, '.env') });
 
+const apiProxyTarget =
+  process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@accessshield/ui', '@accessshield/types', '@accessshield/db'],
@@ -27,7 +30,16 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000',
+    // Empty = browser uses same-origin /api/v1/* (rewritten to Express API below)
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? '',
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: `${apiProxyTarget.replace(/\/$/, '')}/api/v1/:path*`,
+      },
+    ];
   },
 };
 

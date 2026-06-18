@@ -40,4 +40,5 @@ export type {
   HeadingInfo,
 } from './types';
 
-export { DEFAULT_SCAN_CONFIG, DEFAULT_VIEWPORTS, PLAN_SCAN_LIMITS } from './types';
+export { DEFAULT_SCAN_CONFIG, DEFAULT_VIEWPORTS } from './types';
+export { PLAN_SCAN_LIMITS } from '../lib/plan-limits';

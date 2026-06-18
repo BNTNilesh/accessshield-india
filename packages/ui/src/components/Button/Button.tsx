@@ -5,13 +5,22 @@ import type { VariantProps } from 'class-variance-authority';
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { LoaderIcon } from '../../lib/icons';
+import { getButtonStyle } from './buttonTheme';
 import { buttonVariants } from './buttonVariants';
 
-export { buttonVariants } from './buttonVariants';
+export {
+  buttonVariants,
+  getButtonClassName,
+  BUTTON_VARIANT_STYLE,
+  getButtonStyle,
+} from './buttonVariants';
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  extends
+    Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'disabled'>,
+    VariantProps<typeof buttonVariants> {
   children: ReactNode;
+  disabled?: boolean;
   isLoading?: boolean;
   /** Render child element (e.g. Link) with button styles */
   asChild?: boolean;
@@ -30,12 +39,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       disabledReason,
       className,
+      style,
       type = 'button',
       onClick,
       ...props
     },
     ref,
   ) => {
+    const resolvedVariant = variant ?? 'primary';
+    const resolvedSize = size ?? 'md';
     const isDisabled = Boolean(disabled ?? isLoading);
     const describedBy =
       disabledReason && isDisabled ? `${props.id ?? 'btn'}-disabled-reason` : undefined;
@@ -55,14 +67,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         <Comp
           ref={ref}
           type={asChild ? undefined : type}
+          data-as-btn={resolvedVariant}
           aria-disabled={isDisabled || undefined}
           aria-busy={isLoading || undefined}
           aria-describedby={describedBy ?? props['aria-describedby']}
           className={cn(
-            buttonVariants({ variant, size }),
-            isDisabled && 'opacity-50 cursor-not-allowed',
+            buttonVariants({ variant: resolvedVariant, size: resolvedSize }),
+            isDisabled && 'cursor-not-allowed opacity-50',
             className,
           )}
+          style={{ ...getButtonStyle(resolvedVariant), ...style }}
           onClick={asChild ? onClick : handleClick}
           {...props}
         >

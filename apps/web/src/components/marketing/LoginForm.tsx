@@ -71,7 +71,7 @@ export function LoginForm() {
           <p className="mt-2 text-sm text-text-secondary">
             Don&apos;t have an account?{' '}
             <Link
-              href="/waitlist"
+              href="/signup"
               className="font-medium text-primary-600 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
             >
               Start free trial →
@@ -125,7 +125,13 @@ export function LoginForm() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              disabled={loading}
+              aria-busy={loading}
+            >
               {loading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
