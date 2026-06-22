@@ -9,6 +9,7 @@ import { Button } from '@accessshield/ui';
 import { Modal } from '@accessshield/ui';
 import { cn } from '@/lib/utils';
 import { CheckCircle, Clock, AlertCircle, XCircle, PlayCircle } from 'lucide-react';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const STATUS_CONFIG = {
   open: {
@@ -126,7 +127,7 @@ export function StatusWorkflow({ issueId }: StatusWorkflowProps) {
   });
 
   if (!issue) {
-    return <div>Loading...</div>;
+    return <LoadingState message="Loading workflow…" variant="card" />;
   }
 
   const statusConfig = STATUS_CONFIG[issue.status];
@@ -229,7 +230,8 @@ export function StatusWorkflow({ issueId }: StatusWorkflowProps) {
                   setWontFixReason('');
                 }
               }}
-              disabled={!wontFixReason.trim() || statusMutation.isPending}
+              disabled={!wontFixReason.trim()}
+              isLoading={statusMutation.isPending}
             >
               Confirm
             </Button>

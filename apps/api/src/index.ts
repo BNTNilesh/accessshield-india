@@ -24,7 +24,7 @@ import { createIssuesRouter } from './routes/issues';
 import { createNotificationsRouter } from './routes/notifications';
 import { createOrganisationRouter } from './routes/organisation';
 import { createUsersRouter } from './routes/users';
-import { createWidgetRouter } from './routes/widget';
+import { createWidgetRouter, createPublicWidgetRouter } from './routes/widget';
 import { createScannerRouter, closeRabbitMQ } from './scanner/orchestrator';
 import { createPublicScanRouter } from './routes/public-scan';
 import { createPublicWaitlistRouter } from './routes/public-waitlist';
@@ -82,6 +82,9 @@ async function bootstrap() {
 
   const publicSignupRouter = createPublicSignupRouter(db, redis, secrets);
   app.use('/api/v1/public/signup', publicSignupRouter);
+
+  const publicWidgetRouter = createPublicWidgetRouter(db, redis);
+  app.use('/api/v1/widget', publicWidgetRouter);
 
   const authMiddleware = createAuthMiddleware(secrets.supabaseUrl, db);
   app.use('/api/v1', authMiddleware);

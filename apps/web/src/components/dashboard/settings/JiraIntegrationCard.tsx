@@ -10,6 +10,7 @@ import { Badge } from '@accessshield/ui';
 import { Input } from '@accessshield/ui';
 import { Select } from '@accessshield/ui';
 import { Modal } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const PRIORITY_OPTIONS = [
   { value: 'Highest', label: 'Highest' },
@@ -105,7 +106,7 @@ export function JiraIntegrationCard() {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingState message="Loading Jira integration…" variant="card" />;
   }
 
   if (!integration) {
@@ -250,12 +251,9 @@ export function JiraIntegrationCard() {
         <Button
           variant="outline"
           onClick={() => syncMutation.mutate()}
-          disabled={syncMutation.isPending}
+          isLoading={syncMutation.isPending}
         >
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${syncMutation.isPending ? 'animate-spin' : ''}`}
-            aria-hidden="true"
-          />
+          <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
           Sync all open issues
         </Button>
         <p className="mt-2 text-sm text-text-tertiary">
@@ -277,7 +275,7 @@ export function JiraIntegrationCard() {
           <Button
             variant="primary"
             onClick={() => disconnectMutation.mutate()}
-            disabled={disconnectMutation.isPending}
+            isLoading={disconnectMutation.isPending}
             className="bg-error-700 hover:bg-error-800"
           >
             Disconnect

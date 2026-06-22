@@ -7,7 +7,7 @@ import { ScoreRingCard } from '@/components/dashboard/home/ScoreRingCard';
 import { AssetList } from '@/components/dashboard/home/AssetList';
 import { ActivityFeed } from '@/components/dashboard/home/ActivityFeed';
 import { useDashboardStats, useAssets } from '@/lib/hooks/useApi';
-import { Skeleton } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const ScoreTrendChart = dynamic(
   () =>
@@ -16,7 +16,14 @@ const ScoreTrendChart = dynamic(
     })),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-80 rounded-lg" aria-label="Loading score trend chart" />,
+    loading: () => (
+      <LoadingState
+        message="Loading score chart…"
+        variant="inline"
+        size="sm"
+        className="h-80 rounded-lg"
+      />
+    ),
   },
 );
 
@@ -47,11 +54,7 @@ export function DashboardHome() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-40 rounded-xl" />
-          ))}
-        </div>
+        <LoadingState message="Loading dashboard overview…" variant="page" />
       ) : (
         <>
           <div

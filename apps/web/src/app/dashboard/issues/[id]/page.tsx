@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { Skeleton } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { ViolationDetail } from '@/components/dashboard/issues/ViolationDetail';
 import { AIFixPanel } from '@/components/dashboard/issues/AIFixPanel';
 import { StatusWorkflow } from '@/components/dashboard/issues/StatusWorkflow';
@@ -45,25 +45,25 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Suspense fallback={<Skeleton className="h-96 rounded-lg" />}>
+          <Suspense fallback={<LoadingState message="Loading issue details…" variant="card" />}>
             <ViolationDetail issueId={params.id} />
           </Suspense>
 
-          <Suspense fallback={<Skeleton className="h-64 rounded-lg" />}>
+          <Suspense fallback={<LoadingState message="Loading AI suggestions…" variant="card" />}>
             <AIFixPanel issueId={params.id} />
           </Suspense>
         </div>
 
         <div className="space-y-6">
-          <Suspense fallback={<Skeleton className="h-64 rounded-lg" />}>
+          <Suspense fallback={<LoadingState message="Loading workflow…" variant="card" />}>
             <StatusWorkflow issueId={params.id} />
           </Suspense>
 
-          <Suspense fallback={<Skeleton className="h-96 rounded-lg" />}>
+          <Suspense fallback={<LoadingState message="Loading issue metadata…" variant="card" />}>
             <IssueMetadata issueId={params.id} />
           </Suspense>
 
-          <Suspense fallback={<Skeleton className="h-64 rounded-lg" />}>
+          <Suspense fallback={<LoadingState message="Loading comments…" variant="card" />}>
             <CommentThread issueId={params.id} />
           </Suspense>
         </div>

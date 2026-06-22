@@ -3,7 +3,17 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 ENV_FILE="$ROOT/.env.local"
-NEXT_BIN="$(cd "$(dirname "$0")/.." && pwd)/node_modules/next/dist/bin/next"
+WEB_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+NEXT_BIN="$WEB_DIR/node_modules/next/dist/bin/next"
+WIDGET_PUBLIC="$WEB_DIR/public/widget.js"
+
+# Serve marketing widget from /widget.js when NEXT_PUBLIC_CDN_URL is unset
+if [[ ! -f "$WIDGET_PUBLIC" ]]; then
+  echo "Building widget bundle for /widget.js …" >&2
+  pnpm --filter @accessshield/widget build
+  mkdir -p "$WEB_DIR/public"
+  cp "$ROOT/apps/widget/dist/widget.min.js" "$WIDGET_PUBLIC"
+fi
 
 ARGS=()
 if [[ -f "$ENV_FILE" ]]; then

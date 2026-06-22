@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { cn, focusRing } from '../../lib/cn';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon } from '../../lib/icons';
-import { Button } from '../Button';
+import { Button } from '../Button/index';
 
 export interface DataTableColumn<T> {
   id: string;

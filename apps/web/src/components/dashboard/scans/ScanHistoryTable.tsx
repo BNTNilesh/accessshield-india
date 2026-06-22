@@ -11,6 +11,7 @@ import {
 import { ExternalLink } from 'lucide-react';
 import { formatIndianDate, truncate } from '@/lib/utils';
 import type { ScanListItem } from '@/lib/api/types';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const STATUS_VARIANT: Record<ScanListItem['status'], 'success' | 'accent' | 'outline' | 'default'> =
   {
@@ -153,15 +154,7 @@ export function ScanHistoryTable({
   ];
 
   if (isLoading) {
-    return (
-      <div
-        className="rounded-lg border border-border bg-white p-12 text-center"
-        role="status"
-        aria-live="polite"
-      >
-        <p className="text-text-secondary">Loading scan history…</p>
-      </div>
-    );
+    return <LoadingState message="Loading scan history…" variant="card" />;
   }
 
   return (

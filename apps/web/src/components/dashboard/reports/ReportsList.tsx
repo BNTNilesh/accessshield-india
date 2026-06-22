@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Download, Trash2, FileCode } from 'lucide-react';
 import { getAccessToken, downloadReportFile } from '@/lib/api/client';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import type { Report } from '@/lib/api/types';
 import { Badge } from '@accessshield/ui';
 import { Button } from '@accessshield/ui';
@@ -61,7 +62,7 @@ export function ReportsList() {
   });
 
   if (isLoading) {
-    return <div className="text-center py-12 text-text-secondary">Loading reports...</div>;
+    return <LoadingState message="Loading reports…" variant="page" />;
   }
 
   if (reports.length === 0) {
@@ -246,7 +247,7 @@ export function ReportsList() {
                 deleteMutation.mutate(reportToDelete.id);
               }
             }}
-            disabled={deleteMutation.isPending}
+            isLoading={deleteMutation.isPending}
           >
             Delete
           </Button>

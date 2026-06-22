@@ -9,10 +9,12 @@ import {
   type AdminOrganisation,
 } from '@/lib/api/admin';
 import { Button, Input, Modal, Select } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const PLAN_OPTIONS = [
   { value: 'trial', label: 'Trial' },
   { value: 'starter', label: 'Starter' },
+  { value: 'widget', label: 'Widget' },
   { value: 'professional', label: 'Professional' },
   { value: 'enterprise', label: 'Enterprise' },
   { value: 'government', label: 'Government' },
@@ -64,7 +66,7 @@ export default function AdminOrganisationsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-text-secondary">Loading...</p>
+        <LoadingState message="Loading organisations…" variant="card" />
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
           <table className="min-w-full divide-y divide-border">
@@ -130,10 +132,11 @@ export default function AdminOrganisationsPage() {
           <Button
             variant="primary"
             className="w-full"
-            disabled={createMutation.isPending || !name.trim()}
+            disabled={!name.trim()}
+            isLoading={createMutation.isPending}
             onClick={() => createMutation.mutate()}
           >
-            {createMutation.isPending ? 'Creating...' : 'Create'}
+            Create
           </Button>
         </div>
       </Modal>

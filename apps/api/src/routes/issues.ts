@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 import { syncIssuesFromViolations } from '../services/issue-sync';
+import { generateIssueAiAltText, generateIssueAiFix } from '../services/ai-enrichment';
 
 const listIssuesSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -323,6 +324,9 @@ export function createIssuesRouter(db: Database): ExpressRouter {
             violationHtml: violations.html,
             violationPageUrl: violations.pageUrl,
             violationHelpUrl: violations.helpUrl,
+            violationAiFix: violations.aiFix,
+            violationAiExplanation: violations.aiExplanation,
+            violationAiAltText: violations.aiAltText,
           })
           .from(issues)
           .leftJoin(assets, eq(issues.assetId, assets.id))
@@ -382,6 +386,9 @@ export function createIssuesRouter(db: Database): ExpressRouter {
             elementSelector: row.violationSelector,
             wcagCriterion,
             wcagTitle: wcagCriterion ? `WCAG ${wcagCriterion}` : null,
+            aiFixSuggestion: row.violationAiFix,
+            aiExplanation: row.violationAiExplanation,
+            aiAltText: row.violationAiAltText,
             comments: [],
             labels: [],
           },
@@ -443,6 +450,84 @@ export function createIssuesRouter(db: Database): ExpressRouter {
 
         res.json(response);
       } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    '/:id/ai-fix',
+    requireRoles('developer', 'accessibility_officer', 'customer_admin'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const orgId = req.user!.org_id;
+        const issueId = req.params.id;
+
+        if (!issueId || !z.string().uuid().safeParse(issueId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid issue ID');
+          return;
+        }
+
+        const result = await generateIssueAiFix(db, orgId, issueId);
+
+        const response: ApiResponse<typeof result> = {
+          data: result,
+          timestamp: new Date().toISOString(),
+        };
+
+        res.json(response);
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('not available on your plan')) {
+          sendProblem(res, 403, 'forbidden', err.message);
+          return;
+        }
+        if (err instanceof Error && err.message === 'Issue not found') {
+          sendProblem(res, 404, 'not-found', err.message);
+          return;
+        }
+        if (err instanceof Error && err.message.includes('not configured')) {
+          sendProblem(res, 503, 'service-unavailable', 'AI service is temporarily unavailable');
+          return;
+        }
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    '/:id/ai-alt-text',
+    requireRoles('developer', 'accessibility_officer', 'customer_admin'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const orgId = req.user!.org_id;
+        const issueId = req.params.id;
+
+        if (!issueId || !z.string().uuid().safeParse(issueId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid issue ID');
+          return;
+        }
+
+        const result = await generateIssueAiAltText(db, orgId, issueId);
+
+        const response: ApiResponse<typeof result> = {
+          data: result,
+          timestamp: new Date().toISOString(),
+        };
+
+        res.json(response);
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('not available on your plan')) {
+          sendProblem(res, 403, 'forbidden', err.message);
+          return;
+        }
+        if (err instanceof Error && err.message === 'Issue not found') {
+          sendProblem(res, 404, 'not-found', err.message);
+          return;
+        }
+        if (err instanceof Error && err.message.includes('not configured')) {
+          sendProblem(res, 503, 'service-unavailable', 'AI service is temporarily unavailable');
+          return;
+        }
         next(err);
       }
     },

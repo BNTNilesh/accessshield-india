@@ -9,6 +9,7 @@ import { Input } from '@accessshield/ui';
 import { Button } from '@accessshield/ui';
 import { Modal } from '@accessshield/ui';
 import { Select } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const INDUSTRY_OPTIONS = [
   { value: 'bfsi', label: 'BFSI (Banking, Financial Services, Insurance)' },
@@ -48,7 +49,7 @@ export function OrgSettingsForm() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [confirmName, setConfirmName] = useState('');
 
-  const { data: org } = useQuery({
+  const { data: org, isLoading } = useQuery({
     queryKey: ['organisation'],
     queryFn: async () => {
       const token = await getAccessToken();
@@ -66,8 +67,8 @@ export function OrgSettingsForm() {
     },
   });
 
-  if (!org) {
-    return <div>Loading...</div>;
+  if (isLoading || !org) {
+    return <LoadingState message="Loading organisation settings…" variant="card" />;
   }
 
   return (
@@ -130,7 +131,7 @@ export function OrgSettingsForm() {
           />
         </div>
 
-        <Button type="submit" variant="primary" disabled={updateMutation.isPending}>
+        <Button type="submit" variant="primary" isLoading={updateMutation.isPending}>
           <Save className="mr-2 h-4 w-4" aria-hidden="true" />
           Save changes
         </Button>

@@ -14,7 +14,14 @@ import amqp from 'amqplib';
 import type { ConsumeMessage } from 'amqplib';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import Redis from 'ioredis';
-import { createDb, type Database, scans, violations, assets } from '@accessshield/db';
+import {
+  createDb,
+  type Database,
+  scans,
+  violations,
+  assets,
+  organisations,
+} from '@accessshield/db';
 import { eq, and, desc } from 'drizzle-orm';
 import type { Browser } from 'playwright';
 import { logger } from '../lib/logger';
@@ -400,47 +407,81 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
       'Violation deduplication complete',
     );
 
-    const altTextCandidates = getAltTextCandidates(deduplicatedViolations);
-    for (const candidate of altTextCandidates) {
-      await publishToAIQueue(AI_ALT_TEXT_QUEUE, {
-        violationId: candidate.fingerprint,
-        imageSelector: candidate.elementSelector,
-        pageUrl: candidate.pageUrl,
-        elementHtml: candidate.elementHtml,
-      });
-    }
+    const altTextFingerprints = new Set(
+      getAltTextCandidates(deduplicatedViolations).map((v) => v.fingerprint),
+    );
+    const fixFingerprints = new Set(
+      getFixCandidates(deduplicatedViolations).map((v) => v.fingerprint),
+    );
 
-    const fixCandidates = getFixCandidates(deduplicatedViolations);
-    for (const candidate of fixCandidates) {
-      await publishToAIQueue(AI_FIX_QUEUE, {
-        violationId: candidate.fingerprint,
-        ruleId: candidate.ruleId,
-        elementHtml: candidate.elementHtml,
-        wcagCriterion: candidate.wcagCriterion,
-        description: candidate.description,
-      });
-    }
+    const [orgRow] = await db
+      .select({ planTier: organisations.planTier })
+      .from(organisations)
+      .where(eq(organisations.id, orgId))
+      .limit(1);
+    const planTier = orgRow?.planTier ?? 'starter';
 
     const BATCH_SIZE = 500;
     for (let i = 0; i < deduplicatedViolations.length; i += BATCH_SIZE) {
       const batch = deduplicatedViolations.slice(i, i + BATCH_SIZE);
 
-      await db.insert(violations).values(
-        batch.map((v) => ({
-          organisationId: orgId,
-          scanId,
-          ruleId: v.ruleId,
-          impact: v.severity,
-          description: v.description,
-          helpUrl: v.helpUrl,
-          wcagCriteria: [v.wcagCriterion],
-          selector: v.elementSelector,
-          html: v.elementHtml,
-          pageUrl: v.pageUrl,
-        })),
-      );
+      const inserted = await db
+        .insert(violations)
+        .values(
+          batch.map((v) => ({
+            organisationId: orgId,
+            scanId,
+            ruleId: v.ruleId,
+            impact: v.severity,
+            description: v.description,
+            helpUrl: v.helpUrl,
+            wcagCriteria: [v.wcagCriterion],
+            selector: v.elementSelector,
+            html: v.elementHtml,
+            pageUrl: v.pageUrl,
+          })),
+        )
+        .returning({
+          id: violations.id,
+          ruleId: violations.ruleId,
+          html: violations.html,
+          pageUrl: violations.pageUrl,
+        });
 
       logger.info({ scanId, batchStart: i, batchSize: batch.length }, 'Violation batch inserted');
+
+      for (let j = 0; j < batch.length; j++) {
+        const source = batch[j];
+        const row = inserted[j];
+        if (!source || !row) {
+          continue;
+        }
+
+        if (altTextFingerprints.has(source.fingerprint)) {
+          await publishToAIQueue(AI_ALT_TEXT_QUEUE, {
+            violationId: row.id,
+            orgId,
+            planTier,
+            assetId,
+            imageSelector: source.elementSelector,
+            pageUrl: source.pageUrl,
+            elementHtml: source.elementHtml,
+          });
+        }
+
+        if (fixFingerprints.has(source.fingerprint)) {
+          await publishToAIQueue(AI_FIX_QUEUE, {
+            violationId: row.id,
+            orgId,
+            planTier,
+            ruleId: source.ruleId,
+            elementHtml: source.elementHtml,
+            wcagCriterion: source.wcagCriterion,
+            pageUrl: source.pageUrl,
+            description: source.description,
+          });
+        }
+      }
     }
 
     await syncIssuesFromViolations(db, orgId);

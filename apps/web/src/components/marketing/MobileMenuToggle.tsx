@@ -78,18 +78,25 @@ export function MobileMenuToggle() {
 
             <nav className="mt-8 flex flex-col gap-4">
               <Link
-                href="/#standards"
+                href="/"
                 onClick={handleClose}
                 className="block rounded-md px-3 py-2 text-base font-medium text-text-secondary hover:bg-gray-100 hover:text-primary-600"
               >
-                Compliance
+                Home
               </Link>
               <Link
-                href="/pricing"
+                href="/services"
                 onClick={handleClose}
                 className="block rounded-md px-3 py-2 text-base font-medium text-text-secondary hover:bg-gray-100 hover:text-primary-600"
               >
-                Pricing
+                Services
+              </Link>
+              <Link
+                href="/widget"
+                onClick={handleClose}
+                className="block rounded-md px-3 py-2 text-base font-medium text-text-secondary hover:bg-gray-100 hover:text-primary-600"
+              >
+                Widget
               </Link>
               <Link
                 href="/scan"

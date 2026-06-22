@@ -6,6 +6,7 @@ import { getAccessToken } from '@/lib/api/client';
 import type { Organisation, Invoice } from '@/lib/api/types';
 import { Button, Badge, Progress, getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
 import { cn } from '@/lib/utils';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const PLAN_NAMES = {
   trial: 'Trial',
@@ -64,7 +65,7 @@ async function fetchUsage(token: string) {
 }
 
 export function BillingCard() {
-  const { data: org } = useQuery({
+  const { data: org, isLoading: orgLoading } = useQuery({
     queryKey: ['organisation'],
     queryFn: async () => {
       const token = await getAccessToken();
@@ -72,7 +73,7 @@ export function BillingCard() {
     },
   });
 
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
       const token = await getAccessToken();
@@ -80,7 +81,7 @@ export function BillingCard() {
     },
   });
 
-  const { data: usage } = useQuery({
+  const { data: usage, isLoading: usageLoading } = useQuery({
     queryKey: ['usage'],
     queryFn: async () => {
       const token = await getAccessToken();
@@ -88,8 +89,8 @@ export function BillingCard() {
     },
   });
 
-  if (!org || !usage) {
-    return <div>Loading...</div>;
+  if (orgLoading || invoicesLoading || usageLoading || !org || !usage) {
+    return <LoadingState message="Loading billing information…" variant="card" />;
   }
 
   const planName = PLAN_NAMES[org.planTier as keyof typeof PLAN_NAMES] ?? org.planTier;

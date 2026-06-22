@@ -98,7 +98,7 @@ export function AssetCard({ asset }: AssetCardProps) {
           size="sm"
           variant="primary"
           onClick={() => triggerScan({ asset_id: asset.id })}
-          disabled={isPending}
+          isLoading={isPending}
           className="flex-1"
         >
           <PlayCircle className="mr-2 h-4 w-4" aria-hidden="true" />

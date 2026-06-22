@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Award, ExternalLink, Copy, XCircle, AlertTriangle } from 'lucide-react';
 import { getAccessToken } from '@/lib/api/client';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import type { Certificate, RevokeCertificateInput } from '@/lib/api/types';
 import { Badge, Button, getButtonStyle, getButtonThemeClassName, Modal } from '@accessshield/ui';
 import { BadgeEmbedCode } from './BadgeEmbedCode';
@@ -82,7 +83,7 @@ export function CertificateList() {
   });
 
   if (isLoading) {
-    return <div className="text-center py-12 text-text-secondary">Loading certificates...</div>;
+    return <LoadingState message="Loading certificates…" variant="page" />;
   }
 
   if (certificates.length === 0) {
@@ -302,7 +303,8 @@ export function CertificateList() {
                   });
                 }
               }}
-              disabled={!revokeReason.trim() || revokeMutation.isPending}
+              disabled={!revokeReason.trim()}
+              isLoading={revokeMutation.isPending}
               className="bg-error-700 hover:bg-error-800"
             >
               Revoke Certificate

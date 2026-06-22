@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Skeleton } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { IssueCertificatePanel } from '@/components/dashboard/certs/IssueCertificatePanel';
 import { CertificateList } from '@/components/dashboard/certs/CertificateList';
 
@@ -18,11 +18,11 @@ export default function CertificatesPage() {
         </p>
       </div>
 
-      <Suspense fallback={<Skeleton className="h-64 rounded-lg" />}>
+      <Suspense fallback={<LoadingState message="Loading certificate form…" variant="card" />}>
         <IssueCertificatePanel />
       </Suspense>
 
-      <Suspense fallback={<Skeleton className="h-96 rounded-lg" />}>
+      <Suspense fallback={<LoadingState message="Loading certificates…" variant="card" />}>
         <CertificateList />
       </Suspense>
     </div>

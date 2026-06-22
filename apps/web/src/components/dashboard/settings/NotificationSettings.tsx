@@ -12,6 +12,7 @@ import type {
 import { Button } from '@accessshield/ui';
 import { Switch } from '@accessshield/ui';
 import { Input } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const NOTIFICATION_TYPES: Array<{ key: NotificationType; label: string; description: string }> = [
   {
@@ -94,7 +95,7 @@ export function NotificationSettings() {
     Partial<Record<NotificationType, boolean>>
   >({});
 
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading } = useQuery({
     queryKey: ['notification-settings'],
     queryFn: async () => {
       const token = await getAccessToken();
@@ -131,8 +132,8 @@ export function NotificationSettings() {
     });
   }
 
-  if (!settings) {
-    return <div>Loading...</div>;
+  if (isLoading || !settings) {
+    return <LoadingState message="Loading notification settings…" variant="card" />;
   }
 
   return (
@@ -182,7 +183,7 @@ export function NotificationSettings() {
                   variant="outline"
                   size="sm"
                   onClick={() => verifyMutation.mutate()}
-                  disabled={verifyMutation.isPending}
+                  isLoading={verifyMutation.isPending}
                 >
                   {settings.whatsappVerified ? (
                     <>
@@ -235,7 +236,7 @@ export function NotificationSettings() {
       </div>
 
       {/* Save button */}
-      <Button variant="primary" size="lg" onClick={handleSave} disabled={updateMutation.isPending}>
+      <Button variant="primary" size="lg" onClick={handleSave} isLoading={updateMutation.isPending}>
         <Save className="mr-2 h-4 w-4" aria-hidden="true" />
         Save preferences
       </Button>

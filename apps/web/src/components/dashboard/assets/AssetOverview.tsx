@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, Skeleton } from '@accessshield/ui';
+import { Card } from '@accessshield/ui';
 import { ScoreTrendChart } from '@/components/dashboard/home/ScoreTrendChart';
 import { ScanHistoryTable } from '@/components/dashboard/scans/ScanHistoryTable';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { useScans } from '@/lib/hooks/useApi';
 
 export interface AssetOverviewProps {
@@ -25,12 +26,7 @@ export function AssetOverview({ assetId }: AssetOverviewProps) {
     }));
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-64" />
-        <Skeleton className="h-96" />
-      </div>
-    );
+    return <LoadingState message="Loading scan data…" variant="card" />;
   }
 
   return (

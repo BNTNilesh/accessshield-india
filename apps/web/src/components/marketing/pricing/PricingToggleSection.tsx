@@ -29,7 +29,7 @@ export function PricingToggleSection() {
   const plans: Plan[] = [
     {
       name: 'Starter',
-      description: 'Perfect for small projects and personal websites',
+      description: 'Always free — one microsite and basic scanning',
       monthlyPrice: 0,
       annualPrice: 0,
       features: [
@@ -38,74 +38,88 @@ export function PricingToggleSection() {
         { text: 'WCAG 2.2 AA + IS 17802', included: true },
         { text: 'Basic violation reporting', included: true },
         { text: 'Email support', included: true },
+        { text: 'Accessibility widget SDK', included: false },
         { text: 'AI fix suggestions', included: false },
-        { text: 'Widget SDK', included: false },
         { text: 'SEBI compliance report', included: false },
       ],
       cta: {
-        text: 'Start free trial',
+        text: 'Get started free',
         href: '/signup',
       },
     },
     {
       name: 'Professional',
-      description: 'For growing teams and mid-market companies',
+      description: 'Scanning, AI fixes, and accessibility widget for growing teams',
       monthlyPrice: 3999,
       annualPrice: 39990,
       popular: true,
       features: [
         { text: 'Up to 10 websites', included: true },
-        { text: 'Unlimited scans', included: true },
+        { text: 'Unlimited compliance scans', included: true },
         { text: 'WCAG 2.2 AA + IS 17802 + GIGW', included: true },
-        { text: 'Detailed violation reports', included: true },
-        { text: 'Priority email + chat support', included: true },
+        { text: 'Accessibility widget SDK included', included: true },
+        { text: 'Hindi + English widget UI', included: true },
+        { text: 'Font size, contrast & dyslexia tools', included: true },
         { text: 'AI fix suggestions', included: true },
-        { text: 'Widget SDK', included: true },
+        { text: 'Priority email + chat support', included: true },
         { text: 'SEBI compliance report', included: false },
       ],
       cta: {
-        text: 'Start free trial',
+        text: 'Start 14-day trial',
         href: '/signup',
       },
     },
     {
       name: 'Enterprise',
-      description: 'For large organizations and listed companies',
-      monthlyPrice: 14999,
-      annualPrice: 149990,
+      description: 'Listed companies, BFSI, and large organisations',
+      monthlyPrice: 12999,
+      annualPrice: 129990,
       features: [
         { text: 'Unlimited websites', included: true },
         { text: 'Unlimited scans', included: true },
         { text: 'All standards + custom rules', included: true },
+        { text: 'Widget SDK + custom branding', included: true },
         { text: 'White-label reports', included: true },
         { text: 'Dedicated account manager', included: true },
         { text: 'AI fix suggestions', included: true },
-        { text: 'Widget SDK + custom branding', included: true },
-        { text: 'SEBI compliance report', included: true },
+        { text: 'SEBI report (1/year included)', included: true },
+        { text: 'GIGW 3.0 + RPwD legal reporting', included: true },
       ],
       cta: {
         text: 'Contact sales',
-        href: process.env.NEXT_PUBLIC_CALENDLY_URL || '/contact',
+        href: process.env.NEXT_PUBLIC_CALENDLY_URL || '/contact?plan=enterprise',
       },
     },
   ];
 
-  const formatPrice = (paise: number, period: BillingPeriod) => {
-    if (paise === 0) return 'Free';
-    const amount = paise / 100;
+  const formatPrice = (rupees: number, period: BillingPeriod) => {
+    if (rupees === 0) return 'Free';
     const formatted = new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(rupees);
 
     const suffix = period === 'annual' ? '/year' : '/month';
     return `${formatted}${suffix}`;
   };
 
+  const salesHref = (href: string) => href.startsWith('http');
+
   return (
-    <div className="mt-16">
-      <div className="flex justify-center">
+    <div className="mt-12">
+      <div className="text-center">
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">Step 01</p>
+        <h2 className="mt-2 text-2xl font-bold text-text-primary sm:text-3xl">
+          Pick your monthly plan
+        </h2>
+        <p className="mx-auto mt-3 max-w-2xl text-base leading-normal text-text-secondary">
+          All subscription prices exclude 18% GST. Annual billing saves ~17% (pay for 10 months, get
+          12).
+        </p>
+      </div>
+
+      <div className="mt-8 flex justify-center">
         <div
           role="group"
           aria-label="Billing period"
@@ -139,11 +153,11 @@ export function PricingToggleSection() {
         </div>
       </div>
 
-      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="mt-12 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-3 lg:gap-8">
         {plans.map((plan) => (
           <div
             key={plan.name}
-            className={`relative rounded-lg border bg-white p-8 shadow-sm ${
+            className={`relative flex flex-col rounded-lg border bg-white p-6 shadow-sm lg:p-8 ${
               plan.popular ? 'border-primary-600 border-2 shadow-lg' : 'border-gray-200'
             }`}
           >
@@ -171,9 +185,12 @@ export function PricingToggleSection() {
                     {formatPrice(plan.annualPrice / 12, 'monthly')} billed annually
                   </div>
                 )}
+                {plan.monthlyPrice > 0 && (
+                  <p className="mt-1 text-xs text-text-tertiary">+ 18% GST</p>
+                )}
               </div>
 
-              {plan.cta.href.startsWith('http') ? (
+              {salesHref(plan.cta.href) ? (
                 <ButtonAnchor
                   href={plan.cta.href}
                   target="_blank"
@@ -196,7 +213,7 @@ export function PricingToggleSection() {
               )}
             </div>
 
-            <ul className="mt-8 space-y-3" role="list">
+            <ul className="mt-8 flex-1 space-y-3" role="list">
               {plan.features.map((feature, i) => (
                 <li key={i} className="flex items-start gap-3">
                   {feature.included ? (

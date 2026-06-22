@@ -34,6 +34,10 @@ function tokenKey(orgId: string): string {
   return `widget:token:${orgId}`;
 }
 
+function tokenLookupKey(token: string): string {
+  return `widget:token:lookup:${token}`;
+}
+
 function domainsKey(orgId: string): string {
   return `widget:domains:${orgId}`;
 }
@@ -48,8 +52,109 @@ async function getOrCreateToken(redis: Redis, orgId: string): Promise<string> {
   if (existing) return existing;
 
   const token = deriveDefaultToken(orgId);
-  await redis.set(tokenKey(orgId), token);
+  await setOrgToken(redis, orgId, token);
   return token;
+}
+
+async function setOrgToken(redis: Redis, orgId: string, token: string): Promise<void> {
+  const existing = await redis.get(tokenKey(orgId));
+  if (existing && existing !== token) {
+    await redis.del(tokenLookupKey(existing));
+  }
+  await redis.set(tokenKey(orgId), token);
+  await redis.set(tokenLookupKey(token), orgId);
+}
+
+async function findOrgByToken(redis: Redis, token: string): Promise<string | null> {
+  const fromLookup = await redis.get(tokenLookupKey(token));
+  if (fromLookup) return fromLookup;
+
+  // Backfill lookup for tokens created before reverse index existed
+  const keys = await redis.keys('widget:token:*');
+  for (const key of keys) {
+    if (key.startsWith('widget:token:lookup:')) continue;
+    const orgId = key.slice('widget:token:'.length);
+    const stored = await redis.get(key);
+    if (stored === token) {
+      await redis.set(tokenLookupKey(token), orgId);
+      return orgId;
+    }
+  }
+  return null;
+}
+
+async function resolveOrgByToken(
+  redis: Redis,
+  db: Database,
+  token: string,
+): Promise<string | null> {
+  const fromLookup = await findOrgByToken(redis, token);
+  if (fromLookup) return fromLookup;
+
+  const orgPrefs = await db
+    .select({ organisationId: widgetPreferences.organisationId })
+    .from(widgetPreferences)
+    .where(isNull(widgetPreferences.assetId));
+
+  for (const row of orgPrefs) {
+    const stored = await redis.get(tokenKey(row.organisationId));
+    const derived = deriveDefaultToken(row.organisationId);
+    const candidate = stored ?? derived;
+    if (candidate === token) {
+      if (!stored) {
+        await setOrgToken(redis, row.organisationId, token);
+      }
+      return row.organisationId;
+    }
+  }
+
+  // Platform org default token before widget settings are opened in dashboard
+  const platformOrgId = '44444444-4444-4444-4444-444444444444';
+  const platformStored = await redis.get(tokenKey(platformOrgId));
+  const platformDerived = deriveDefaultToken(platformOrgId);
+  if (token === (platformStored ?? platformDerived)) {
+    if (!platformStored) {
+      await setOrgToken(redis, platformOrgId, token);
+    }
+    return platformOrgId;
+  }
+
+  return null;
+}
+
+function normalizeHostname(host: string): string {
+  return host.toLowerCase().replace(/^www\./, '');
+}
+
+function requestHostname(req: Request): string | null {
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      return normalizeHostname(new URL(origin).hostname);
+    } catch {
+      /* fall through */
+    }
+  }
+  const referer = req.headers.referer;
+  if (referer) {
+    try {
+      return normalizeHostname(new URL(referer).hostname);
+    } catch {
+      /* fall through */
+    }
+  }
+  return null;
+}
+
+function domainAllowed(allowedDomains: string[], hostname: string | null): boolean {
+  if (allowedDomains.length === 0) return true;
+  if (!hostname) return false;
+
+  const normalizedHost = normalizeHostname(hostname);
+  return allowedDomains.some((domain) => {
+    const normalizedDomain = normalizeHostname(domain.trim());
+    return normalizedHost === normalizedDomain || normalizedHost.endsWith(`.${normalizedDomain}`);
+  });
 }
 
 async function getAllowedDomains(redis: Redis, orgId: string): Promise<string[]> {
@@ -61,6 +166,16 @@ async function getAllowedDomains(redis: Redis, orgId: string): Promise<string[]>
   } catch {
     return [];
   }
+}
+
+async function getPrefsForVerify(db: Database, orgId: string): Promise<{ isEnabled: boolean }> {
+  const [existing] = await db
+    .select({ isEnabled: widgetPreferences.isEnabled })
+    .from(widgetPreferences)
+    .where(and(eq(widgetPreferences.organisationId, orgId), isNull(widgetPreferences.assetId)))
+    .limit(1);
+
+  return existing ?? { isEnabled: true };
 }
 
 async function getOrCreatePrefs(db: Database, orgId: string) {
@@ -124,6 +239,58 @@ const updateWidgetSchema = z.object({
     .optional(),
   isEnabled: z.boolean().optional(),
 });
+
+const verifyQuerySchema = z.object({
+  token: z.string().min(8).max(128),
+});
+
+/** PUBLIC — token verification for embedded widget (mount before auth middleware). */
+export function createPublicWidgetRouter(db: Database, redis: Redis): ExpressRouter {
+  const router = Router();
+
+  router.get('/verify', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const parseResult = verifyQuerySchema.safeParse(req.query);
+      if (!parseResult.success) {
+        sendProblem(res, 400, 'validation-error', 'Invalid token', undefined, {
+          errors: parseResult.error.flatten().fieldErrors,
+        });
+        return;
+      }
+
+      const { token } = parseResult.data;
+      const orgId = await resolveOrgByToken(redis, db, token);
+
+      if (!orgId) {
+        const response: ApiResponse<{ valid: boolean }> = {
+          data: { valid: false },
+          timestamp: new Date().toISOString(),
+        };
+        res.json(response);
+        return;
+      }
+
+      const [prefs, allowedDomains] = await Promise.all([
+        getPrefsForVerify(db, orgId),
+        getAllowedDomains(redis, orgId),
+      ]);
+
+      const hostname = requestHostname(req);
+      const valid = prefs.isEnabled && domainAllowed(allowedDomains, hostname);
+
+      const response: ApiResponse<{ valid: boolean }> = {
+        data: { valid },
+        timestamp: new Date().toISOString(),
+      };
+
+      res.json(response);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  return router;
+}
 
 export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
   const router = Router();
@@ -211,7 +378,7 @@ export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
       try {
         const orgId = req.user!.org_id;
         const newToken = randomBytes(16).toString('hex');
-        await redis.set(tokenKey(orgId), newToken);
+        await setOrgToken(redis, orgId, newToken);
 
         const [prefs, allowedDomains] = await Promise.all([
           getOrCreatePrefs(db, orgId),

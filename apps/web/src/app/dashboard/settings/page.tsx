@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
-import { Tabs, Skeleton, type TabItem } from '@accessshield/ui';
+import { Tabs, type TabItem } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { OrgSettingsForm } from '@/components/dashboard/settings/OrgSettingsForm';
 import { UserTable } from '@/components/dashboard/settings/UserTable';
 import { JiraIntegrationCard } from '@/components/dashboard/settings/JiraIntegrationCard';
@@ -17,7 +18,7 @@ const SETTINGS_TABS: TabItem[] = [
     value: 'organisation',
     label: 'Organisation',
     content: (
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<LoadingState message="Loading organisation settings…" variant="card" />}>
         <OrgSettingsForm />
       </Suspense>
     ),
@@ -26,7 +27,7 @@ const SETTINGS_TABS: TabItem[] = [
     value: 'team',
     label: 'Team & Roles',
     content: (
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<LoadingState message="Loading team members…" variant="card" />}>
         <UserTable />
       </Suspense>
     ),
@@ -35,7 +36,7 @@ const SETTINGS_TABS: TabItem[] = [
     value: 'integrations',
     label: 'Integrations',
     content: (
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<LoadingState message="Loading integrations…" variant="card" />}>
         <JiraIntegrationCard />
       </Suspense>
     ),
@@ -44,7 +45,7 @@ const SETTINGS_TABS: TabItem[] = [
     value: 'billing',
     label: 'Billing',
     content: (
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<LoadingState message="Loading billing…" variant="card" />}>
         <BillingCard />
       </Suspense>
     ),
@@ -53,7 +54,7 @@ const SETTINGS_TABS: TabItem[] = [
     value: 'notifications',
     label: 'Notifications',
     content: (
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<LoadingState message="Loading notification settings…" variant="card" />}>
         <NotificationSettings />
       </Suspense>
     ),
@@ -62,7 +63,7 @@ const SETTINGS_TABS: TabItem[] = [
     value: 'widget',
     label: 'Widget',
     content: (
-      <Suspense fallback={<Skeleton className="h-96" />}>
+      <Suspense fallback={<LoadingState message="Loading widget settings…" variant="card" />}>
         <WidgetSettings />
       </Suspense>
     ),

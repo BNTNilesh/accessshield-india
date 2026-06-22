@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { FlaskConical } from 'lucide-react';
-import { Skeleton, getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
+import { getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
 import { ScanHistoryTable } from '@/components/dashboard/scans/ScanHistoryTable';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { useScans } from '@/lib/hooks/useApi';
 
 export function ScansPageContent() {
@@ -32,7 +33,7 @@ export function ScansPageContent() {
       </div>
 
       {isLoading ? (
-        <Skeleton className="h-96 rounded-xl" />
+        <LoadingState message="Loading scan history…" variant="card" />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
           <ScanHistoryTable scans={scans} isLoading={false} total={total} />

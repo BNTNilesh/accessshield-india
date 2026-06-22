@@ -9,6 +9,7 @@ import { Badge } from '@accessshield/ui';
 import { Button } from '@accessshield/ui';
 import { CopyButton } from '@accessshield/ui';
 import { cn } from '@/lib/utils';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const SEVERITY_CONFIG = {
   critical: {
@@ -60,7 +61,7 @@ export function ViolationDetail({ issueId }: ViolationDetailProps) {
   });
 
   if (!issue) {
-    return <div>Loading...</div>;
+    return <LoadingState message="Loading issue details…" variant="card" />;
   }
 
   const severityConfig = SEVERITY_CONFIG[issue.severity];

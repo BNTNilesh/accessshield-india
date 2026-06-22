@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { IssueFilters } from '@/components/dashboard/issues/IssueFilters';
 import { IssueList } from '@/components/dashboard/issues/IssueList';
 import { IssueStats } from '@/components/dashboard/issues/IssueStats';
-import { Skeleton } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import type { IssueFilters as IssueFilterParams } from '@/lib/api/types';
 
 export const metadata = {
@@ -25,20 +25,14 @@ export default function IssuesPage({ searchParams }: IssuesPageProps) {
       </div>
 
       <Suspense
-        fallback={
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-lg" />
-            ))}
-          </div>
-        }
+        fallback={<LoadingState message="Loading issue statistics…" variant="inline" size="sm" />}
       >
         <IssueStats />
       </Suspense>
 
       <IssueFilters searchParams={searchParams} />
 
-      <Suspense fallback={<Skeleton className="h-96 rounded-lg" />}>
+      <Suspense fallback={<LoadingState message="Loading issues…" variant="card" />}>
         <IssueList searchParams={searchParams} />
       </Suspense>
     </div>

@@ -14,8 +14,8 @@ export default function RefundPage() {
         <h2 className="text-xl font-semibold text-text-primary">Free trial</h2>
         <p className="mt-2">
           New customers may start with a free trial as described on our{' '}
-          <Link href="/pricing" className="text-primary-600 hover:text-primary-700">
-            pricing page
+          <Link href="/services" className="text-primary-600 hover:text-primary-700">
+            services page
           </Link>
           . No payment is charged during the trial unless you upgrade to a paid plan.
         </p>

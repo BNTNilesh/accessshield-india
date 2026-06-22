@@ -12,6 +12,7 @@ import { Button } from '@accessshield/ui';
 import { Select } from '@accessshield/ui';
 import { CopyButton } from '@accessshield/ui';
 import { Modal } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const POSITION_OPTIONS = [
   { value: 'bottom-right' as const, label: 'Bottom Right' },
@@ -65,7 +66,7 @@ export function WidgetSettings() {
   const [allowedDomains, setAllowedDomains] = useState<string[]>([]);
   const [newDomain, setNewDomain] = useState('');
 
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading } = useQuery({
     queryKey: ['widget-settings'],
     queryFn: async () => {
       const token = await getAccessToken();
@@ -117,8 +118,8 @@ export function WidgetSettings() {
     });
   }
 
-  if (!settings) {
-    return <div>Loading...</div>;
+  if (isLoading || !settings) {
+    return <LoadingState message="Loading widget settings…" variant="card" />;
   }
 
   const embedCode = `<script>
@@ -262,7 +263,7 @@ export function WidgetSettings() {
       </div>
 
       {/* Save button */}
-      <Button variant="primary" size="lg" onClick={handleSave} disabled={updateMutation.isPending}>
+      <Button variant="primary" size="lg" onClick={handleSave} isLoading={updateMutation.isPending}>
         <Save className="mr-2 h-4 w-4" aria-hidden="true" />
         Save settings
       </Button>
@@ -295,7 +296,7 @@ export function WidgetSettings() {
             <Button
               variant="primary"
               onClick={() => regenerateMutation.mutate()}
-              disabled={regenerateMutation.isPending}
+              isLoading={regenerateMutation.isPending}
               className="bg-error-700 hover:bg-error-800"
             >
               Regenerate Token

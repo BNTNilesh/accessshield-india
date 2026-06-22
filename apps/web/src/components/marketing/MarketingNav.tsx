@@ -16,16 +16,22 @@ export function MarketingNav() {
         {/* Desktop navigation */}
         <div className="hidden items-center gap-8 md:flex">
           <Link
-            href="/#standards"
+            href="/"
             className="text-base font-medium text-text-secondary hover:text-primary-600"
           >
-            Compliance
+            Home
           </Link>
           <Link
-            href="/pricing"
+            href="/services"
             className="text-base font-medium text-text-secondary hover:text-primary-600"
           >
-            Pricing
+            Services
+          </Link>
+          <Link
+            href="/widget"
+            className="text-base font-medium text-text-secondary hover:text-primary-600"
+          >
+            Widget
           </Link>
           <Link
             href="/scan"

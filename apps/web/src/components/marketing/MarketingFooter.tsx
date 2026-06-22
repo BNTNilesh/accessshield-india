@@ -61,10 +61,18 @@ export function MarketingFooter() {
               </li>
               <li>
                 <Link
-                  href="/pricing"
+                  href="/services"
                   className="text-base text-text-secondary hover:text-primary-600"
                 >
-                  Pricing
+                  Services
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/widget"
+                  className="text-base text-text-secondary hover:text-primary-600"
+                >
+                  Accessibility Widget
                 </Link>
               </li>
               <li>

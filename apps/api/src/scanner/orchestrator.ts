@@ -205,7 +205,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
           sendProblem(res, 402, 'payment-required', 'Monthly scan limit reached', undefined, {
             current_count: planCheck.currentCount,
             limit: planCheck.limit,
-            upgrade_url: '/pricing',
+            upgrade_url: '/services',
           });
           return;
         }

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { Skeleton } from '@accessshield/ui';
 import { ReportsList } from '@/components/dashboard/reports/ReportsList';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const GenerateReportPanel = dynamic(
   () =>
@@ -11,7 +11,12 @@ const GenerateReportPanel = dynamic(
   {
     ssr: false,
     loading: () => (
-      <Skeleton className="h-12 w-56 rounded-md" aria-label="Loading report generator" />
+      <LoadingState
+        message="Loading report generator…"
+        variant="inline"
+        size="sm"
+        className="py-4"
+      />
     ),
   },
 );
@@ -35,7 +40,11 @@ export default function ReportsPage() {
         <GenerateReportPanel />
       </div>
 
-      <Suspense fallback={<Skeleton className="h-96 rounded-xl" />}>
+      <Suspense
+        fallback={
+          <LoadingState message="Loading reports…" variant="card" className="rounded-2xl" />
+        }
+      >
         <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
           <ReportsList />
         </div>

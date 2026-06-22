@@ -1,6 +1,7 @@
 import { SkipLink } from '@accessshield/ui';
 import { Sidebar } from '@/components/dashboard/layout/Sidebar';
 import { TopBar } from '@/components/dashboard/layout/TopBar';
+import { DashboardActivityBar } from '@/components/dashboard/common/DashboardActivityBar';
 import { DashboardProviders } from '@/providers/DashboardProviders';
 import { getDashboardRole } from '@/lib/dashboard/session';
 
@@ -14,6 +15,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar userRole={userRole} />
         <div className="flex flex-1 flex-col overflow-hidden">
           <TopBar />
+          <DashboardActivityBar />
           <main
             id="main-content"
             className="flex-1 overflow-y-auto p-8 md:p-10"

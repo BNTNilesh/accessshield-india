@@ -196,7 +196,7 @@ export function createReportingRouter(db: Database): ExpressRouter {
               'payment-required',
               'SEBI reports require Enterprise or Government plan',
               'Upgrade your plan to generate SEBI compliance reports.',
-              { upgrade_url: '/pricing' },
+              { upgrade_url: '/services' },
             );
             return;
           }

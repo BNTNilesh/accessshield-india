@@ -7,6 +7,7 @@ import { getAccessToken } from '@/lib/api/client';
 import type { Issue, IssueFilters } from '@/lib/api/types';
 import { Badge, Button, getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
 import { cn } from '@/lib/utils';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const SEVERITY_CONFIG = {
   critical: {
@@ -79,7 +80,7 @@ export function IssueList({ searchParams }: IssueListProps) {
   });
 
   if (isLoading) {
-    return <div className="text-center py-12 text-text-secondary">Loading issues...</div>;
+    return <LoadingState message="Loading issues…" variant="page" />;
   }
 
   if (!data || data.issues.length === 0) {

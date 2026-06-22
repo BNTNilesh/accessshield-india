@@ -16,7 +16,8 @@ export default function SignupPage() {
             Start your free trial
           </h1>
           <p className="mt-4 text-lg leading-normal text-text-secondary">
-            No credit card required. 1 website, 5 scans per month on the trial plan.
+            No credit card required. 14-day Professional trial — 1 website, 5 scans, then choose a
+            plan or continue free on Starter (3 scans/month).
           </p>
         </div>
 

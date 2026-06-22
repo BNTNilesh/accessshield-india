@@ -5,6 +5,7 @@ import { ExternalLink, AlertCircle, AlertTriangle, Info, Minus } from 'lucide-re
 import { truncate } from '@/lib/utils';
 import type { ViolationRow } from '@/lib/api/types';
 import type { IssueSeverity } from '@accessshield/types';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const SEVERITY_CONFIG = {
   critical: { icon: AlertCircle, color: 'error' },
@@ -97,15 +98,7 @@ export function ViolationTable({ violations, isLoading, total }: ViolationTableP
   ];
 
   if (isLoading) {
-    return (
-      <div
-        className="rounded-lg border border-border bg-white p-12 text-center"
-        role="status"
-        aria-live="polite"
-      >
-        <p className="text-text-secondary">Loading violations…</p>
-      </div>
-    );
+    return <LoadingState message="Loading violations…" variant="card" />;
   }
 
   return (

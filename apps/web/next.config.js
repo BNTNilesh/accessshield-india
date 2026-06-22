@@ -32,12 +32,24 @@ const nextConfig = {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
     // Empty = browser uses same-origin /api/v1/* (rewritten to Express API below)
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? '',
+    NEXT_PUBLIC_WIDGET_ENABLED: process.env.NEXT_PUBLIC_WIDGET_ENABLED ?? '',
+    NEXT_PUBLIC_WIDGET_TOKEN: process.env.NEXT_PUBLIC_WIDGET_TOKEN ?? '',
+    NEXT_PUBLIC_CDN_URL: process.env.NEXT_PUBLIC_CDN_URL ?? '',
   },
   async rewrites() {
     return [
       {
         source: '/api/v1/:path*',
         destination: `${apiProxyTarget.replace(/\/$/, '')}/api/v1/:path*`,
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/pricing',
+        destination: '/services',
+        permanent: true,
       },
     ];
   },

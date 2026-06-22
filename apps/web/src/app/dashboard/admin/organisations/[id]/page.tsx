@@ -11,10 +11,12 @@ import {
   updateAdminOrganisation,
 } from '@/lib/api/admin';
 import { Button, Input, Select } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const PLAN_OPTIONS = [
   { value: 'trial', label: 'Trial' },
   { value: 'starter', label: 'Starter' },
+  { value: 'widget', label: 'Widget' },
   { value: 'professional', label: 'Professional' },
   { value: 'enterprise', label: 'Enterprise' },
   { value: 'government', label: 'Government' },
@@ -73,7 +75,7 @@ export default function AdminOrganisationDetailPage() {
   });
 
   if (orgLoading) {
-    return <p className="text-text-secondary">Loading organisation...</p>;
+    return <LoadingState message="Loading organisation…" variant="page" />;
   }
 
   if (!org) {
@@ -109,6 +111,7 @@ export default function AdminOrganisationDetailPage() {
           <div className="flex items-end gap-3">
             <Button
               variant={org.isActive ? 'outline' : 'primary'}
+              isLoading={updateOrgMutation.isPending}
               onClick={() => updateOrgMutation.mutate({ isActive: !org.isActive })}
             >
               {org.isActive ? 'Suspend organisation' : 'Activate organisation'}
@@ -121,7 +124,7 @@ export default function AdminOrganisationDetailPage() {
         <h2 className="text-xl font-semibold text-text-primary">Users</h2>
 
         {usersLoading ? (
-          <p className="mt-4 text-text-secondary">Loading users...</p>
+          <LoadingState message="Loading users…" variant="inline" size="sm" className="mt-4" />
         ) : (
           <ul className="mt-4 divide-y divide-border">
             {users.map((user) => (
@@ -161,10 +164,11 @@ export default function AdminOrganisationDetailPage() {
           )}
           <Button
             variant="primary"
-            disabled={createUserMutation.isPending || !userEmail || !userPassword || !userName}
+            disabled={!userEmail || !userPassword || !userName}
+            isLoading={createUserMutation.isPending}
             onClick={() => createUserMutation.mutate()}
           >
-            {createUserMutation.isPending ? 'Creating user...' : 'Create user'}
+            Create user
           </Button>
         </div>
       </section>

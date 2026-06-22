@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Card, Progress, Button } from '@accessshield/ui';
-import { ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Asset } from '@/lib/api/types';
 import { useTriggerScan } from '@/lib/hooks/useApi';
@@ -93,14 +93,10 @@ export function AssetList({ assets }: AssetListProps) {
                   size="sm"
                   variant="primary"
                   onClick={() => triggerScan({ asset_id: asset.id })}
-                  disabled={isPending}
+                  isLoading={isPending}
                   aria-label={`Scan ${asset.name} now`}
                 >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  ) : (
-                    'Scan'
-                  )}
+                  Scan
                 </Button>
 
                 <Link

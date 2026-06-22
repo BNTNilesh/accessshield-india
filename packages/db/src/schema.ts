@@ -194,6 +194,9 @@ export const violations = pgTable(
     selector: text('selector'),
     html: text('html'),
     pageUrl: text('page_url'),
+    aiFix: text('ai_fix'),
+    aiExplanation: text('ai_explanation'),
+    aiAltText: text('ai_alt_text'),
     ...timestamps,
   },
   (table) => ({

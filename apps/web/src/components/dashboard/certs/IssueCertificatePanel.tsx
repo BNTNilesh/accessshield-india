@@ -229,7 +229,8 @@ export function IssueCertificatePanel() {
               variant="primary"
               size="lg"
               className="w-full"
-              disabled={!confirmed || issueMutation.isPending}
+              disabled={!confirmed}
+              isLoading={issueMutation.isPending}
             >
               <Award className="mr-2 h-5 w-5" aria-hidden="true" />
               Issue Certificate

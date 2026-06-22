@@ -161,8 +161,8 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={isPending} className="flex-1">
-            {isPending ? 'Creating...' : 'Create Asset'}
+          <Button type="submit" variant="primary" isLoading={isPending} className="flex-1">
+            Create Asset
           </Button>
         </div>
       </form>

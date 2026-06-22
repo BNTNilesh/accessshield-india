@@ -122,3 +122,21 @@ ON CONFLICT (auth_user_id) DO UPDATE SET
   role = EXCLUDED.role,
   is_active = EXCLUDED.is_active,
   updated_at = now();
+
+-- Platform org widget preferences (marketing site dogfood)
+INSERT INTO widget_preferences (id, organisation_id, asset_id, position, primary_color, language, is_enabled)
+VALUES (
+  '66666666-6666-6666-6666-666666666666',
+  '44444444-4444-4444-4444-444444444444',
+  NULL,
+  'bottom-right',
+  '#1A56A0',
+  'en',
+  true
+)
+ON CONFLICT (id) DO UPDATE SET
+  position = EXCLUDED.position,
+  primary_color = EXCLUDED.primary_color,
+  language = EXCLUDED.language,
+  is_enabled = EXCLUDED.is_enabled,
+  updated_at = now();

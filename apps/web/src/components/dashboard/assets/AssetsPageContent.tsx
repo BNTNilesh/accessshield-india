@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button, Skeleton } from '@accessshield/ui';
+import { Button } from '@accessshield/ui';
 import { AssetCard } from '@/components/dashboard/assets/AssetCard';
 import { AddAssetModal } from '@/components/dashboard/assets/AddAssetModal';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { useAssets } from '@/lib/hooks/useApi';
 
 export function AssetsPageContent() {
@@ -32,11 +33,7 @@ export function AssetsPageContent() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-80 rounded-xl" />
-          ))}
-        </div>
+        <LoadingState message="Loading assets…" variant="page" />
       ) : assets.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-16 text-center shadow-sm">
           <div className="mx-auto w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mb-6">

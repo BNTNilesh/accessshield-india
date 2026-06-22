@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { Badge, Skeleton, Progress } from '@accessshield/ui';
+import { Badge, Progress } from '@accessshield/ui';
 import { ViolationFilters } from '@/components/dashboard/scans/ViolationFilters';
 import { ViolationTable } from '@/components/dashboard/scans/ViolationTable';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { useScan, useViolations } from '@/lib/hooks/useApi';
 import { formatIndianDate } from '@/lib/utils';
 
@@ -47,13 +48,7 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
   );
 
   if (scanLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-2/3" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-96" />
-      </div>
-    );
+    return <LoadingState message="Loading scan details…" variant="page" />;
   }
 
   if (!scan) {

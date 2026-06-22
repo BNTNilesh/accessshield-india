@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { fetchAdminStats } from '@/lib/api/admin';
 import { getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 export default function AdminHomePage() {
   const {
@@ -34,7 +35,7 @@ export default function AdminHomePage() {
         </Link>
       </div>
 
-      {isLoading && <p className="text-text-secondary">Loading platform stats...</p>}
+      {isLoading && <LoadingState message="Loading platform stats…" variant="inline" size="sm" />}
       {error && (
         <p className="text-error-700" role="alert">
           Failed to load stats.

@@ -10,6 +10,7 @@ import { Badge } from '@accessshield/ui';
 import { Modal } from '@accessshield/ui';
 import { Input } from '@accessshield/ui';
 import { Select } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const ROLE_OPTIONS = [
   { value: 'customer_admin', label: 'Customer Admin' },
@@ -87,7 +88,7 @@ export function UserTable() {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingState message="Loading team members…" variant="card" />;
   }
 
   return (
@@ -286,7 +287,7 @@ export function UserTable() {
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={inviteMutation.isPending}>
+            <Button type="submit" variant="primary" isLoading={inviteMutation.isPending}>
               <Mail className="mr-2 h-4 w-4" aria-hidden="true" />
               Send invite
             </Button>

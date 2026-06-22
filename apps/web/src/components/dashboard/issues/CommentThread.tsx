@@ -7,6 +7,7 @@ import { getAccessToken } from '@/lib/api/client';
 import type { IssueDetail, IssueComment } from '@/lib/api/types';
 import { Button } from '@accessshield/ui';
 import { Badge } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 async function fetchIssueDetail(token: string, issueId: string): Promise<IssueDetail> {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/issues/${issueId}`, {
@@ -101,7 +102,7 @@ export function CommentThread({ issueId }: CommentThreadProps) {
   }
 
   if (!issue) {
-    return <div>Loading...</div>;
+    return <LoadingState message="Loading comments…" variant="card" />;
   }
 
   const comments = issue.comments ?? [];
@@ -193,7 +194,8 @@ export function CommentThread({ issueId }: CommentThreadProps) {
           <Button
             type="submit"
             variant="primary"
-            disabled={!commentBody.trim() || commentMutation.isPending}
+            disabled={!commentBody.trim()}
+            isLoading={commentMutation.isPending}
             aria-label="Post comment"
           >
             <Send className="mr-2 h-4 w-4" aria-hidden="true" />

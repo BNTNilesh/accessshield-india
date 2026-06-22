@@ -9,6 +9,7 @@ import { Select } from '@accessshield/ui';
 import { Input } from '@accessshield/ui';
 import { Badge } from '@accessshield/ui';
 import { cn } from '@/lib/utils';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const SEVERITY_OPTIONS = [
   { value: 'critical', label: 'Critical' },
@@ -98,7 +99,7 @@ export function IssueMetadata({ issueId }: IssueMetadataProps) {
   });
 
   if (!issue) {
-    return <div>Loading...</div>;
+    return <LoadingState message="Loading issue metadata…" variant="card" />;
   }
 
   const assigneeOptions = [

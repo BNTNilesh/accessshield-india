@@ -3,6 +3,7 @@
 import { AlertCircle, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getAccessToken } from '@/lib/api/client';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import type { IssueStats } from '@/lib/api/types';
 
 const STAT_CONFIG = [
@@ -59,7 +60,7 @@ export function IssueStats() {
   });
 
   if (isLoading || !stats) {
-    return null;
+    return <LoadingState message="Loading issue statistics…" variant="inline" size="sm" />;
   }
 
   return (
