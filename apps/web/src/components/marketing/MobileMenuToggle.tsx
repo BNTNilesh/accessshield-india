@@ -99,6 +99,13 @@ export function MobileMenuToggle() {
                 Widget
               </Link>
               <Link
+                href="/blog"
+                onClick={handleClose}
+                className="block rounded-md px-3 py-2 text-base font-medium text-text-secondary hover:bg-gray-100 hover:text-primary-600"
+              >
+                Blog
+              </Link>
+              <Link
                 href="/scan"
                 onClick={handleClose}
                 className="block rounded-md px-3 py-2 text-base font-medium text-text-secondary hover:bg-gray-100 hover:text-primary-600"

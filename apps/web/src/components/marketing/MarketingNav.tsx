@@ -34,6 +34,12 @@ export function MarketingNav() {
             Widget
           </Link>
           <Link
+            href="/blog"
+            className="text-base font-medium text-text-secondary hover:text-primary-600"
+          >
+            Blog
+          </Link>
+          <Link
             href="/scan"
             className="text-base font-medium text-text-secondary hover:text-primary-600"
           >

@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { Badge } from '@accessshield/ui';
-import { getRecentPosts } from '@/lib/sanity';
+import { getRecentPosts, type BlogPost } from '@/lib/sanity';
 
 export async function BlogPreviewSection() {
-  let posts;
+  let posts: BlogPost[] = [];
   try {
     posts = await getRecentPosts(3);
   } catch (error) {

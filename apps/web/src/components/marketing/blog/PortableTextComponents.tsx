@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { PortableTextComponents as PTComponents } from '@portabletext/react';
+import type { PortableTextComponents as PTComponents } from 'next-sanity';
 
 export const portableTextComponents: PTComponents = {
   block: {

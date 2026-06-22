@@ -35,6 +35,16 @@ const nextConfig = {
     NEXT_PUBLIC_WIDGET_ENABLED: process.env.NEXT_PUBLIC_WIDGET_ENABLED ?? '',
     NEXT_PUBLIC_WIDGET_TOKEN: process.env.NEXT_PUBLIC_WIDGET_TOKEN ?? '',
     NEXT_PUBLIC_CDN_URL: process.env.NEXT_PUBLIC_CDN_URL ?? '',
+    NEXT_PUBLIC_SANITY_PROJECT_ID: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '',
+    NEXT_PUBLIC_SANITY_DATASET: process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production',
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.sanity.io',
+      },
+    ],
   },
   async rewrites() {
     return [

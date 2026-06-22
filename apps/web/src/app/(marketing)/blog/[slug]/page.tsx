@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { PortableText } from '@portabletext/react';
+import { PortableText } from 'next-sanity';
 import { Badge } from '@accessshield/ui';
 import { getPostBySlug, getAllPosts } from '@/lib/sanity';
 import { portableTextComponents } from '@/components/marketing/blog/PortableTextComponents';
