@@ -3,12 +3,21 @@
  */
 
 import type { Database } from '@accessshield/db';
-import { organisations, scans, users } from '@accessshield/db';
+import { organisations, scans, users, widgetPreferences } from '@accessshield/db';
 import type { ApiResponse } from '@accessshield/types';
-import { and, count, desc, eq, gte, ilike, or } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, isNull, or } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
+import type { Redis } from 'ioredis';
 import { z } from 'zod';
+import {
+  countActiveOrganisations,
+  countWidgetsEnabled,
+  getMonthStart,
+  getOrgListMetricsBatch,
+  getOrgSummary,
+  getOrCreateOrgWidgetPrefs,
+} from '../../lib/admin-org-metrics';
 import { slugifyCompanyName, uniqueSlug } from '../../lib/slug';
 import { sendProblem } from '../../lib/problem-details';
 import { logger } from '../../lib/logger';
@@ -17,7 +26,16 @@ import { createSupabaseAdminService } from '../../services/supabase-admin';
 import { provisionOrgUser } from '../../services/user-provisioning';
 import type { AppSecrets } from '../../config/secrets';
 
-const PLAN_TIERS = ['trial', 'starter', 'professional', 'enterprise', 'government'] as const;
+const PLAN_TIERS = [
+  'trial',
+  'starter',
+  'widget',
+  'compliance_shield',
+  'regulatory_defense',
+  'professional',
+  'enterprise',
+  'government',
+] as const;
 
 const createOrgSchema = z.object({
   name: z.string().min(2).max(255),
@@ -51,12 +69,11 @@ const updateUserSchema = z.object({
   fullName: z.string().min(2).max(255).optional(),
 });
 
-function getMonthStart(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-}
+const updateWidgetSchema = z.object({
+  isEnabled: z.boolean(),
+});
 
-export function createAdminRouter(db: Database, secrets: AppSecrets): ExpressRouter {
+export function createAdminRouter(db: Database, secrets: AppSecrets, redis: Redis): ExpressRouter {
   const router = Router();
   const supabaseAdmin = createSupabaseAdminService({
     supabaseUrl: secrets.supabaseUrl,
@@ -69,24 +86,31 @@ export function createAdminRouter(db: Database, secrets: AppSecrets): ExpressRou
     try {
       const monthStart = getMonthStart();
 
-      const [[orgCount], [userCount], [scanCount]] = await Promise.all([
-        db.select({ count: count() }).from(organisations),
-        db.select({ count: count() }).from(users),
-        db
-          .select({ count: count() })
-          .from(scans)
-          .where(gte(scans.createdAt, monthStart.toISOString())),
-      ]);
+      const [[orgCount], [userCount], [scanCount], activeOrganisations, widgetsEnabled] =
+        await Promise.all([
+          db.select({ count: count() }).from(organisations),
+          db.select({ count: count() }).from(users),
+          db
+            .select({ count: count() })
+            .from(scans)
+            .where(gte(scans.createdAt, monthStart.toISOString())),
+          countActiveOrganisations(db),
+          countWidgetsEnabled(db),
+        ]);
 
       const response: ApiResponse<{
         organisations: number;
         users: number;
         scansThisMonth: number;
+        activeOrganisations: number;
+        widgetsEnabled: number;
       }> = {
         data: {
           organisations: orgCount?.count ?? 0,
           users: userCount?.count ?? 0,
           scansThisMonth: scanCount?.count ?? 0,
+          activeOrganisations,
+          widgetsEnabled,
         },
         timestamp: new Date().toISOString(),
       };
@@ -126,13 +150,27 @@ export function createAdminRouter(db: Database, secrets: AppSecrets): ExpressRou
         .limit(limit)
         .offset(offset);
 
+      const orgIds = rows.map((r) => r.id);
+      const metricsMap = await getOrgListMetricsBatch(db, orgIds);
+
+      const enriched = rows.map((org) => {
+        const metrics = metricsMap.get(org.id)!;
+        return {
+          ...org,
+          userCount: metrics.userCount,
+          assetCount: metrics.assetCount,
+          scansThisMonth: metrics.scansThisMonth,
+          widgetEnabled: metrics.widgetEnabled,
+        };
+      });
+
       const [totalResult] = await db
         .select({ count: count() })
         .from(organisations)
         .where(conditions);
 
-      const response: ApiResponse<typeof rows> = {
-        data: rows,
+      const response: ApiResponse<typeof enriched> = {
+        data: enriched,
         meta: { page, limit, total: totalResult?.count ?? 0 },
         timestamp: new Date().toISOString(),
       };
@@ -187,6 +225,95 @@ export function createAdminRouter(db: Database, secrets: AppSecrets): ExpressRou
       next(err);
     }
   });
+
+  router.get(
+    '/organisations/:id/summary',
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const orgId = req.params.id ?? '';
+        if (!z.string().uuid().safeParse(orgId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid organisation ID');
+          return;
+        }
+
+        const summary = await getOrgSummary(db, redis, orgId);
+        if (!summary) {
+          sendProblem(res, 404, 'not-found', 'Organisation not found');
+          return;
+        }
+
+        const response: ApiResponse<typeof summary> = {
+          data: summary,
+          timestamp: new Date().toISOString(),
+        };
+
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.patch(
+    '/organisations/:id/widget',
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const orgId = req.params.id ?? '';
+        if (!z.string().uuid().safeParse(orgId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid organisation ID');
+          return;
+        }
+
+        const parseResult = updateWidgetSchema.safeParse(req.body);
+        if (!parseResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid request body', undefined, {
+            errors: parseResult.error.flatten().fieldErrors,
+          });
+          return;
+        }
+
+        const [org] = await db
+          .select({ id: organisations.id })
+          .from(organisations)
+          .where(eq(organisations.id, orgId))
+          .limit(1);
+
+        if (!org) {
+          sendProblem(res, 404, 'not-found', 'Organisation not found');
+          return;
+        }
+
+        const prefs = await getOrCreateOrgWidgetPrefs(db, orgId);
+        await db
+          .update(widgetPreferences)
+          .set({
+            isEnabled: parseResult.data.isEnabled,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(widgetPreferences.id, prefs.id));
+
+        logger.info(
+          {
+            orgId,
+            isEnabled: parseResult.data.isEnabled,
+            actor: req.user?.sub,
+          },
+          'Widget toggled by platform admin',
+        );
+
+        const summary = await getOrgSummary(db, redis, orgId);
+
+        const response: ApiResponse<{ widget: NonNullable<typeof summary>['widget'] }> = {
+          data: { widget: summary!.widget },
+          timestamp: new Date().toISOString(),
+        };
+
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.get('/organisations/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {

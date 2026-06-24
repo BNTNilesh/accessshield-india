@@ -21,11 +21,12 @@ export async function resolveAccessShieldClaims(
   let userRole = appMetadata['user_role'] as AccessShieldJwtClaims['user_role'] | undefined;
   let orgId = appMetadata['org_id'] as string | undefined;
 
-  if ((!userRole || !orgId) && isDbClaimsFallbackEnabled() && payload.sub) {
+  if (isDbClaimsFallbackEnabled() && payload.sub) {
     const fromDb = await lookupUserClaimsByAuthId(db, payload.sub);
     if (fromDb) {
-      userRole = userRole ?? fromDb.user_role;
-      orgId = orgId ?? fromDb.org_id;
+      // DB is authoritative in dev — roles can change without re-login (e.g. sysadmin seed).
+      userRole = fromDb.user_role;
+      orgId = fromDb.org_id;
     }
   }
 

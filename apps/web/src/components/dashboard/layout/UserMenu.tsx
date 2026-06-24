@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Settings, LogOut } from 'lucide-react';
+import { User } from 'lucide-react';
 import { DropdownMenu } from '@accessshield/ui';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -11,21 +11,20 @@ export function UserMenu() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.push('/login');
+    router.replace('/login');
+    router.refresh();
   };
 
   const menuItems = [
     {
       id: 'profile',
       label: 'Profile',
-      icon: User,
-      onClick: () => router.push('/dashboard/settings/profile'),
+      onSelect: () => router.push('/dashboard/settings/profile'),
     },
     {
       id: 'settings',
       label: 'Settings',
-      icon: Settings,
-      onClick: () => router.push('/dashboard/settings'),
+      onSelect: () => router.push('/dashboard/settings'),
     },
     {
       id: 'divider',
@@ -35,8 +34,10 @@ export function UserMenu() {
     {
       id: 'logout',
       label: 'Sign out',
-      icon: LogOut,
-      onClick: handleSignOut,
+      destructive: true,
+      onSelect: () => {
+        void handleSignOut();
+      },
     },
   ];
 
@@ -52,6 +53,7 @@ export function UserMenu() {
       }
       items={menuItems}
       align="end"
+      ariaLabel="User account menu"
     />
   );
 }

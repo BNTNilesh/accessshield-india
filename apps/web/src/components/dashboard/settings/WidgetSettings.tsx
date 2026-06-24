@@ -8,7 +8,7 @@ import type {
   WidgetSettings as WidgetSettingsType,
   UpdateWidgetSettingsInput,
 } from '@/lib/api/types';
-import { Button } from '@accessshield/ui';
+import { Button, Switch } from '@accessshield/ui';
 import { Select } from '@accessshield/ui';
 import { CopyButton } from '@accessshield/ui';
 import { Modal } from '@accessshield/ui';
@@ -133,6 +133,17 @@ export function WidgetSettings() {
 
   return (
     <div className="space-y-6">
+      {/* Widget on/off */}
+      <div className="rounded-lg border border-border bg-white p-6">
+        <Switch
+          label="Widget enabled"
+          hint="When disabled, the accessibility widget will not appear on your websites."
+          checked={settings.isEnabled}
+          disabled={updateMutation.isPending}
+          onCheckedChange={(checked) => updateMutation.mutate({ isEnabled: checked })}
+        />
+      </div>
+
       {/* Widget token */}
       <div className="rounded-lg border border-border bg-white p-6">
         <div className="flex items-center justify-between mb-4">

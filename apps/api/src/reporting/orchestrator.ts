@@ -32,7 +32,7 @@ import { renderWcagComplianceTemplate } from './templates/wcag-compliance';
 import type { ReportFormat, ReportType } from './types';
 
 /** Plans that can generate SEBI reports */
-const SEBI_ELIGIBLE_PLANS = ['enterprise', 'government'];
+const SEBI_ELIGIBLE_PLANS = ['regulatory_defense', 'enterprise', 'government'];
 
 /** Zod schema for POST /reports request body */
 const createReportSchema = z.object({

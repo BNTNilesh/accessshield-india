@@ -45,22 +45,20 @@ export function DashboardHome() {
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200 rounded-2xl p-8 shadow-md">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-3">Dashboard</h1>
-        <p className="text-lg text-gray-700 font-medium">
-          Welcome back. Here&apos;s your accessibility compliance overview.
-        </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-text-primary">Dashboard</h1>
+        <p className="mt-1 text-sm text-text-secondary">Your accessibility compliance overview.</p>
       </div>
 
       {isLoading ? (
-        <LoadingState message="Loading dashboard overview…" variant="page" />
+        <LoadingState message="Loading dashboard overview…" variant="inline" size="sm" />
       ) : (
         <>
           <div
             role="list"
             aria-label="Key metrics"
-            className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
           >
             <KPICard
               label="Accessibility Score"

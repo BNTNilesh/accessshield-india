@@ -20,7 +20,7 @@ export function DashboardActivityBar() {
   return (
     <div className="w-full shrink-0" role="status" aria-live="polite" aria-atomic="true">
       {isMutating ? (
-        <div className="flex items-center justify-center gap-2 bg-primary-600 px-4 py-2 text-sm font-medium text-white">
+        <div className="flex items-center justify-center gap-2 bg-primary-600/95 px-4 py-1.5 text-xs font-medium text-white">
           <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
           <span>Processing your request…</span>
         </div>

@@ -12,6 +12,7 @@ export interface DropdownMenuItem {
   disabled?: boolean;
   destructive?: boolean;
   shortcut?: string;
+  divider?: boolean;
   items?: DropdownMenuItem[];
 }
 
@@ -27,7 +28,9 @@ function MenuItems({ items }: { items: DropdownMenuItem[] }) {
   return (
     <>
       {items.map((item) =>
-        item.items ? (
+        item.divider ? (
+          <DropdownMenuPrimitive.Separator key={item.id} className="my-1 h-px bg-border" />
+        ) : item.items ? (
           <DropdownMenuPrimitive.Sub key={item.id}>
             <DropdownMenuPrimitive.SubTrigger
               className={cn(

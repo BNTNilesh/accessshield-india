@@ -359,8 +359,18 @@ export default function RPwDActPage() {
               that exceed IS 17802 requirements and represent global best practice.
             </p>
             <p>
-              <Link href="/blog" className="font-medium text-primary-600 hover:text-primary-700">
-                Read our detailed IS 17802 guide →
+              <Link
+                href="/is-17802"
+                className="font-medium text-primary-600 hover:text-primary-700"
+              >
+                Read our full IS 17802 guide →
+              </Link>
+              {' · '}
+              <Link
+                href="/wcag-2-2-aa"
+                className="font-medium text-primary-600 hover:text-primary-700"
+              >
+                WCAG 2.2 AA guide →
               </Link>
             </p>
           </div>

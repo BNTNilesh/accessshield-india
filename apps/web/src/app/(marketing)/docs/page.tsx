@@ -49,9 +49,21 @@ export default function DocsPage() {
         <p className="mt-2">
           Learn about{' '}
           <Link href="/rpwd-act" className="text-primary-600 hover:text-primary-700">
-            RPwD Act &amp; IS 17802
-          </Link>{' '}
-          and{' '}
+            RPwD Act
+          </Link>
+          ,{' '}
+          <Link href="/is-17802" className="text-primary-600 hover:text-primary-700">
+            IS 17802
+          </Link>
+          ,{' '}
+          <Link href="/gigw" className="text-primary-600 hover:text-primary-700">
+            GIGW 3.0
+          </Link>
+          ,{' '}
+          <Link href="/wcag-2-2-aa" className="text-primary-600 hover:text-primary-700">
+            WCAG 2.2 AA
+          </Link>
+          , and{' '}
           <Link href="/sebi-accessibility" className="text-primary-600 hover:text-primary-700">
             SEBI accessibility requirements
           </Link>

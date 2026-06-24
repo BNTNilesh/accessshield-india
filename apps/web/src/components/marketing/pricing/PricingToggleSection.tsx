@@ -1,108 +1,36 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ButtonAnchor, ButtonLink } from '@/components/marketing/ButtonLink';
+import {
+  auditCheckoutSubline,
+  formatSubscriptionPrice,
+  PRICING_CATALOG,
+  SUBSCRIPTION_PLANS,
+  type BillingPeriod,
+  type SubscriptionPlan,
+} from '@/lib/pricing/catalog';
 
-type BillingPeriod = 'monthly' | 'annual';
-
-interface PlanFeature {
-  text: string;
-  included: boolean;
-}
-
-interface Plan {
-  name: string;
-  description: string;
-  monthlyPrice: number;
-  annualPrice: number;
-  popular?: boolean;
-  features: PlanFeature[];
-  cta: {
-    text: string;
-    href: string;
-  };
+function PlanBadges({ plan }: { plan: SubscriptionPlan }) {
+  return (
+    <div className="mb-3 flex flex-wrap justify-center gap-2">
+      {plan.badge && (
+        <span className="inline-flex rounded-full bg-primary-100 px-3 py-0.5 text-xs font-semibold text-primary-700">
+          {plan.badge}
+        </span>
+      )}
+      {plan.remediationRequired && (
+        <span className="inline-flex rounded-full bg-accent-100 px-3 py-0.5 text-xs font-semibold text-accent-700">
+          Remediation required
+        </span>
+      )}
+    </div>
+  );
 }
 
 export function PricingToggleSection() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
-
-  const plans: Plan[] = [
-    {
-      name: 'Starter',
-      description: 'Always free — one microsite and basic scanning',
-      monthlyPrice: 0,
-      annualPrice: 0,
-      features: [
-        { text: '1 website', included: true },
-        { text: '3 scans per month', included: true },
-        { text: 'WCAG 2.2 AA + IS 17802', included: true },
-        { text: 'Basic violation reporting', included: true },
-        { text: 'Email support', included: true },
-        { text: 'Accessibility widget SDK', included: false },
-        { text: 'AI fix suggestions', included: false },
-        { text: 'SEBI compliance report', included: false },
-      ],
-      cta: {
-        text: 'Get started free',
-        href: '/signup',
-      },
-    },
-    {
-      name: 'Professional',
-      description: 'Scanning, AI fixes, and accessibility widget for growing teams',
-      monthlyPrice: 3999,
-      annualPrice: 39990,
-      popular: true,
-      features: [
-        { text: 'Up to 10 websites', included: true },
-        { text: 'Unlimited compliance scans', included: true },
-        { text: 'WCAG 2.2 AA + IS 17802 + GIGW', included: true },
-        { text: 'Accessibility widget SDK included', included: true },
-        { text: 'Hindi + English widget UI', included: true },
-        { text: 'Font size, contrast & dyslexia tools', included: true },
-        { text: 'AI fix suggestions', included: true },
-        { text: 'Priority email + chat support', included: true },
-        { text: 'SEBI compliance report', included: false },
-      ],
-      cta: {
-        text: 'Start 14-day trial',
-        href: '/signup',
-      },
-    },
-    {
-      name: 'Enterprise',
-      description: 'Listed companies, BFSI, and large organisations',
-      monthlyPrice: 12999,
-      annualPrice: 129990,
-      features: [
-        { text: 'Unlimited websites', included: true },
-        { text: 'Unlimited scans', included: true },
-        { text: 'All standards + custom rules', included: true },
-        { text: 'Widget SDK + custom branding', included: true },
-        { text: 'White-label reports', included: true },
-        { text: 'Dedicated account manager', included: true },
-        { text: 'AI fix suggestions', included: true },
-        { text: 'SEBI report (1/year included)', included: true },
-        { text: 'GIGW 3.0 + RPwD legal reporting', included: true },
-      ],
-      cta: {
-        text: 'Contact sales',
-        href: process.env.NEXT_PUBLIC_CALENDLY_URL || '/contact?plan=enterprise',
-      },
-    },
-  ];
-
-  const formatPrice = (rupees: number, period: BillingPeriod) => {
-    if (rupees === 0) return 'Free';
-    const formatted = new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(rupees);
-
-    const suffix = period === 'annual' ? '/year' : '/month';
-    return `${formatted}${suffix}`;
-  };
 
   const salesHref = (href: string) => href.startsWith('http');
 
@@ -114,8 +42,9 @@ export function PricingToggleSection() {
           Pick your monthly plan
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-normal text-text-secondary">
-          All subscription prices exclude 18% GST. Annual billing saves ~17% (pay for 10 months, get
-          12).
+          Stay protected after remediation with continuous monitoring — or add the accessibility
+          widget on its own. All plans cover <strong>one website</strong>. Prices exclude 18% GST.
+          Annual billing saves ~17% (pay for 10 months, get 12).
         </p>
       </div>
 
@@ -154,9 +83,9 @@ export function PricingToggleSection() {
       </div>
 
       <div className="mt-12 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-3 lg:gap-8">
-        {plans.map((plan) => (
+        {SUBSCRIPTION_PLANS.map((plan) => (
           <div
-            key={plan.name}
+            key={plan.id}
             className={`relative flex flex-col rounded-lg border bg-white p-6 shadow-sm lg:p-8 ${
               plan.popular ? 'border-primary-600 border-2 shadow-lg' : 'border-gray-200'
             }`}
@@ -164,31 +93,42 @@ export function PricingToggleSection() {
             {plan.popular && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                 <span className="inline-flex rounded-full bg-primary-600 px-4 py-1 text-sm font-semibold text-white">
-                  Most popular
+                  Recommended
                 </span>
               </div>
             )}
 
             <div className="text-center">
+              <PlanBadges plan={plan} />
               <h3 className="text-2xl font-bold text-text-primary">{plan.name}</h3>
               <p className="mt-2 text-sm leading-normal text-text-secondary">{plan.description}</p>
 
               <div className="mt-6">
                 <div className="text-4xl font-bold text-text-primary">
-                  {formatPrice(
-                    billingPeriod === 'monthly' ? plan.monthlyPrice : plan.annualPrice,
+                  {formatSubscriptionPrice(
+                    plan.monthlyPriceInr,
+                    plan.annualPriceInr,
                     billingPeriod,
                   )}
                 </div>
-                {plan.monthlyPrice > 0 && billingPeriod === 'annual' && (
+                {billingPeriod === 'annual' && (
                   <div className="mt-1 text-sm text-text-tertiary">
-                    {formatPrice(plan.annualPrice / 12, 'monthly')} billed annually
+                    {formatSubscriptionPrice(
+                      plan.annualPriceInr / 12,
+                      plan.annualPriceInr,
+                      'monthly',
+                    )}{' '}
+                    billed annually
                   </div>
                 )}
-                {plan.monthlyPrice > 0 && (
-                  <p className="mt-1 text-xs text-text-tertiary">+ 18% GST</p>
-                )}
+                <p className="mt-1 text-xs text-text-tertiary">+ 18% GST</p>
               </div>
+
+              {plan.auditRequired && (
+                <p className="mt-4 text-xs leading-normal text-text-secondary">
+                  {auditCheckoutSubline()}
+                </p>
+              )}
 
               {salesHref(plan.cta.href) ? (
                 <ButtonAnchor
@@ -197,7 +137,7 @@ export function PricingToggleSection() {
                   rel="noopener noreferrer"
                   size="lg"
                   variant={plan.popular ? 'primary' : 'secondary'}
-                  className="mt-8 w-full"
+                  className="mt-6 w-full"
                 >
                   {plan.cta.text}
                 </ButtonAnchor>
@@ -206,7 +146,7 @@ export function PricingToggleSection() {
                   href={plan.cta.href}
                   size="lg"
                   variant={plan.popular ? 'primary' : 'secondary'}
-                  className="mt-8 w-full"
+                  className="mt-6 w-full"
                 >
                   {plan.cta.text}
                 </ButtonLink>
@@ -214,52 +154,57 @@ export function PricingToggleSection() {
             </div>
 
             <ul className="mt-8 flex-1 space-y-3" role="list">
-              {plan.features.map((feature, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  {feature.included ? (
-                    <svg
-                      className="mt-0.5 h-5 w-5 shrink-0 text-green-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="mt-0.5 h-5 w-5 shrink-0 text-gray-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  )}
-                  <span
-                    className={`text-sm leading-normal ${
-                      feature.included ? 'text-text-primary' : 'text-text-tertiary'
-                    }`}
+              {plan.features.map((feature) => (
+                <li key={feature} className="flex items-start gap-3">
+                  <svg
+                    className="mt-0.5 h-5 w-5 shrink-0 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
                   >
-                    {feature.text}
-                  </span>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span className="text-sm leading-normal text-text-primary">{feature}</span>
                 </li>
               ))}
             </ul>
           </div>
         ))}
       </div>
+
+      <aside
+        className="mx-auto mt-10 max-w-3xl rounded-lg border border-gray-200 bg-bg-secondary p-6 text-sm leading-normal text-text-secondary"
+        aria-label="Which plan fits you"
+      >
+        <h3 className="text-base font-semibold text-text-primary">Which plan fits you?</h3>
+        <p className="mt-2">
+          The <strong>Widget Only</strong> plan (₹
+          {PRICING_CATALOG.subscriptions.widget.monthlyPriceInr.toLocaleString('en-IN')}/mo) is a
+          standalone product — install it on any website to add accessibility controls instantly, no
+          audit or remediation required.
+        </p>
+        <p className="mt-2">
+          <strong>Compliance Shield</strong> and <strong>Regulatory Defense</strong> are reserved
+          for clients who have completed a full audit and remediation through us, since ongoing
+          monitoring and badge renewal require a remediated, certified site as a baseline.
+        </p>
+      </aside>
+
+      <p className="mt-8 text-center text-sm text-text-secondary">
+        Need multiple websites or a government deployment?{' '}
+        <Link
+          href="/contact?plan=enterprise"
+          className="font-medium text-primary-600 underline hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+        >
+          Contact sales for Enterprise
+        </Link>
+      </p>
     </div>
   );
 }

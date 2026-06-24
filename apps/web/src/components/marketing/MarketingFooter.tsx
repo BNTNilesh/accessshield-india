@@ -23,18 +23,23 @@ export function MarketingFooter() {
               </li>
               <li>
                 <Link
-                  href="/rpwd-act#is17802"
+                  href="/is-17802"
                   className="text-base text-text-secondary hover:text-primary-600"
                 >
                   IS 17802
                 </Link>
               </li>
               <li>
+                <Link href="/gigw" className="text-base text-text-secondary hover:text-primary-600">
+                  GIGW 3.0
+                </Link>
+              </li>
+              <li>
                 <Link
-                  href="/rpwd-act#gigw"
+                  href="/wcag-2-2-aa"
                   className="text-base text-text-secondary hover:text-primary-600"
                 >
-                  GIGW 3.0
+                  WCAG 2.2 AA
                 </Link>
               </li>
               <li>

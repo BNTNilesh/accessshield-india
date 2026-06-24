@@ -49,14 +49,18 @@ function readRole(value: unknown): UserRole | undefined {
 /**
  * Extract AccessShield tenant claims from JWT + optional user record metadata.
  *
- * Custom access token hooks inject into JWT app_metadata; the Auth user object
- * may not mirror those fields until refreshed — always prefer the access token.
+ * Prefer the Supabase user record (from getUser) over JWT payload — app_metadata
+ * can be updated server-side before the access token is refreshed.
  */
 export function parseAccessShieldClaims(
   accessToken: string | null | undefined,
   userAppMetadata?: Record<string, unknown> | null,
 ): ParsedAccessShieldClaims {
   const sources: Record<string, unknown>[] = [];
+
+  if (userAppMetadata) {
+    sources.push(userAppMetadata);
+  }
 
   if (accessToken) {
     try {
@@ -66,10 +70,6 @@ export function parseAccessShieldClaims(
     } catch {
       // Malformed token — fall through to user metadata
     }
-  }
-
-  if (userAppMetadata) {
-    sources.push(userAppMetadata);
   }
 
   let user_role: UserRole | undefined;

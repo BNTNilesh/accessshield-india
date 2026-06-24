@@ -11,19 +11,19 @@ export function StandardsSection() {
     {
       name: 'IS 17802',
       description: 'Indian Standard for ICT Accessibility — aligned with WCAG 2.1 AA',
-      href: '/rpwd-act#is17802',
+      href: '/is-17802',
       icon: '🇮🇳',
     },
     {
       name: 'GIGW 3.0',
       description: 'Guidelines for Indian Government Websites — WCAG 2.0 Level A compliance',
-      href: '/rpwd-act#gigw',
+      href: '/gigw',
       icon: '🏛️',
     },
     {
       name: 'WCAG 2.2 AA',
       description: 'Web Content Accessibility Guidelines — international accessibility standard',
-      href: '/rpwd-act#wcag',
+      href: '/wcag-2-2-aa',
       icon: '🌐',
     },
     {

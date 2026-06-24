@@ -8,9 +8,12 @@ import { Button, Badge, Progress, getButtonStyle, getButtonThemeClassName } from
 import { cn } from '@/lib/utils';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
-const PLAN_NAMES = {
+const PLAN_NAMES: Record<string, string> = {
   trial: 'Trial',
   starter: 'Starter',
+  widget: 'Widget Only',
+  compliance_shield: 'Compliance Shield',
+  regulatory_defense: 'Regulatory Defense',
   professional: 'Professional',
   enterprise: 'Enterprise',
   government: 'Government',

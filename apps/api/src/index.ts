@@ -126,7 +126,7 @@ async function bootstrap() {
   const integrationsRouter = createIntegrationsRouter(db);
   app.use('/api/v1/integrations', integrationsRouter);
 
-  const adminRouter = createAdminRouter(db, secrets);
+  const adminRouter = createAdminRouter(db, secrets, redis);
   app.use('/api/v1/admin', adminRouter);
 
   app.use((_req, res) => {

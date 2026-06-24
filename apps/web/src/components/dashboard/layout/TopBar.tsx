@@ -22,7 +22,7 @@ export function TopBar() {
     });
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-white px-6">
+    <header className="flex h-14 items-center justify-between border-b border-gray-200/90 bg-white px-5">
       <Breadcrumb items={breadcrumbItems} aria-label="Breadcrumb navigation" />
 
       <div className="flex items-center gap-4">

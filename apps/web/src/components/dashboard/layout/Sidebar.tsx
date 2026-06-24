@@ -12,8 +12,8 @@ import {
   Award,
   Settings,
   Shield,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 import type { UserRole } from '@accessshield/types';
 import { useUIStore } from '@/lib/stores/uiStore';
@@ -51,37 +51,35 @@ export function Sidebar({ userRole }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex flex-col border-r border-gray-200 bg-white shadow-xl transition-all duration-300',
-        sidebarCollapsed ? 'w-20' : 'w-72',
+        'flex flex-col border-r border-gray-200/90 bg-white transition-all duration-200',
+        sidebarCollapsed ? 'w-[4.5rem]' : 'w-60',
       )}
       aria-label="Sidebar navigation"
     >
-      {/* Logo */}
-      <div className="flex h-20 items-center justify-between border-b border-gray-200 bg-gradient-to-r from-primary-50 to-white px-6 shadow-sm">
+      <div className="flex h-14 items-center justify-between border-b border-gray-100 px-4">
         {!sidebarCollapsed && (
           <Link
             href="/dashboard"
-            className="text-xl font-extrabold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56A0] focus-visible:ring-offset-2 rounded"
+            className="text-base font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
           >
             AccessShield
           </Link>
         )}
         <button
           onClick={toggleSidebar}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-primary-100 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56A0] focus-visible:ring-offset-2 transition-colors shadow-sm border border-gray-200"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-tertiary hover:bg-gray-100 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-expanded={!sidebarCollapsed}
         >
           {sidebarCollapsed ? (
-            <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            <PanelLeft className="h-4 w-4" aria-hidden="true" />
           ) : (
-            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
           )}
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-2 p-4" aria-label="Main navigation">
+      <nav className="flex-1 space-y-0.5 p-2" aria-label="Main navigation">
         {navItems.map((item) => {
           const isActive =
             item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
@@ -99,7 +97,7 @@ export function Sidebar({ userRole }: SidebarProps) {
               )}
               title={sidebarCollapsed ? item.label : undefined}
             >
-              <Icon className="h-5 w-5 shrink-0 text-current" aria-hidden="true" />
+              <Icon className="h-4 w-4 shrink-0 text-current" aria-hidden="true" />
               {!sidebarCollapsed && <span>{item.label}</span>}
             </Link>
           );

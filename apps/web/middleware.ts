@@ -52,10 +52,14 @@ export async function middleware(request: NextRequest) {
   });
 
   const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const user = session?.user ?? null;
+  const user = authUser ?? session?.user ?? null;
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
