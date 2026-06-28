@@ -67,7 +67,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-xl font-semibold text-text-primary">7. Governing law</h2>
         <p className="mt-2">
-          These terms are governed by the laws of India. Courts in Bengaluru, Karnataka shall have
+          These terms are governed by the laws of India. Courts in Pune, Maharashtra shall have
           exclusive jurisdiction, subject to applicable consumer protection laws.
         </p>
       </section>

@@ -6,6 +6,7 @@ import {
 } from '@/components/marketing/pricing/PricingServicesSection';
 import { WidgetComplianceDisclaimer } from '@/components/marketing/pricing/WidgetComplianceDisclaimer';
 import { FAQSection } from '@/components/marketing/pricing/FAQSection';
+import { MarketingVisual, ServicesIllustration } from '@/components/marketing/visuals';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -79,25 +80,36 @@ export default function ServicesPage() {
   return (
     <div className="px-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
-            Services &amp; Pricing
-          </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary sm:text-4xl lg:text-5xl">
-            Everything you need to stay compliant
-          </h1>
-          <p className="mx-auto mt-4 max-w-3xl text-lg leading-normal text-text-secondary">
-            Three building blocks for <strong>one website</strong>: a comprehensive audit,
-            remediation sized to your site, and ongoing monitoring so you never fall out of
-            compliance. Prices exclude 18% GST.
-          </p>
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_minmax(240px,400px)] lg:gap-16">
+          <div className="text-center lg:text-left">
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
+              Services &amp; Pricing
+            </p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary sm:text-4xl lg:text-5xl">
+              Everything you need to stay compliant
+            </h1>
+            <p className="mt-4 max-w-3xl text-lg leading-normal text-text-secondary lg:mx-0 mx-auto">
+              Three building blocks for <strong>one website</strong>: a comprehensive audit,
+              remediation sized to your site, and ongoing monitoring so you never fall out of
+              compliance. Prices exclude 18% GST.
+            </p>
+          </div>
+
+          <MarketingVisual
+            label="Compliance audit and certification"
+            className="mx-auto w-full max-w-md lg:max-w-none"
+          >
+            <ServicesIllustration />
+          </MarketingVisual>
         </div>
 
-        <PricingToggleSection />
-        <WidgetComplianceDisclaimer />
-        <PricingRemediationSection />
-        <PricingAuditAddonSection />
-        <PricingRegulatoryAddonsSection />
+        <div className="mt-16">
+          <PricingToggleSection />
+          <WidgetComplianceDisclaimer />
+          <PricingRemediationSection />
+          <PricingAuditAddonSection />
+          <PricingRegulatoryAddonsSection />
+        </div>
 
         <div className="mt-24">
           <FAQSection items={servicesFaqs} />

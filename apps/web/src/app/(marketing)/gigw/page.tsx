@@ -6,6 +6,7 @@ import { FAQSection } from '@/components/marketing/pricing/FAQSection';
 import { GuideCheckItem } from '@/components/marketing/guides/GuideCheckItem';
 import { GuideSectionNav } from '@/components/marketing/guides/GuideSectionNav';
 import { GuideStepList } from '@/components/marketing/guides/GuideStepList';
+import { GovernmentGuideIllustration, GuidePageHero } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'GIGW 3.0 — Guidelines for Indian Government Websites',
@@ -87,19 +88,14 @@ const complySteps = [
 export default function GIGWPage() {
   return (
     <>
-      <header className="bg-primary-50 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-primary-700">
-            Government framework
-          </p>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
-            GIGW 3.0 — Government Website Guidelines
-          </h1>
-          <p className="mt-6 text-lg leading-normal text-text-secondary">
-            The official framework for accessible, secure, and citizen-friendly Indian government
-            websites
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <GuidePageHero
+        eyebrow="Government framework"
+        title="GIGW 3.0 — Government Website Guidelines"
+        description="The official framework for accessible, secure, and citizen-friendly Indian government websites"
+        visual={<GovernmentGuideIllustration />}
+        visualLabel="Indian government website guidelines"
+        badges={
+          <>
             <Badge variant="secondary" size="md">
               NIC / MeitY
             </Badge>
@@ -112,9 +108,9 @@ export default function GIGWPage() {
             <Badge variant="secondary" size="md">
               .gov.in domains
             </Badge>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <GuideSectionNav sections={sections} />
 

@@ -13,6 +13,7 @@ import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 import { syncIssuesFromViolations } from '../services/issue-sync';
 import { generateIssueAiAltText, generateIssueAiFix } from '../services/ai-enrichment';
+import { isDevPreviewAiFix, stripDevPreviewComment } from '../lib/dev-mock-ai';
 
 const listIssuesSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -341,6 +342,7 @@ export function createIssuesRouter(db: Database): ExpressRouter {
         }
 
         const wcagCriterion = row.violationWcag?.[0] ?? null;
+        const aiFixAfter = row.violationAiFix ? stripDevPreviewComment(row.violationAiFix) : null;
 
         const response: ApiResponse<Record<string, unknown>> = {
           data: {
@@ -386,9 +388,12 @@ export function createIssuesRouter(db: Database): ExpressRouter {
             elementSelector: row.violationSelector,
             wcagCriterion,
             wcagTitle: wcagCriterion ? `WCAG ${wcagCriterion}` : null,
-            aiFixSuggestion: row.violationAiFix,
+            aiFixSuggestion: aiFixAfter,
             aiExplanation: row.violationAiExplanation,
             aiAltText: row.violationAiAltText,
+            aiFixDevPreview: isDevPreviewAiFix(row.violationAiExplanation, row.violationAiFix),
+            aiFixBefore: row.violationHtml,
+            aiFixAfter,
             comments: [],
             labels: [],
           },

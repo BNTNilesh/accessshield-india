@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MarketingContentPage } from '@/components/marketing/MarketingContentPage';
+import { DocsIllustration } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'Documentation',
@@ -13,6 +14,8 @@ export default function DocsPage() {
     <MarketingContentPage
       title="Documentation"
       description="Quick start guide for AccessShield India customers."
+      visual={<DocsIllustration />}
+      visualLabel="Documentation and getting started guides"
     >
       <section>
         <h2 className="text-xl font-semibold text-text-primary">1. Start a free scan</h2>

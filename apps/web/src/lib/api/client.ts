@@ -78,6 +78,10 @@ async function apiFetch<T>(path: string, token: string, init?: RequestInit): Pro
     throw new ApiError(problem);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -94,6 +98,11 @@ export async function createAsset(token: string, input: CreateAssetInput): Promi
     body: JSON.stringify(input),
   });
   return response.data;
+}
+
+/** Permanently delete an asset and all related scans, violations, and issues */
+export async function deleteAsset(token: string, assetId: string): Promise<void> {
+  await apiFetch<void>(`/api/v1/assets/${assetId}`, token, { method: 'DELETE' });
 }
 
 /** Queue a new accessibility scan */

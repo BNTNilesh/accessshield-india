@@ -5,6 +5,7 @@ import { SectionNav } from '@/components/marketing/rpwd/SectionNav';
 import { PenaltyCard } from '@/components/marketing/rpwd/PenaltyCard';
 import { CTABanner } from '@/components/marketing/home/CTABanner';
 import { FAQSection } from '@/components/marketing/pricing/FAQSection';
+import { GuidePageHero, LegalGuideIllustration } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'RPwD Act 2016 — Digital Accessibility Guide',
@@ -58,18 +59,14 @@ const rpwdFaqs = [
 export default function RPwDActPage() {
   return (
     <>
-      <header className="bg-primary-50 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-primary-700">
-            Legal guide
-          </p>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
-            Rights of Persons with Disabilities Act, 2016
-          </h1>
-          <p className="mt-6 text-lg leading-normal text-text-secondary">
-            Plain-English guide for Indian businesses and website owners
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <GuidePageHero
+        eyebrow="Legal guide"
+        title="Rights of Persons with Disabilities Act, 2016"
+        description="Plain-English guide for Indian businesses and website owners"
+        visual={<LegalGuideIllustration />}
+        visualLabel="RPwD Act 2016 legal framework"
+        badges={
+          <>
             <Badge variant="secondary" size="md">
               Act No. 49 of 2016
             </Badge>
@@ -82,9 +79,9 @@ export default function RPwDActPage() {
             <Badge variant="secondary" size="md">
               Enforced by DEPwD
             </Badge>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <SectionNav />
 

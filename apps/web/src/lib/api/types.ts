@@ -173,6 +173,9 @@ export interface IssueDetail extends Issue {
   aiFixSuggestion?: string | null;
   aiExplanation?: string | null;
   aiAltText?: string | null;
+  aiFixDevPreview?: boolean;
+  aiFixBefore?: string | null;
+  aiFixAfter?: string | null;
   comments: IssueComment[];
   labels: string[];
 }

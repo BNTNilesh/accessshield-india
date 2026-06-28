@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MarketingContentPage } from '@/components/marketing/MarketingContentPage';
+import { CareersIllustration } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'Careers',
@@ -12,9 +13,11 @@ export default function CareersPage() {
     <MarketingContentPage
       title="Careers"
       description="We're building India's leading accessibility compliance platform. Come help us make the web work for everyone."
+      visual={<CareersIllustration />}
+      visualLabel="Career growth and team building"
     >
       <p>
-        We&apos;re a small, mission-driven team in Bengaluru. We care deeply about accessibility,
+        We&apos;re a small, mission-driven team in Pune. We care deeply about accessibility,
         inclusive design, and building software that meets WCAG 2.2 AA standards — including our own
         product.
       </p>

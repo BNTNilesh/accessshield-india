@@ -146,11 +146,4 @@ async def generate_fix(request: FixRequest) -> FixResponse:
             request.violation_id,
             str(e),
         )
-        return FixResponse(
-            fix_html="",
-            aria_fix={},
-            explanation="",
-            before_after={},
-            is_quick_win=False,
-            cached=False,
-        )
+        raise

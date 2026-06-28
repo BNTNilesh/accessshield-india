@@ -12,6 +12,7 @@ import type { NextFunction, Request, Response, Router as ExpressRouter } from 'e
 import { Router } from 'express';
 import { z } from 'zod';
 import { getAssetLimit } from '../lib/plan-limits';
+import { logger } from '../lib/logger';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 
@@ -143,6 +144,48 @@ export function createAssetsRouter(db: Database): ExpressRouter {
         };
 
         res.status(201).json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  /**
+   * DELETE /assets/:id — Permanently remove an asset and all related data
+   *
+   * Cascades to issues, scans, violations, certificates, and reports via FK constraints.
+   */
+  router.delete(
+    '/:id',
+    requireRoles('customer_admin', 'accessibility_officer', 'developer'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const orgId = req.user!.org_id;
+        const assetId = req.params.id;
+
+        if (!assetId || !z.string().uuid().safeParse(assetId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid asset ID');
+          return;
+        }
+
+        const [asset] = await db
+          .select({ id: assets.id, name: assets.name })
+          .from(assets)
+          .where(and(eq(assets.id, assetId), eq(assets.organisationId, orgId)))
+          .limit(1);
+
+        if (!asset) {
+          sendProblem(res, 404, 'not-found', 'Asset not found');
+          return;
+        }
+
+        await db
+          .delete(assets)
+          .where(and(eq(assets.id, assetId), eq(assets.organisationId, orgId)));
+
+        logger.info({ assetId, orgId, assetName: asset.name }, 'Asset deleted');
+
+        res.status(204).send();
       } catch (err) {
         next(err);
       }

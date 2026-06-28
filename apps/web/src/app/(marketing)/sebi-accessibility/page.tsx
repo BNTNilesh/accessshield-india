@@ -4,6 +4,7 @@ import { ButtonLink } from '@/components/marketing/ButtonLink';
 import { DeadlineBanner } from '@/components/marketing/sebi/DeadlineBanner';
 import { EntityGrid } from '@/components/marketing/sebi/EntityGrid';
 import { FAQSection } from '@/components/marketing/pricing/FAQSection';
+import { FinanceGuideIllustration, GuidePageHero } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'SEBI Accessibility Compliance Guide 2026',
@@ -51,17 +52,13 @@ export default function SEBIAccessibilityPage() {
         <DeadlineBanner />
       </div>
 
-      <header className="bg-gradient-to-b from-white to-gray-50 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
-            SEBI digital accessibility compliance
-          </h1>
-          <p className="mt-6 text-lg leading-normal text-text-secondary">
-            SEBI&apos;s 2024 circular requires all stock brokers, AMCs, depositories, and investment
-            advisers to audit their digital platforms for WCAG 2.1 AA accessibility by April 2026.
-          </p>
-        </div>
-      </header>
+      <GuidePageHero
+        eyebrow="SEBI circular 2024"
+        title="SEBI digital accessibility compliance"
+        description="SEBI's 2024 circular requires all stock brokers, AMCs, depositories, and investment advisers to audit their digital platforms for WCAG 2.1 AA accessibility by April 2026."
+        visual={<FinanceGuideIllustration />}
+        visualLabel="SEBI regulated financial platform accessibility"
+      />
 
       <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <section aria-labelledby="entities-heading">

@@ -1,3 +1,7 @@
+import { Award, ClipboardList, ScanSearch, Wrench, type LucideIcon } from 'lucide-react';
+
+const STEP_ICONS: LucideIcon[] = [ScanSearch, ClipboardList, Wrench, Award];
+
 export function HowItWorksSection() {
   const steps = [
     {
@@ -38,27 +42,33 @@ export function HowItWorksSection() {
         </div>
 
         <ol className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step) => (
-            <li
-              key={step.number}
-              className="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex items-center justify-center">
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-600 text-xl font-bold text-white"
-                  aria-hidden="true"
-                >
-                  {step.number}
+          {steps.map((step, index) => {
+            const Icon = STEP_ICONS[index] ?? ScanSearch;
+            return (
+              <li
+                key={step.number}
+                className="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+              >
+                <div className="flex items-center justify-center">
+                  <div
+                    className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 text-primary-600 ring-2 ring-primary-100"
+                    aria-hidden="true"
+                  >
+                    <Icon className="h-7 w-7" strokeWidth={1.75} />
+                  </div>
                 </div>
-              </div>
-              <h3 className="mt-4 text-center text-xl font-semibold text-text-primary">
-                {step.title}
-              </h3>
-              <p className="mt-2 text-center text-base leading-normal text-text-secondary">
-                {step.description}
-              </p>
-            </li>
-          ))}
+                <p className="mt-3 text-center text-xs font-semibold uppercase tracking-wide text-primary-600">
+                  Step {step.number}
+                </p>
+                <h3 className="mt-2 text-center text-xl font-semibold text-text-primary">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-center text-base leading-normal text-text-secondary">
+                  {step.description}
+                </p>
+              </li>
+            );
+          })}
         </ol>
       </div>
     </section>

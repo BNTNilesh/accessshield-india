@@ -78,7 +78,7 @@ class TestGenerateFix:
 
     @pytest.mark.asyncio
     async def test_handles_exception(self):
-        """Exception returns empty response."""
+        """Unexpected errors propagate to the API layer."""
         request = FixRequest(
             rule_id="image-alt",
             element_html="<img src='logo.png'>",
@@ -87,15 +87,13 @@ class TestGenerateFix:
             page_context="",
             violation_id="test-violation",
         )
-        
+
         mock_cache = MagicMock()
         mock_cache.get = AsyncMock(side_effect=Exception("Redis error"))
-        
+
         with patch("services.fix_suggestion.cache", mock_cache):
-            response = await generate_fix(request)
-        
-        assert response.fix_html == ""
-        assert response.cached is False
+            with pytest.raises(Exception, match="Redis error"):
+                await generate_fix(request)
 
 
 class TestFixResponse:

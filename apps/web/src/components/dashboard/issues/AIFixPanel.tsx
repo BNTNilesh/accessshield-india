@@ -9,6 +9,12 @@ import { Tabs } from '@accessshield/ui';
 import { CopyButton } from '@accessshield/ui';
 import { Button } from '@accessshield/ui';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
+import {
+  DevPreviewBanner,
+  FixBeforeAfter,
+  isIssueDevPreviewFix,
+  resolveFixBeforeAfter,
+} from '@/components/dashboard/issues/AiFixDisplay';
 import { Lightbulb, Code, Type } from 'lucide-react';
 
 async function fetchIssueDetail(token: string, issueId: string): Promise<IssueDetail> {
@@ -71,9 +77,12 @@ export function AIFixPanel({ issueId }: AIFixPanelProps) {
         current
           ? {
               ...current,
-              aiFixSuggestion: data.aiFixSuggestion ?? current.aiFixSuggestion,
-              aiExplanation: data.aiExplanation ?? current.aiExplanation,
+              aiFixSuggestion: data.aiFixSuggestion ?? null,
+              aiExplanation: data.aiExplanation ?? null,
               aiAltText: data.aiAltText ?? current.aiAltText,
+              aiFixDevPreview: data.aiFixDevPreview === true,
+              aiFixBefore: data.aiFixBefore ?? current.aiFixBefore,
+              aiFixAfter: data.aiFixAfter ?? null,
             }
           : current,
       );
@@ -91,7 +100,11 @@ export function AIFixPanel({ issueId }: AIFixPanelProps) {
   }, [issueId]);
 
   useEffect(() => {
-    if (isLoading || !issue || issue.aiFixSuggestion || fixAttempted.current) {
+    if (isLoading || !issue || fixAttempted.current) {
+      return;
+    }
+    const hasRealFix = Boolean(issue.aiFixSuggestion) && !isIssueDevPreviewFix(issue);
+    if (hasRealFix) {
       return;
     }
     fixAttempted.current = true;
@@ -162,36 +175,73 @@ function AIFixTab({
   onRetry: () => void;
 }) {
   if (issue.aiFixSuggestion) {
+    const devPreview = isIssueDevPreviewFix(issue);
+    const beforeAfter = resolveFixBeforeAfter(issue);
+    const isRegenerating = status === 'pending';
+
     return (
       <div className="space-y-4">
-        <div className="rounded-md border border-border bg-bg-secondary p-4">
-          <h3 className="text-sm font-semibold text-text-primary mb-2">Suggested Fix</h3>
-          <div className="relative">
-            <pre
-              className="overflow-x-auto rounded-md bg-gray-900 p-4 text-sm text-gray-100 font-mono"
-              aria-label="Code diff showing before and after the accessibility fix"
-            >
-              <code>{issue.aiFixSuggestion}</code>
-            </pre>
-            <div className="absolute top-2 right-2">
-              <CopyButton
-                text={issue.aiFixSuggestion}
-                label="Copy fixed HTML"
-                variant="secondary"
-              />
+        {devPreview && <DevPreviewBanner />}
+
+        {devPreview && status === 'success' && !isRegenerating && (
+          <p className="text-sm text-error-700" role="alert">
+            Regeneration completed but Claude was not used. Ensure{' '}
+            <code className="rounded bg-error-100 px-1 text-xs">INTERNAL_AI_SERVICE_KEY</code> is
+            set in the repo root{' '}
+            <code className="rounded bg-error-100 px-1 text-xs">.env.local</code> and restart the
+            API, then run{' '}
+            <code className="rounded bg-error-100 px-1 text-xs">
+              pnpm --filter @accessshield/ai-service dev
+            </code>
+            .
+          </p>
+        )}
+
+        {beforeAfter ? (
+          <FixBeforeAfter beforeHtml={beforeAfter.beforeHtml} afterHtml={beforeAfter.afterHtml} />
+        ) : (
+          <div className="rounded-md border border-border bg-bg-secondary p-4">
+            <h3 className="text-sm font-semibold text-text-primary mb-2">Suggested Fix</h3>
+            <div className="relative">
+              <pre
+                className="overflow-x-auto rounded-md bg-gray-900 p-4 text-sm text-gray-100 font-mono"
+                aria-label="Suggested fixed HTML"
+              >
+                <code>{issue.aiFixSuggestion}</code>
+              </pre>
+              <div className="absolute top-2 right-2">
+                <CopyButton
+                  text={issue.aiFixSuggestion}
+                  label="Copy fixed HTML"
+                  variant="secondary"
+                />
+              </div>
             </div>
           </div>
-        </div>
-
-        {issue.jiraIssueKey ? (
-          <Button variant="outline" size="sm" disabled>
-            Already synced to Jira
-          </Button>
-        ) : (
-          <Button variant="primary" size="sm">
-            Apply to Jira
-          </Button>
         )}
+
+        <div className="flex flex-wrap gap-3">
+          {devPreview && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onRetry}
+              disabled={isRegenerating}
+              aria-busy={isRegenerating}
+            >
+              {isRegenerating ? 'Regenerating…' : 'Regenerate with Claude'}
+            </Button>
+          )}
+          {issue.jiraIssueKey ? (
+            <Button variant="outline" size="sm" disabled>
+              Already synced to Jira
+            </Button>
+          ) : (
+            <Button variant="primary" size="sm">
+              Apply to Jira
+            </Button>
+          )}
+        </div>
       </div>
     );
   }

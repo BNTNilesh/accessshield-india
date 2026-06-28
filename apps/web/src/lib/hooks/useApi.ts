@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import {
   listAssets,
   createAsset,
+  deleteAsset,
   createScan,
   getScan,
   listScans,
@@ -46,6 +47,31 @@ export function useCreateAsset() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast.success('Asset created successfully');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useDeleteAsset() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async ({ assetId }: { assetId: string; redirectTo?: string }) => {
+      const token = await getAccessToken();
+      await deleteAsset(token, assetId);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
+      queryClient.invalidateQueries({ queryKey: ['scans'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      toast.success('Asset deleted');
+      if (variables.redirectTo) {
+        router.push(variables.redirectTo);
+      }
     },
     onError: (error: ApiError) => {
       toast.error(error.message);

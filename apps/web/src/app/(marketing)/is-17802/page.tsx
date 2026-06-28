@@ -6,6 +6,7 @@ import { FAQSection } from '@/components/marketing/pricing/FAQSection';
 import { GuideCheckItem } from '@/components/marketing/guides/GuideCheckItem';
 import { GuideSectionNav } from '@/components/marketing/guides/GuideSectionNav';
 import { GuideStepList } from '@/components/marketing/guides/GuideStepList';
+import { GuidePageHero, StandardsGuideIllustration } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'IS 17802 — Indian ICT Accessibility Standard Guide',
@@ -87,18 +88,14 @@ const complySteps = [
 export default function IS17802Page() {
   return (
     <>
-      <header className="bg-primary-50 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-primary-700">
-            Technical standard
-          </p>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
-            IS 17802 — Indian ICT Accessibility
-          </h1>
-          <p className="mt-6 text-lg leading-normal text-text-secondary">
-            India&apos;s national standard for accessible websites, apps, and digital documents
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <GuidePageHero
+        eyebrow="Technical standard"
+        title="IS 17802 — Indian ICT Accessibility"
+        description="India's national standard for accessible websites, apps, and digital documents"
+        visual={<StandardsGuideIllustration />}
+        visualLabel="IS 17802 accessibility standards overview"
+        badges={
+          <>
             <Badge variant="secondary" size="md">
               BIS IS 17802:2020
             </Badge>
@@ -111,9 +108,9 @@ export default function IS17802Page() {
             <Badge variant="secondary" size="md">
               22 Indian languages
             </Badge>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <GuideSectionNav sections={sections} />
 

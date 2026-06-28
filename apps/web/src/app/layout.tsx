@@ -31,8 +31,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     foundingDate: '2024',
     address: {
       '@type': 'PostalAddress',
-      addressLocality: 'Bengaluru',
-      addressRegion: 'Karnataka',
+      addressLocality: 'Pune',
+      addressRegion: 'Maharashtra',
       addressCountry: 'IN',
     },
     contactPoint: {

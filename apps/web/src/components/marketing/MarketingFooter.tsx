@@ -181,7 +181,7 @@ export function MarketingFooter() {
           <p className="text-sm text-text-secondary">
             &copy; {currentYear} AccessShield India. All rights reserved.
             <span className="ml-4">GSTIN: 29AABCA1234B1ZS</span>
-            <span className="ml-4">Bengaluru, Karnataka, India</span>
+            <span className="ml-4">Pune, Maharashtra, India</span>
           </p>
         </div>
       </div>

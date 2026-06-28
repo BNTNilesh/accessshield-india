@@ -6,6 +6,7 @@ import { Card, Badge, Button, getButtonStyle, getButtonThemeClassName } from '@a
 import { cn, formatRelativeTime } from '@/lib/utils';
 import type { Asset } from '@/lib/api/types';
 import { useTriggerScan } from '@/lib/hooks/useApi';
+import { DeleteAssetDialog } from '@/components/dashboard/assets/DeleteAssetDialog';
 
 function stableScoreFromId(id: string): number {
   let hash = 0;
@@ -40,22 +41,25 @@ export function AssetCard({ asset }: AssetCardProps) {
       className="group hover:shadow-xl transition-all duration-300 border-gray-200 hover:border-primary-300 bg-white overflow-hidden"
     >
       <div className="p-6 space-y-4">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-3">
           <h2
             id={`asset-${asset.id}-name`}
-            className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors"
+            className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors min-w-0 flex-1"
           >
             {asset.name}
           </h2>
-          <div
-            className={`flex h-16 w-16 items-center justify-center rounded-2xl border-2 text-xl font-extrabold shadow-lg ${getScoreColor(score)}`}
-            role="meter"
-            aria-valuenow={score}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`Score: ${score}`}
-          >
-            {score}
+          <div className="flex shrink-0 items-start gap-2">
+            <DeleteAssetDialog asset={asset} variant="icon" />
+            <div
+              className={`flex h-16 w-16 items-center justify-center rounded-2xl border-2 text-xl font-extrabold shadow-lg ${getScoreColor(score)}`}
+              role="meter"
+              aria-valuenow={score}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Score: ${score}`}
+            >
+              {score}
+            </div>
           </div>
         </div>
 

@@ -1,7 +1,12 @@
 import { logger } from './logger';
 
-const AI_SERVICE_URL = (process.env.AI_SERVICE_URL ?? 'http://localhost:8001').replace(/\/$/, '');
-const INTERNAL_AI_KEY = process.env.INTERNAL_AI_SERVICE_KEY ?? '';
+/** Read at request time — module-level reads miss .env.local loaded after import hoisting. */
+function getAiServiceConfig(): { url: string; internalKey: string } {
+  return {
+    url: (process.env.AI_SERVICE_URL ?? 'http://localhost:8001').replace(/\/$/, ''),
+    internalKey: process.env.INTERNAL_AI_SERVICE_KEY ?? '',
+  };
+}
 
 export interface AiFixRequestBody {
   rule_id: string;
@@ -36,10 +41,10 @@ export interface AiAltTextResponseBody {
   cached?: boolean;
 }
 
-function aiHeaders(orgId: string, planTier: string): Record<string, string> {
+function aiHeaders(orgId: string, planTier: string, internalKey: string): Record<string, string> {
   return {
     'Content-Type': 'application/json',
-    'X-Internal-Key': INTERNAL_AI_KEY,
+    'X-Internal-Key': internalKey,
     'X-Org-Id': orgId,
     'X-Org-Plan': planTier,
   };
@@ -50,13 +55,15 @@ export async function requestAiFix(
   orgId: string,
   planTier: string,
 ): Promise<AiFixResponseBody> {
-  if (!INTERNAL_AI_KEY) {
+  const { url, internalKey } = getAiServiceConfig();
+
+  if (!internalKey) {
     throw new Error('AI service is not configured (INTERNAL_AI_SERVICE_KEY missing)');
   }
 
-  const response = await fetch(`${AI_SERVICE_URL}/ai/fix`, {
+  const response = await fetch(`${url}/ai/fix`, {
     method: 'POST',
-    headers: aiHeaders(orgId, planTier),
+    headers: aiHeaders(orgId, planTier, internalKey),
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(60_000),
   });
@@ -79,13 +86,15 @@ export async function requestAiAltText(
   orgId: string,
   planTier: string,
 ): Promise<AiAltTextResponseBody> {
-  if (!INTERNAL_AI_KEY) {
+  const { url, internalKey } = getAiServiceConfig();
+
+  if (!internalKey) {
     throw new Error('AI service is not configured (INTERNAL_AI_SERVICE_KEY missing)');
   }
 
-  const response = await fetch(`${AI_SERVICE_URL}/ai/alt-text`, {
+  const response = await fetch(`${url}/ai/alt-text`, {
     method: 'POST',
-    headers: aiHeaders(orgId, planTier),
+    headers: aiHeaders(orgId, planTier, internalKey),
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(60_000),
   });

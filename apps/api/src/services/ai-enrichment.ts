@@ -2,7 +2,12 @@ import type { Database } from '@accessshield/db';
 import { assets, issues, organisations, violations } from '@accessshield/db';
 import { and, eq } from 'drizzle-orm';
 import { requestAiAltText, requestAiFix } from '../lib/ai-client';
-import { buildDevMockAltText, buildDevMockFix } from '../lib/dev-mock-ai';
+import {
+  buildDevMockAltText,
+  buildDevMockFix,
+  isDevPreviewAiFix,
+  stripDevPreviewComment,
+} from '../lib/dev-mock-ai';
 import { getPlanFeatures } from '../lib/plan-limits';
 import { logger } from '../lib/logger';
 
@@ -10,6 +15,40 @@ export interface IssueAiEnrichment {
   aiFixSuggestion: string | null;
   aiExplanation: string | null;
   aiAltText: string | null;
+  aiFixDevPreview?: boolean;
+  aiFixBefore?: string | null;
+  aiFixAfter?: string | null;
+}
+
+/** Dev mock only when the AI service cannot be reached — not for Claude/model errors. */
+function isAiServiceUnreachable(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    message.includes('fetch failed') ||
+    message.includes('ECONNREFUSED') ||
+    message.includes('ENOTFOUND') ||
+    message.includes('not configured') ||
+    message.includes('AI service is temporarily unavailable')
+  );
+}
+
+function buildAiFixEnrichment(row: {
+  elementHtml: string;
+  aiFix: string | null;
+  aiExplanation: string | null;
+  aiAltText: string | null;
+}): IssueAiEnrichment {
+  const devPreview = isDevPreviewAiFix(row.aiExplanation, row.aiFix);
+  const afterHtml = row.aiFix ? stripDevPreviewComment(row.aiFix) : null;
+
+  return {
+    aiFixSuggestion: afterHtml,
+    aiExplanation: row.aiExplanation,
+    aiAltText: row.aiAltText,
+    aiFixDevPreview: devPreview,
+    aiFixBefore: row.elementHtml || null,
+    aiFixAfter: afterHtml,
+  };
 }
 
 async function loadIssueViolation(
@@ -86,16 +125,16 @@ export async function generateIssueAiFix(
     throw new Error('AI remediation is not available on your plan');
   }
 
-  if (row.aiFix) {
-    return {
-      aiFixSuggestion: row.aiFix,
-      aiExplanation: row.aiExplanation,
-      aiAltText: row.aiAltText,
-    };
+  // Skip cached dev mocks so a fixed AI service can regenerate real Claude fixes.
+  if (row.aiFix && !isDevPreviewAiFix(row.aiExplanation, row.aiFix)) {
+    return buildAiFixEnrichment(row);
   }
 
   let fixHtml = '';
   let explanation = '';
+  let fixBefore: string | null = row.elementHtml || null;
+  let fixAfter: string | null = null;
+  let fixDevPreview = false;
 
   try {
     const response = await requestAiFix(
@@ -112,17 +151,22 @@ export async function generateIssueAiFix(
     );
     fixHtml = response.fix_html?.trim() ?? '';
     explanation = response.explanation?.trim() ?? '';
+    fixBefore = response.before_after?.before?.trim() || row.elementHtml || null;
+    fixAfter = response.before_after?.after?.trim() || fixHtml || null;
   } catch (err) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' || !isAiServiceUnreachable(err)) {
       throw err;
     }
     logger.warn(
       { err, issueId, violationId: row.violationId },
-      'AI fix failed — using dev fallback',
+      'AI service unreachable — using dev fallback',
     );
     const mock = buildDevMockFix(row.ruleId, row.elementHtml, row.description, row.wcagCriterion);
     fixHtml = mock.fixHtml;
     explanation = mock.explanation;
+    fixBefore = mock.beforeHtml;
+    fixAfter = mock.afterHtml;
+    fixDevPreview = true;
   }
 
   if (!fixHtml && !explanation) {
@@ -138,10 +182,16 @@ export async function generateIssueAiFix(
     })
     .where(and(eq(violations.id, row.violationId), eq(violations.organisationId, orgId)));
 
+  const storedFix = fixHtml || row.elementHtml;
+  const afterHtml = fixAfter ?? storedFix;
+
   return {
-    aiFixSuggestion: fixHtml || row.elementHtml,
+    aiFixSuggestion: afterHtml,
     aiExplanation: explanation || null,
     aiAltText: row.aiAltText,
+    aiFixDevPreview: fixDevPreview,
+    aiFixBefore: fixBefore,
+    aiFixAfter: afterHtml,
   };
 }
 

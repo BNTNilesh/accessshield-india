@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     database_url: str
 
     # Claude model configuration
-    claude_model: str = "claude-sonnet-4-20250514"
+    claude_model: str = "claude-sonnet-4-5-20250929"
     max_tokens_alt_text: int = 256
     max_tokens_fix: int = 1024
     max_tokens_advice: int = 512

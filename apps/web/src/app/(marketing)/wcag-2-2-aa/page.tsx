@@ -6,6 +6,7 @@ import { FAQSection } from '@/components/marketing/pricing/FAQSection';
 import { GuideCheckItem } from '@/components/marketing/guides/GuideCheckItem';
 import { GuideSectionNav } from '@/components/marketing/guides/GuideSectionNav';
 import { GuideStepList } from '@/components/marketing/guides/GuideStepList';
+import { GuidePageHero, StandardsGuideIllustration } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'WCAG 2.2 AA — Web Accessibility Guidelines Guide',
@@ -88,19 +89,14 @@ const complySteps = [
 export default function WCAG22Page() {
   return (
     <>
-      <header className="bg-primary-50 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-primary-700">
-            International standard
-          </p>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
-            WCAG 2.2 Level AA
-          </h1>
-          <p className="mt-6 text-lg leading-normal text-text-secondary">
-            The global benchmark for accessible web content — and what Indian businesses need to
-            know
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <GuidePageHero
+        eyebrow="International standard"
+        title="WCAG 2.2 Level AA"
+        description="The global benchmark for accessible web content — and what Indian businesses need to know"
+        visual={<StandardsGuideIllustration />}
+        visualLabel="WCAG 2.2 accessibility guidelines"
+        badges={
+          <>
             <Badge variant="secondary" size="md">
               W3C WAI
             </Badge>
@@ -113,9 +109,9 @@ export default function WCAG22Page() {
             <Badge variant="secondary" size="md">
               POUR framework
             </Badge>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <GuideSectionNav sections={sections} />
 

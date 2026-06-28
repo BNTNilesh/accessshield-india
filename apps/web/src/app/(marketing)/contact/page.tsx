@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MarketingContentPage } from '@/components/marketing/MarketingContentPage';
+import { ContactIllustration } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'Contact',
@@ -15,6 +16,8 @@ export default function ContactPage() {
     <MarketingContentPage
       title="Contact us"
       description="We're here to help with accessibility compliance, product questions, and enterprise plans."
+      visual={<ContactIllustration />}
+      visualLabel="Customer support and communication"
     >
       <div className="space-y-4">
         <p>
@@ -36,7 +39,7 @@ export default function ContactPage() {
           </a>
         </p>
         <p>
-          <strong className="text-text-primary">Office:</strong> Bengaluru, Karnataka, India
+          <strong className="text-text-primary">Office:</strong> Pune, Maharashtra, India
         </p>
         {calendlyUrl && calendlyUrl !== '#' && (
           <p>
