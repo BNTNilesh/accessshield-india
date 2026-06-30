@@ -10,10 +10,13 @@ import type { ApiResponse } from '@accessshield/types';
 import { and, count, desc, eq } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
+import multer from 'multer';
 import { z } from 'zod';
 import { getAssetLimit } from '../lib/plan-limits';
 import { logger } from '../lib/logger';
 import { sendProblem } from '../lib/problem-details';
+import { uploadMobileApp } from '../services/s3-upload';
+import { buildMobileAssetDescription } from '../lib/mobile-asset';
 import { requireRoles } from '../middleware/rbac';
 
 const createAssetSchema = z.object({
@@ -140,6 +143,169 @@ export function createAssetsRouter(db: Database): ExpressRouter {
 
         const response: ApiResponse<typeof created> = {
           data: created,
+          timestamp: new Date().toISOString(),
+        };
+
+        res.status(201).json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  /**
+   * POST /assets/mobile — Upload a mobile app (APK/IPA) and create asset
+   */
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 500 * 1024 * 1024 }, // 500MB max
+    fileFilter: (_req, file, cb) => {
+      const validTypes = [
+        'application/vnd.android.package-archive', // APK
+        'application/octet-stream', // IPA (often served as this)
+      ];
+      const validExtensions = ['.apk', '.ipa'];
+      const ext = file.originalname.toLowerCase().slice(-4);
+
+      if (validTypes.includes(file.mimetype) || validExtensions.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only APK and IPA files are allowed.'));
+      }
+    },
+  });
+
+  router.post(
+    '/mobile',
+    requireRoles('customer_admin', 'accessibility_officer', 'developer'),
+    upload.single('file'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const orgId = req.user!.org_id;
+        const file = req.file;
+
+        if (!file) {
+          sendProblem(res, 400, 'validation-error', 'No file uploaded');
+          return;
+        }
+
+        const { name, platform, description, maxScreens, standards } = req.body;
+
+        if (!name || !platform) {
+          sendProblem(res, 400, 'validation-error', 'Missing required fields: name, platform');
+          return;
+        }
+
+        if (!['android', 'ios'].includes(platform)) {
+          sendProblem(res, 400, 'validation-error', 'Platform must be android or ios');
+          return;
+        }
+
+        // Check plan limits
+        const [org] = await db
+          .select({ planTier: organisations.planTier })
+          .from(organisations)
+          .where(eq(organisations.id, orgId))
+          .limit(1);
+
+        const planTier = org?.planTier ?? 'starter';
+        const assetLimit = getAssetLimit(planTier);
+
+        if (assetLimit !== null) {
+          const [assetCountResult] = await db
+            .select({ count: count() })
+            .from(assets)
+            .where(and(eq(assets.organisationId, orgId), eq(assets.isActive, true)));
+
+          const currentCount = assetCountResult?.count ?? 0;
+          if (currentCount >= assetLimit) {
+            sendProblem(
+              res,
+              422,
+              'plan-limit-exceeded',
+              `Your ${planTier} plan allows up to ${assetLimit} asset(s). Upgrade to add more.`,
+            );
+            return;
+          }
+        }
+
+        // Create asset first to get the ID
+        const [created] = await db
+          .insert(assets)
+          .values({
+            organisationId: orgId,
+            name,
+            url: `mobile://${platform}/pending`,
+            type: 'mobile_app',
+            description: description || null,
+          })
+          .returning({
+            id: assets.id,
+            name: assets.name,
+            url: assets.url,
+            type: assets.type,
+            description: assets.description,
+            createdAt: assets.createdAt,
+          });
+
+        if (!created) {
+          sendProblem(res, 500, 'db-error', 'Failed to create asset');
+          return;
+        }
+
+        // Upload file to S3
+        const s3Key = await uploadMobileApp(
+          file.buffer,
+          orgId,
+          created.id,
+          platform as 'android' | 'ios',
+          file.originalname,
+        );
+
+        const parsedStandards = (() => {
+          try {
+            const raw = standards ? JSON.parse(standards) : {};
+            const selected = Object.entries(raw)
+              .filter(([, enabled]) => enabled)
+              .map(([key]) => {
+                if (key === 'wcag22') return 'WCAG22';
+                if (key === 'is17802') return 'IS17802';
+                if (key === 'sebi') return 'SEBI';
+                return null;
+              })
+              .filter((value): value is 'WCAG22' | 'IS17802' | 'SEBI' => value !== null);
+            return selected.length > 0 ? selected : ['WCAG22', 'IS17802'];
+          } catch {
+            return ['WCAG22', 'IS17802'] as Array<'WCAG22' | 'IS17802' | 'SEBI'>;
+          }
+        })();
+
+        const mobileDescription = buildMobileAssetDescription(
+          {
+            platform: platform as 'android' | 'ios',
+            appS3Key: s3Key,
+            maxScreens: maxScreens ? Number(maxScreens) : 50,
+            standards: parsedStandards,
+          },
+          description || undefined,
+        );
+
+        const mobileUrl = `mobile://${platform}/${created.id}`;
+
+        await db
+          .update(assets)
+          .set({ description: mobileDescription, url: mobileUrl })
+          .where(and(eq(assets.id, created.id), eq(assets.organisationId, orgId)));
+
+        const assetWithMetadata = { ...created, description: mobileDescription, url: mobileUrl };
+
+        logger.info(
+          { assetId: created.id, orgId, platform, s3Key, fileSize: file.size },
+          'Mobile app uploaded',
+        );
+
+        const response: ApiResponse<typeof assetWithMetadata & { s3Key: string }> = {
+          data: { ...assetWithMetadata, s3Key },
           timestamp: new Date().toISOString(),
         };
 

@@ -50,6 +50,33 @@ services:
       timeout: 10s
       retries: 5
 
+  mobile-scanner:
+    build:
+      context: .
+      dockerfile: apps/mobile-scanner/Dockerfile
+    container_name: accessshield-mobile-scanner
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/accessshield}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://accessshield:accessshield@rabbitmq:5672}
+      - AWS_REGION=${AWS_REGION:-ap-south-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - CLOUDFRONT_URL=${CLOUDFRONT_URL}
+      - BROWSERSTACK_USERNAME=${BROWSERSTACK_USERNAME}
+      - BROWSERSTACK_ACCESS_KEY=${BROWSERSTACK_ACCESS_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   redis_data:

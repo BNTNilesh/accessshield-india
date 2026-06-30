@@ -12,6 +12,10 @@
     "@accessshield/ai-service#build": {
       "outputs": []
     },
+    "@accessshield/mobile-scanner#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
@@ -30,6 +34,10 @@
     },
     "db:migrate": {
       "cache": false
+    },
+    "worker": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

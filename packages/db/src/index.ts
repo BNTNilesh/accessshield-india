@@ -3,6 +3,7 @@ import postgres from 'postgres';
 import * as schema from './schema';
 
 export * from './schema';
+export { eq, and, or, not, isNull, isNotNull, inArray, sql, desc, asc } from 'drizzle-orm';
 export {
   lookupUserByAuthId,
   lookupUserClaimsByAuthId,

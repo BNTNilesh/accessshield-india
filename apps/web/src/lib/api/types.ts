@@ -60,6 +60,9 @@ export interface ScanDetail {
   id: string;
   organisationId: string;
   assetId: string;
+  assetName?: string | null;
+  assetUrl?: string | null;
+  assetType?: Asset['type'];
   status: 'pending' | 'running' | 'completed' | 'failed';
   wcagLevel: string;
   wcagVersion: string;
@@ -236,12 +239,7 @@ export interface UpdateIssueInput {
 // ─── Reports ─────────────────────────────────────────────────────────────
 
 export type ReportType =
-  | 'executive'
-  | 'technical'
-  | 'wcag_compliance'
-  | 'legal_rpwd'
-  | 'sebi'
-  | 'accessibility_statement';
+  'executive' | 'technical' | 'wcag_compliance' | 'legal_rpwd' | 'sebi' | 'accessibility_statement';
 export type ReportFormat = 'pdf' | 'html';
 
 export interface Report {
@@ -306,11 +304,7 @@ export interface RevokeCertificateInput {
 // ─── Users and Teams ──────────────────────────────────────────────────────
 
 export type UserRole =
-  | 'super_admin'
-  | 'customer_admin'
-  | 'accessibility_officer'
-  | 'developer'
-  | 'auditor';
+  'super_admin' | 'customer_admin' | 'accessibility_officer' | 'developer' | 'auditor';
 
 export interface User {
   id: string;

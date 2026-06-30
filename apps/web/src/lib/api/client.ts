@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
-import { apiUrl } from './base';
+import { apiUrl, getApiBase } from './base';
 import type {
   ApiResponse,
   Asset,
@@ -98,6 +98,38 @@ export async function createAsset(token: string, input: CreateAssetInput): Promi
     body: JSON.stringify(input),
   });
   return response.data;
+}
+
+/** Register a new mobile app asset with APK/IPA file upload */
+export async function createMobileAsset(token: string, formData: FormData): Promise<Asset> {
+  const baseUrl = getApiBase();
+  const url = baseUrl ? `${baseUrl}/api/v1/assets/mobile` : '/api/v1/assets/mobile';
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let problem: ApiError['problem'];
+    try {
+      problem = (await response.json()) as ApiError['problem'];
+    } catch {
+      problem = {
+        type: 'https://api.accessshield.in/problems/unknown',
+        title: 'Request failed',
+        status: response.status,
+        detail: response.statusText,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    throw new ApiError(problem);
+  }
+
+  const result = (await response.json()) as ApiResponse<Asset>;
+  return result.data;
 }
 
 /** Permanently delete an asset and all related scans, violations, and issues */

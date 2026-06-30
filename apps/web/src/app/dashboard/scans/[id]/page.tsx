@@ -63,6 +63,10 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
   }
 
   const isActive = scan.status === 'running' || scan.status === 'pending';
+  const isMobileScan = scan.assetType === 'mobile_app' || scan.assetUrl?.startsWith('mobile://');
+  const workerHint = isMobileScan
+    ? 'Make sure the mobile scanner worker is running: pnpm --filter @accessshield/mobile-scanner worker'
+    : 'Make sure the API scan worker is running: pnpm --filter @accessshield/api dev:worker';
   const severityCounts = (violationsData?.rows ?? []).reduce(
     (acc, row) => {
       acc[row.impact] = (acc[row.impact] ?? 0) + 1;
@@ -120,9 +124,7 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
             </>
           ) : (
             <p className="text-sm text-primary-600">
-              {scan.status === 'pending'
-                ? 'Make sure the API scan worker is running: pnpm --filter @accessshield/api dev:worker'
-                : 'Starting scan…'}
+              {scan.status === 'pending' ? workerHint : 'Starting scan…'}
             </p>
           )}
         </div>

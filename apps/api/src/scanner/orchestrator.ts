@@ -12,6 +12,7 @@ import type { ApiResponse, IssueSeverity, PaginationMeta } from '@accessshield/t
 import { and, count, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import amqp from 'amqplib';
 import type { Redis } from 'ioredis';
 import { z } from 'zod';
@@ -22,6 +23,8 @@ import type { ComplianceStandard, ScanJobMessage, ScanProgress, WcagLevel } from
 import { DEFAULT_SCAN_CONFIG, DEFAULT_VIEWPORTS } from './types';
 import { getScanLimit, isScanLimitDisabled } from '../lib/plan-limits';
 import { closeScanQueue, publishScanJob } from './queue';
+import { publishMobileScanJob } from './mobile-queue';
+import { parseMobileAssetMetadata } from '../lib/mobile-asset';
 
 /** Zod schema for POST /scans request body */
 const createScanSchema = z.object({
@@ -240,6 +243,85 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
           return;
         }
 
+        if (asset.type === 'mobile_app') {
+          const mobileMeta = parseMobileAssetMetadata(asset.description, asset.url);
+
+          if (!mobileMeta?.appS3Key) {
+            await db
+              .update(scans)
+              .set({
+                status: 'failed',
+                errorMessage: 'Mobile app file not found. Please re-upload the APK/IPA.',
+              })
+              .where(eq(scans.id, newScan.id));
+
+            sendProblem(
+              res,
+              422,
+              'mobile-app-missing',
+              'Mobile app file not found',
+              'This asset has no uploaded APK/IPA. Delete it and upload the app again.',
+            );
+            return;
+          }
+
+          const mobileScanId = randomUUID();
+          const mobileJob = {
+            scanId: newScan.id,
+            mobileScanId,
+            mobileAppId: asset_id,
+            orgId,
+            assetId: asset_id,
+            platform: mobileMeta.platform,
+            ...(mobileMeta.platform === 'android'
+              ? { apkS3Key: mobileMeta.appS3Key }
+              : { ipaS3Key: mobileMeta.appS3Key }),
+            config: {
+              standards: mobileMeta.standards,
+              maxScreens: max_pages ?? mobileMeta.maxScreens,
+            },
+          };
+
+          try {
+            await publishMobileScanJob(mobileJob);
+          } catch (err) {
+            logger.error({ err, scanId: newScan.id }, 'Failed to publish mobile scan job');
+            await db
+              .update(scans)
+              .set({ status: 'failed', errorMessage: 'Failed to queue mobile scan job' })
+              .where(eq(scans.id, newScan.id));
+
+            sendProblem(
+              res,
+              500,
+              'queue-error',
+              'Failed to queue mobile scan',
+              'The mobile scan could not be queued. Please try again.',
+            );
+            return;
+          }
+
+          const response: ApiResponse<{
+            scanId: string;
+            status: string;
+            message: string;
+            previousScanId?: string;
+            scanType: 'mobile';
+          }> = {
+            data: {
+              scanId: newScan.id,
+              status: 'pending',
+              message: 'Mobile scan queued successfully',
+              scanType: 'mobile',
+              ...(previousScan ? { previousScanId: previousScan.id } : {}),
+            },
+            timestamp: new Date().toISOString(),
+          };
+
+          res.status(201).json(response);
+          return;
+        }
+
         const scanJob: ScanJobMessage = {
           scanId: newScan.id,
           assetId: asset_id,
@@ -331,8 +413,12 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
             errorMessage: scans.errorMessage,
             createdAt: scans.createdAt,
             assetId: scans.assetId,
+            assetName: assets.name,
+            assetUrl: assets.url,
+            assetType: assets.type,
           })
           .from(scans)
+          .innerJoin(assets, eq(scans.assetId, assets.id))
           .where(and(eq(scans.id, scanId), eq(scans.organisationId, orgId)))
           .limit(1);
 

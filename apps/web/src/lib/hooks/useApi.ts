@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import {
   listAssets,
   createAsset,
+  createMobileAsset,
   deleteAsset,
   createScan,
   getScan,
@@ -47,6 +48,24 @@ export function useCreateAsset() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast.success('Asset created successfully');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useCreateMobileAsset() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (formData: FormData) => {
+      const token = await getAccessToken();
+      return createMobileAsset(token, formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      toast.success('Mobile app uploaded and asset created');
     },
     onError: (error: ApiError) => {
       toast.error(error.message);
