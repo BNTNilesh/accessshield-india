@@ -10,9 +10,9 @@ import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const PLAN_NAMES: Record<string, string> = {
   trial: 'Trial',
-  starter: 'Starter',
+  starter: 'Free',
   widget: 'Widget Only',
-  compliance_shield: 'Compliance Shield',
+  compliance_shield: 'Stay Compliant',
   regulatory_defense: 'Regulatory Defense',
   professional: 'Professional',
   enterprise: 'Enterprise',

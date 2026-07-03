@@ -8,11 +8,11 @@ import { WidgetFeatureGrid } from '@/components/marketing/widget/WidgetFeatureGr
 export const metadata: Metadata = {
   title: 'Accessibility Widget',
   description:
-    'AccessShield India accessibility widget — lightweight toolbar for font size, contrast, reading aids, Hindi UI, and text-to-speech on every page.',
+    'Help visitors with disabilities use your website — font size, contrast, dyslexia tools, Hindi UI, and keyboard enhancements. Built for Indian sites.',
   openGraph: {
     title: 'Accessibility Widget | AccessShield India',
     description:
-      'Give every visitor one-click control over font, contrast, reading tools, and speech — built for Indian websites.',
+      'A toolbar for visitors who need larger text, higher contrast, reading aids, or Hindi UI — one click, no login required.',
     type: 'website',
   },
   alternates: {
@@ -52,12 +52,16 @@ export default function WidgetPage() {
             The Widget
           </p>
           <h1 className="mt-4 text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-[3.25rem] lg:leading-tight">
-            Accessibility for every visitor, on every page
+            Help visitors with disabilities use your site
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl">
-            The AccessShield widget is a lightweight toolbar for your website. Visitors customize
-            their experience with one click — font size, contrast, reading guides, Hindi UI,
-            text-to-speech, and more.
+            The AccessShield widget is a lightweight toolbar for people who need larger text, higher
+            contrast, dyslexia-friendly fonts, Hindi UI, keyboard tools, or text-to-speech — one
+            click, no login required.
+          </p>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-text-tertiary">
+            <span lang="hi">सभी के लिए डिजिटल पहुँच</span> — accessibility for every visitor, on
+            every page.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <ButtonLink href="/signup" size="lg" variant="primary" className="min-w-[240px]">

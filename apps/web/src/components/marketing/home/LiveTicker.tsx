@@ -2,17 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
-const companies = [
-  'HDFC Bank · Mumbai',
-  'Infosys · Bengaluru',
-  'TCS · Chennai',
-  'ICICI Bank · Mumbai',
-  'Wipro · Bengaluru',
-  'Axis Bank · Mumbai',
-  'Tech Mahindra · Pune',
-  'Kotak Mahindra · Mumbai',
-  'HCL Technologies · Noida',
-  'L&T Infotech · Mumbai',
+const sectors = [
+  'BFSI & listed companies',
+  'PSUs & central ministries',
+  'State govt portals',
+  'SEBI-regulated entities',
+  'Government ICT vendors',
+  'Healthcare & insurance',
+  'E-commerce & fintech',
+  'Public sector banks',
 ];
 
 export function LiveTicker() {
@@ -27,20 +25,23 @@ export function LiveTicker() {
 
   return (
     <div
-      className="border-y border-gray-200 bg-white py-4"
-      aria-label="Companies currently being protected"
+      className="border-y border-primary-200 bg-primary-900 py-3.5"
+      aria-label="Sectors we serve across India"
     >
       <div className="relative overflow-hidden">
         <div
-          className={`flex gap-8 ${isPaused ? '' : 'animate-marquee'}`}
+          className={`flex gap-10 ${isPaused ? '' : 'animate-marquee'}`}
           style={{
-            animation: isPaused ? 'none' : 'marquee 40s linear infinite',
+            animation: isPaused ? 'none' : 'marquee 45s linear infinite',
           }}
         >
-          {[...companies, ...companies].map((company, i) => (
-            <div key={i} className="flex items-center gap-2 whitespace-nowrap">
-              <span className="inline-block h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
-              <span className="text-sm font-medium text-text-secondary">{company}</span>
+          {[...sectors, ...sectors].map((sector, i) => (
+            <div key={i} className="flex items-center gap-2.5 whitespace-nowrap">
+              <span
+                className="inline-block h-2 w-2 rounded-full bg-accent-600"
+                aria-hidden="true"
+              />
+              <span className="text-sm font-medium text-primary-100">{sector}</span>
             </div>
           ))}
         </div>

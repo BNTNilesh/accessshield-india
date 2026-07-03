@@ -23,9 +23,9 @@ import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const PLAN_OPTIONS = [
   { value: 'trial', label: 'Trial' },
-  { value: 'starter', label: 'Starter' },
+  { value: 'starter', label: 'Free' },
   { value: 'widget', label: 'Widget Only' },
-  { value: 'compliance_shield', label: 'Compliance Shield' },
+  { value: 'compliance_shield', label: 'Stay Compliant' },
   { value: 'regulatory_defense', label: 'Regulatory Defense' },
   { value: 'professional', label: 'Professional' },
   { value: 'enterprise', label: 'Enterprise' },

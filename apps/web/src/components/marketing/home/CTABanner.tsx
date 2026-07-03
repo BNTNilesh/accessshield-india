@@ -1,21 +1,45 @@
+import { Badge } from '@accessshield/ui';
 import { ButtonAnchor, ButtonLink } from '@/components/marketing/ButtonLink';
+import { MarketingImage } from '@/components/marketing/visuals/MarketingImage';
 
 export function CTABanner() {
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL;
 
   return (
-    <section className="bg-primary-900 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto max-w-4xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          Your SEBI deadline is approaching. Are you compliant?
+    <section className="relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <div className="absolute inset-0" aria-hidden="true">
+        <MarketingImage
+          src="/marketing/enterprise-govt-compliance.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-primary-900/88" />
+      </div>
+
+      <div className="relative mx-auto max-w-4xl text-center">
+        <div className="flex justify-center">
+          <Badge
+            variant="outline"
+            size="lg"
+            className="border-2 border-primary-400 bg-primary-800/80 text-primary-100"
+          >
+            SEBI deadline: April 2026
+          </Badge>
+        </div>
+        <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          Everyone deserves to use your website
         </h2>
         <p className="mt-6 text-lg leading-normal text-primary-100">
-          Listed companies must comply with SEBI accessibility rules by April 2026. Don&apos;t wait
-          for the penalty notice — get compliant today.
+          Crores of Indians live with a disability. If they cannot complete a payment, sign up, or
+          read your content, your product is not finished. SEBI, RPwD, and GIGW require accessible
+          digital services — but the real reason to act is simpler:{' '}
+          <strong className="font-semibold text-white">inclusion is good business.</strong>
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <ButtonLink href="/scan" size="lg" variant="onDark" className="min-w-[220px]">
-            Scan my website free
+            Scan for accessibility barriers
           </ButtonLink>
           <ButtonAnchor
             href={calendlyUrl || '/contact'}

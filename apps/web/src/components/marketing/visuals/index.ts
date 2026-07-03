@@ -14,5 +14,7 @@ export { GuidePageHero } from './GuidePageHero';
 export type { GuidePageHeroProps } from './GuidePageHero';
 export { MarketingPageHero } from './MarketingPageHero';
 export type { MarketingPageHeroProps } from './MarketingPageHero';
+export { MarketingImage } from './MarketingImage';
+export type { MarketingImageProps } from './MarketingImage';
 export { MarketingVisual } from './MarketingVisual';
 export type { MarketingVisualProps } from './MarketingVisual';

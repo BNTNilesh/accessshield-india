@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: '%s | AccessShield India',
   },
   description:
-    'AI-powered WCAG 2.2 AA compliance platform for Indian organisations. Scan, remediate, and certify your digital assets.',
+    'AI-powered digital accessibility platform for Indian organisations — make websites and apps usable by people with disabilities, with WCAG 2.2 AA, IS 17802, and SEBI compliance.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     name: 'AccessShield India',
     url: 'https://accessshield.in',
     description:
-      'AI-powered digital accessibility compliance platform for Indian organisations. WCAG 2.2 AA, IS 17802, and SEBI compliance.',
+      'Digital accessibility platform for Indian organisations — websites and apps usable by people with disabilities, with WCAG 2.2 AA, IS 17802, and SEBI compliance.',
     logo: 'https://accessshield.in/logo.png',
     foundingDate: '2024',
     address: {

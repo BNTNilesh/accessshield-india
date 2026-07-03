@@ -6,26 +6,27 @@ export function HowItWorksSection() {
   const steps = [
     {
       number: 1,
-      title: 'Scan',
+      title: 'Discover',
       description:
-        'Enter your website URL and get a comprehensive accessibility audit in 60-90 seconds.',
+        'See your site through the eyes of users with disabilities — automated scan plus real barrier detection in 60–90 seconds.',
     },
     {
       number: 2,
-      title: 'Review',
+      title: 'Understand',
       description:
-        'See all violations categorized by severity, WCAG criterion, and Indian standards.',
+        'Prioritised issues: what blocks someone from paying, signing up, or reading your content — mapped to WCAG and IS 17802.',
     },
     {
       number: 3,
       title: 'Fix',
-      description: 'Get AI-powered fix suggestions with code snippets and deploy with confidence.',
+      description:
+        'Code-level remediation guidance and AI suggestions your dev team can ship — alt text, contrast, keyboard access, and more.',
     },
     {
       number: 4,
-      title: 'Certify',
+      title: 'Prove',
       description:
-        'Generate your compliance certificate and accessibility statement for regulators.',
+        'Reports and certificates for RPwD, SEBI, GIGW, and your audit file — so compliance follows inclusion, not the other way around.',
     },
   ];
 
@@ -34,10 +35,10 @@ export function HowItWorksSection() {
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
-            Compliant in 4 steps
+            From barriers to welcome — in 4 steps
           </h2>
           <p className="mt-4 text-lg leading-normal text-text-secondary">
-            From scan to certification — all in under an hour
+            Find what excludes people, fix it, and document progress for your team and regulators
           </p>
         </div>
 

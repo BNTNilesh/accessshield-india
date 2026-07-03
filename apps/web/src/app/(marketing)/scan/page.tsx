@@ -4,11 +4,11 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Free Website Accessibility Scan',
   description:
-    'Scan your website for WCAG 2.2 AA, RPwD Act, and IS 17802 compliance issues. Get results in 60-90 seconds. No credit card required.',
+    'See who your website excludes — scan for barriers affecting people with disabilities. WCAG 2.2, IS 17802, and RPwD checks in 60–90 seconds. No credit card.',
   openGraph: {
     title: 'Free Website Accessibility Scan | AccessShield India',
     description:
-      'Scan your website for WCAG 2.2 AA, RPwD Act, and IS 17802 compliance issues in 60-90 seconds.',
+      'Find accessibility barriers for blind, deaf, and motor-impaired users in 60–90 seconds. Free scan, no credit card.',
     type: 'website',
   },
   alternates: {
@@ -22,10 +22,11 @@ export default function ScanPage() {
       <div className="mx-auto max-w-4xl">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl lg:text-5xl">
-            See how accessible your website is
+            See who your website is leaving out
           </h1>
           <p className="mt-4 text-lg leading-normal text-text-secondary">
-            Scans up to 10 pages · Results in 60-90 seconds · No credit card required
+            Find barriers for people with visual, hearing, and motor disabilities · Up to 10 pages ·
+            Results in 60–90 seconds · No credit card
           </p>
         </div>
 

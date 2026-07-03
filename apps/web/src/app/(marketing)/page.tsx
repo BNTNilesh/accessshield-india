@@ -1,6 +1,7 @@
 import { HeroSection } from '@/components/marketing/home/HeroSection';
 import { LiveTicker } from '@/components/marketing/home/LiveTicker';
 import { RiskStatsBar } from '@/components/marketing/home/RiskStatsBar';
+import { WhoWeBuildForSection } from '@/components/marketing/home/WhoWeBuildForSection';
 import { HowItWorksSection } from '@/components/marketing/home/HowItWorksSection';
 import { StandardsSection } from '@/components/marketing/home/StandardsSection';
 import { TestimonialsSection } from '@/components/marketing/home/TestimonialsSection';
@@ -9,13 +10,13 @@ import { CTABanner } from '@/components/marketing/home/CTABanner';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Make your website legally accessible in India',
+  title: 'Accessible to all Indians. Auditable for your regulators.',
   description:
-    'AI-powered accessibility compliance for RPwD Act 2016, IS 17802, GIGW 3.0, WCAG 2.2 AA, and SEBI. Scan, remediate, and certify your website in minutes.',
+    'Enterprise accessibility platform for BFSI, PSUs, and government vendors — scan websites and mobile apps, fix barriers for people with disabilities, and produce RPwD, GIGW, IS 17802 & SEBI audit evidence.',
   openGraph: {
-    title: 'Make your website legally accessible in India | AccessShield India',
+    title: 'Enterprise Digital Accessibility | AccessShield India',
     description:
-      'AI-powered accessibility compliance for RPwD Act 2016, IS 17802, GIGW 3.0, WCAG 2.2 AA, and SEBI.',
+      'BFSI, PSUs & govt vendors trust AccessShield for RPwD, GIGW, IS 17802 & SEBI compliance — websites, mobile apps, audit-ready reports.',
     type: 'website',
   },
   alternates: {
@@ -29,6 +30,7 @@ export default function HomePage() {
       <HeroSection />
       <LiveTicker />
       <RiskStatsBar />
+      <WhoWeBuildForSection />
       <HowItWorksSection />
       <StandardsSection />
       <TestimonialsSection />

@@ -39,10 +39,10 @@ export function StandardsSection() {
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
-            Every Indian standard covered
+            The proof your auditors need — after you fix the barriers
           </h2>
           <p className="mt-4 text-lg leading-normal text-text-secondary">
-            One scan. All compliance requirements. Zero blind spots.
+            One scan covers every Indian standard. Compliance follows inclusion.
           </p>
         </div>
 

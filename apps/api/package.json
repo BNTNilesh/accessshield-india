@@ -10,7 +10,9 @@
     "start:worker": "node dist/scanner/worker.js",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "postinstall": "playwright install chromium",
+    "install:browsers": "playwright install chromium"
   },
   "dependencies": {
     "@accessshield/db": "workspace:*",

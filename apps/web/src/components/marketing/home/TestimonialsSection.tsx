@@ -3,7 +3,7 @@ export function TestimonialsSection() {
   const testimonials = [
     {
       quote:
-        'AccessShield helped us achieve SEBI compliance in under 2 weeks. The AI fix suggestions saved our dev team hundreds of hours.',
+        'We thought we were fine until we realised a blind user could not complete our KYC flow. AccessShield showed us exactly what to fix — and gave us SEBI-ready reports.',
       author: 'Priya Sharma',
       role: 'Head of Compliance',
       company: 'Leading Fintech',
@@ -11,7 +11,7 @@ export function TestimonialsSection() {
     },
     {
       quote:
-        'We were facing an audit for RPwD Act compliance. AccessShield gave us a clear roadmap and certificate to show the auditors.',
+        'Our government tender required GIGW compliance. AccessShield translated that into real barriers for users with disabilities — not just a checklist.',
       author: 'Rajesh Kumar',
       role: 'CTO',
       company: 'E-commerce Platform',
@@ -19,7 +19,7 @@ export function TestimonialsSection() {
     },
     {
       quote:
-        'The widget is a game-changer. Our users with disabilities can now customize their experience, and we sleep better at night.',
+        'The widget helps visitors with low vision and dyslexia today. The remediation work helps everyone tomorrow. That is the right order.',
       author: 'Meera Patel',
       role: 'Product Manager',
       company: 'SaaS Startup',
@@ -32,10 +32,10 @@ export function TestimonialsSection() {
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
-            Trusted by compliance teams across India
+            Teams building for everyone across India
           </h2>
           <p className="mt-4 text-lg leading-normal text-text-secondary">
-            Join hundreds of companies who achieved accessibility compliance with AccessShield
+            Compliance gets you the certificate. Accessibility gets you the customer.
           </p>
         </div>
 
