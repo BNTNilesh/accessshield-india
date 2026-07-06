@@ -11,6 +11,7 @@
     "dev:api": "pnpm --filter @accessshield/api dev",
     "dev:stack": "pnpm --parallel --filter @accessshield/web --filter @accessshield/api dev",
     "dev:stop": "bash scripts/dev-stop.sh",
+    "dev:clean": "pnpm dev:stop && rm -rf apps/web/.next apps/web/.turbo && echo 'Cleared Next.js cache. Run pnpm dev to start fresh.'",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
     "test": "turbo test",

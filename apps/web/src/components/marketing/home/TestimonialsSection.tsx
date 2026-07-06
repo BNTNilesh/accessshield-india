@@ -1,55 +1,33 @@
+'use client';
+
+import { useDictionary } from '@/lib/i18n/locale-context';
+
 export function TestimonialsSection() {
-  // TODO: Replace with real testimonials from beta clients
-  const testimonials = [
-    {
-      quote:
-        'We thought we were fine until we realised a blind user could not complete our KYC flow. AccessShield showed us exactly what to fix — and gave us SEBI-ready reports.',
-      author: 'Priya Sharma',
-      role: 'Head of Compliance',
-      company: 'Leading Fintech',
-      rating: 5,
-    },
-    {
-      quote:
-        'Our government tender required GIGW compliance. AccessShield translated that into real barriers for users with disabilities — not just a checklist.',
-      author: 'Rajesh Kumar',
-      role: 'CTO',
-      company: 'E-commerce Platform',
-      rating: 5,
-    },
-    {
-      quote:
-        'The widget helps visitors with low vision and dyslexia today. The remediation work helps everyone tomorrow. That is the right order.',
-      author: 'Meera Patel',
-      role: 'Product Manager',
-      company: 'SaaS Startup',
-      rating: 5,
-    },
-  ];
+  const { home } = useDictionary();
+  const { testimonials } = home;
 
   return (
     <section className="px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
-            Teams building for everyone across India
+            {testimonials.title}
           </h2>
-          <p className="mt-4 text-lg leading-normal text-text-secondary">
-            Compliance gets you the certificate. Accessibility gets you the customer.
-          </p>
+          <p className="mt-4 text-lg leading-normal text-text-secondary">{testimonials.subtitle}</p>
         </div>
 
         <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {testimonials.map((testimonial) => (
+          {testimonials.items.map((testimonial) => (
             <div
-              key={testimonial.author}
+              key={testimonial.name}
               className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
             >
               <div
                 className="flex items-center gap-1"
-                aria-label={`${testimonial.rating} out of 5 stars`}
+                role="img"
+                aria-label={testimonial.starsAria}
               >
-                {Array.from({ length: testimonial.rating }).map((_, i) => (
+                {Array.from({ length: 5 }).map((_, i) => (
                   <svg
                     key={i}
                     className="h-5 w-5 text-amber-400"
@@ -70,14 +48,14 @@ export function TestimonialsSection() {
                     className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700"
                     aria-hidden="true"
                   >
-                    {testimonial.author
+                    {testimonial.name
                       .split(' ')
                       .map((n) => n[0])
                       .join('')}
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-text-primary">
-                      {testimonial.author}
+                      {testimonial.name}
                     </div>
                     <div className="text-sm text-text-secondary">
                       {testimonial.role}, {testimonial.company}

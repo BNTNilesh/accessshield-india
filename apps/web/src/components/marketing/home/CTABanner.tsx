@@ -1,8 +1,13 @@
+'use client';
+
 import { Badge } from '@accessshield/ui';
 import { ButtonAnchor, ButtonLink } from '@/components/marketing/ButtonLink';
 import { MarketingImage } from '@/components/marketing/visuals/MarketingImage';
+import { useDictionary } from '@/lib/i18n/locale-context';
 
 export function CTABanner() {
+  const { home } = useDictionary();
+  const { cta } = home;
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL;
 
   return (
@@ -25,21 +30,16 @@ export function CTABanner() {
             size="lg"
             className="border-2 border-primary-400 bg-primary-800/80 text-primary-100"
           >
-            SEBI deadline: April 2026
+            {cta.badge}
           </Badge>
         </div>
         <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          Everyone deserves to use your website
+          {cta.title}
         </h2>
-        <p className="mt-6 text-lg leading-normal text-primary-100">
-          Crores of Indians live with a disability. If they cannot complete a payment, sign up, or
-          read your content, your product is not finished. SEBI, RPwD, and GIGW require accessible
-          digital services — but the real reason to act is simpler:{' '}
-          <strong className="font-semibold text-white">inclusion is good business.</strong>
-        </p>
+        <p className="mt-6 text-lg leading-normal text-primary-100">{cta.body}</p>
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <ButtonLink href="/scan" size="lg" variant="onDark" className="min-w-[220px]">
-            Scan for accessibility barriers
+            {cta.scanCta}
           </ButtonLink>
           <ButtonAnchor
             href={calendlyUrl || '/contact'}
@@ -48,7 +48,7 @@ export function CTABanner() {
             className="min-w-[220px] border-2 border-white bg-transparent text-white hover:bg-white/10"
             {...(calendlyUrl ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
           >
-            Talk to an expert
+            {cta.expertCta}
           </ButtonAnchor>
         </div>
       </div>

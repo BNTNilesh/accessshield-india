@@ -4,6 +4,8 @@ import {
   extractPageText,
   extractSelectionText,
   isSpeechSupported,
+  primeSpeechUnlock,
+  READABLE_NON_INTERACTIVE_SELECTOR,
   readableBlockFromTarget,
   speakText,
   stopSpeaking,
@@ -20,16 +22,20 @@ const SPEECH_RATES = {
 
 type SpeechRateKey = keyof typeof SPEECH_RATES;
 
-const READABLE_SELECTOR =
-  'p, h1, h2, h3, h4, h5, h6, li, td, th, blockquote, figcaption, label, button, a';
+const HOVER_DEBOUNCE_MS = 300;
 
 /** Text-to-speech module — read aloud for visual / reading disabilities */
 export class SpeechModule {
   private container: HTMLElement | null = null;
   private statusEl: HTMLElement | null = null;
   private lang: Language = 'en';
-  private clickHandler: ((e: MouseEvent) => void) | null = null;
+  private hoverHandler: ((e: MouseEvent) => void) | null = null;
+  private leaveHandler: ((e: MouseEvent) => void) | null = null;
+  private focusHandler: ((e: FocusEvent) => void) | null = null;
+  private tapHandler: ((e: MouseEvent) => void) | null = null;
+  private hoverDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private highlightEl: HTMLElement | null = null;
+  private lastReadBlock: HTMLElement | null = null;
 
   constructor(private readonly prefs: PreferencesManager) {
     warmUpSpeechVoices();
@@ -48,13 +54,13 @@ export class SpeechModule {
   }
 
   apply(prefs: WidgetPreferences): void {
-    this.applyClickToRead(prefs.textToSpeech);
+    this.applyHoverToRead(prefs.textToSpeech);
   }
 
   reset(): void {
     stopSpeaking();
     this.clearHighlight();
-    this.stopClickToRead();
+    this.stopHoverToRead();
     this.setStatus('');
   }
 
@@ -101,7 +107,8 @@ export class SpeechModule {
       <p id="as-speech-unsupported" class="as-hint" ${supported ? 'hidden' : ''} role="alert">
         ${t('speechUnsupported', l)}
       </p>
-      ${this.switchRow('textToSpeech', 'clickToRead')}
+      ${this.switchRow('textToSpeech', 'readOnHover')}
+      <p id="as-read-on-hover-hint" class="as-hint">${t('readOnHoverHint', l)}</p>
       <div class="as-control-group" role="group" aria-labelledby="as-label-speechRate">
         <span class="as-label" id="as-label-speechRate">${t('speechRate', l)}</span>
         <div class="as-btn-group as-btn-group-wrap">
@@ -141,7 +148,11 @@ export class SpeechModule {
 
     this.container.querySelector('#as-toggle-textToSpeech')?.addEventListener('click', () => {
       const current = this.prefs.get();
-      this.prefs.update({ textToSpeech: !current.textToSpeech });
+      const next = !current.textToSpeech;
+      if (next) {
+        primeSpeechUnlock(current.language);
+      }
+      this.prefs.update({ textToSpeech: next });
     });
 
     this.container.querySelectorAll('[data-rate]').forEach((btn) => {
@@ -167,6 +178,7 @@ export class SpeechModule {
   }
 
   private readSelection(): void {
+    primeSpeechUnlock(this.prefs.get().language);
     const text = extractSelectionText();
     if (!text) {
       this.setStatus(t('speechNoSelection', this.lang));
@@ -176,6 +188,7 @@ export class SpeechModule {
   }
 
   private readPage(): void {
+    primeSpeechUnlock(this.prefs.get().language);
     const text = extractPageText();
     if (!text) {
       this.setStatus(t('speechNoContent', this.lang));
@@ -184,30 +197,61 @@ export class SpeechModule {
     this.speak(text.slice(0, 8000));
   }
 
-  private speak(text: string, highlightTarget?: HTMLElement): void {
+  private speak(text: string, highlightTarget?: HTMLElement, fromHover = false): void {
     const prefs = this.prefs.get();
     this.clearHighlight();
 
     if (highlightTarget) {
       this.highlightEl = highlightTarget;
+      this.lastReadBlock = highlightTarget;
       highlightTarget.classList.add('as-tts-reading');
     }
 
-    const started = speakText(text, { lang: prefs.language, rate: prefs.speechRate }, () => {
-      this.clearHighlight();
-      this.setStatus(t('speechFinished', this.lang));
-    });
+    let speechStarted = false;
+    const startTimeout = window.setTimeout(() => {
+      if (!speechStarted) {
+        this.clearHighlight();
+        this.lastReadBlock = null;
+        this.setStatus(t('speechUnlockHint', this.lang));
+      }
+    }, 600);
 
-    if (started) {
-      this.setStatus(t('speechSpeaking', this.lang));
-    } else {
-      this.setStatus(t('speechUnsupported', this.lang));
+    const started = speakText(
+      text,
+      { lang: prefs.language, rate: prefs.speechRate, needsUnlock: fromHover },
+      () => {
+        window.clearTimeout(startTimeout);
+        this.clearHighlight();
+        this.lastReadBlock = null;
+        this.setStatus(t('speechFinished', this.lang));
+      },
+      () => {
+        window.clearTimeout(startTimeout);
+        this.clearHighlight();
+        this.lastReadBlock = null;
+        this.setStatus(t('speechUnlockHint', this.lang));
+      },
+      () => {
+        speechStarted = true;
+        window.clearTimeout(startTimeout);
+        this.setStatus(t('speechSpeaking', this.lang));
+      },
+    );
+
+    if (!started) {
+      window.clearTimeout(startTimeout);
+      if (fromHover) {
+        this.setStatus(t('speechUnlockHint', this.lang));
+      } else {
+        this.setStatus(t('speechUnsupported', this.lang));
+      }
     }
   }
 
   private stop(): void {
     stopSpeaking();
     this.clearHighlight();
+    this.lastReadBlock = null;
     this.setStatus(t('speechStopped', this.lang));
   }
 
@@ -215,42 +259,114 @@ export class SpeechModule {
     if (this.statusEl) this.statusEl.textContent = message;
   }
 
-  private applyClickToRead(enabled: boolean): void {
-    if (enabled) {
-      injectStyle(
-        'tts-click',
-        `
-        ${READABLE_SELECTOR} {
-          cursor: pointer !important;
+  private clearHoverDebounce(): void {
+    if (this.hoverDebounceTimer) {
+      clearTimeout(this.hoverDebounceTimer);
+      this.hoverDebounceTimer = null;
+    }
+  }
+
+  private queueRead(block: HTMLElement, fromHover = true): void {
+    if (this.lastReadBlock === block) return;
+
+    const text = block.innerText.replace(/\s+/g, ' ').trim();
+    if (!text) return;
+
+    this.speak(text, block, fromHover);
+  }
+
+  private applyHoverToRead(enabled: boolean): void {
+    this.stopHoverToRead();
+
+    if (!enabled) return;
+
+    injectStyle(
+      'tts-hover',
+      `
+        ${READABLE_NON_INTERACTIVE_SELECTOR} {
+          cursor: help !important;
         }
         .as-tts-reading {
           outline: 3px solid #1A56A0 !important;
           outline-offset: 4px !important;
           background-color: rgba(235, 243, 251, 0.85) !important;
         }`,
-      );
+    );
 
-      this.clickHandler = (e: MouseEvent) => {
-        const block = readableBlockFromTarget(e.target);
-        if (!block) return;
-        e.preventDefault();
-        e.stopPropagation();
-        const text = block.innerText.replace(/\s+/g, ' ').trim();
-        if (text) this.speak(text, block);
-      };
+    this.hoverHandler = (e: MouseEvent) => {
+      const block = readableBlockFromTarget(e.target);
+      if (!block) return;
 
-      document.addEventListener('click', this.clickHandler, true);
-    } else {
-      this.stopClickToRead();
-    }
+      this.clearHoverDebounce();
+      this.hoverDebounceTimer = setTimeout(() => {
+        this.queueRead(block);
+      }, HOVER_DEBOUNCE_MS);
+    };
+
+    this.leaveHandler = (e: MouseEvent) => {
+      if (!(e.target instanceof Element)) return;
+
+      const from = readableBlockFromTarget(e.target);
+      if (!from) return;
+
+      const related = e.relatedTarget instanceof Element ? e.relatedTarget : null;
+      if (related && from.contains(related)) return;
+
+      this.clearHoverDebounce();
+    };
+
+    this.focusHandler = (e: FocusEvent) => {
+      const block = readableBlockFromTarget(e.target);
+      if (!block) return;
+
+      this.clearHoverDebounce();
+      this.hoverDebounceTimer = setTimeout(() => {
+        this.queueRead(block);
+      }, HOVER_DEBOUNCE_MS);
+    };
+
+    // Touch devices: tap paragraph text to read; links/buttons are untouched
+    this.tapHandler = (e: MouseEvent) => {
+      if (window.matchMedia('(hover: hover)').matches) return;
+
+      const block = readableBlockFromTarget(e.target);
+      if (!block) return;
+
+      this.clearHoverDebounce();
+      primeSpeechUnlock(this.prefs.get().language);
+      this.queueRead(block, false);
+    };
+
+    document.addEventListener('mouseover', this.hoverHandler);
+    document.addEventListener('mouseout', this.leaveHandler);
+    document.addEventListener('focusin', this.focusHandler);
+    document.addEventListener('click', this.tapHandler);
   }
 
-  private stopClickToRead(): void {
+  private stopHoverToRead(): void {
+    removeStyle('tts-hover');
     removeStyle('tts-click');
-    if (this.clickHandler) {
-      document.removeEventListener('click', this.clickHandler, true);
-      this.clickHandler = null;
+
+    this.clearHoverDebounce();
+
+    if (this.hoverHandler) {
+      document.removeEventListener('mouseover', this.hoverHandler);
+      this.hoverHandler = null;
     }
+    if (this.leaveHandler) {
+      document.removeEventListener('mouseout', this.leaveHandler);
+      this.leaveHandler = null;
+    }
+    if (this.focusHandler) {
+      document.removeEventListener('focusin', this.focusHandler);
+      this.focusHandler = null;
+    }
+    if (this.tapHandler) {
+      document.removeEventListener('click', this.tapHandler);
+      this.tapHandler = null;
+    }
+
+    this.lastReadBlock = null;
     this.clearHighlight();
   }
 
@@ -266,13 +382,16 @@ export class SpeechModule {
 
   private updateText(container: HTMLElement, lang: Language): void {
     const keys: Array<[string, TranslationKey]> = [
-      ['as-label-textToSpeech', 'clickToRead'],
+      ['as-label-textToSpeech', 'readOnHover'],
       ['as-label-speechRate', 'speechRate'],
     ];
     for (const [id, key] of keys) {
       const el = container.querySelector(`#${id}`);
       if (el) el.textContent = t(key, lang);
     }
+
+    const hint = container.querySelector('#as-read-on-hover-hint');
+    if (hint) hint.textContent = t('readOnHoverHint', lang);
 
     const actionLabels: Array<[string, TranslationKey]> = [
       ['as-read-selection', 'readSelection'],

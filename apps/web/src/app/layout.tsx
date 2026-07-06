@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { UiProviders } from '@/providers/UiProviders';
+import { getLocale } from '@/lib/i18n/server';
 import './globals.css';
 import '@/styles/button-theme.css';
 
@@ -20,6 +21,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = getLocale();
+  const htmlLang = locale === 'hi' ? 'hi' : 'en';
+
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -43,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang={htmlLang} className={inter.variable}>
       <head>
         <script
           type="application/ld+json"

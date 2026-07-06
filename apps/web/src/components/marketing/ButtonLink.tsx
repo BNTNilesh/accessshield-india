@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import type { ComponentProps } from 'react';
 import {
@@ -6,6 +8,8 @@ import {
   type ButtonThemeSize,
   type ButtonThemeVariant,
 } from '@accessshield/ui';
+import { localizedHref } from '@/lib/i18n/paths';
+import { useOptionalLocale } from '@/lib/i18n/locale-context';
 import { cn } from '@/lib/utils';
 
 export interface ButtonLinkProps extends ComponentProps<typeof Link> {
@@ -13,19 +17,32 @@ export interface ButtonLinkProps extends ComponentProps<typeof Link> {
   size?: ButtonThemeSize;
 }
 
-/** Link styled as a theme button. */
+function resolveHref(
+  href: ComponentProps<typeof Link>['href'],
+  locale: ReturnType<typeof useOptionalLocale>,
+) {
+  if (typeof href === 'string' && href.startsWith('/')) {
+    return localizedHref(href, locale);
+  }
+  return href;
+}
+
+/** Link styled as a theme button — auto-prefixes locale for internal paths. */
 export function ButtonLink({
   variant = 'primary',
   size = 'md',
   className,
   style,
+  href,
   ...props
 }: ButtonLinkProps) {
+  const locale = useOptionalLocale();
   const v = (variant ?? 'primary') as ButtonThemeVariant;
   const s = (size ?? 'md') as ButtonThemeSize;
 
   return (
     <Link
+      href={resolveHref(href, locale)}
       data-as-btn={v}
       className={cn(getButtonThemeClassName(v, s), className)}
       style={{ ...getButtonStyle(v), ...style }}

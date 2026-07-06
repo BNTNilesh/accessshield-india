@@ -17,22 +17,33 @@ import {
 } from 'lucide-react';
 import type { UserRole } from '@accessshield/types';
 import { useUIStore } from '@/lib/stores/uiStore';
+import { useDictionary } from '@/lib/i18n/locale-context';
 import { cn } from '@/lib/utils';
+
+type NavLabelKey =
+  | 'dashboard'
+  | 'assets'
+  | 'scans'
+  | 'issues'
+  | 'reports'
+  | 'certificates'
+  | 'settings'
+  | 'platformAdmin';
 
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: NavLabelKey;
   icon: LucideIcon;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/assets', label: 'Assets', icon: Globe },
-  { href: '/dashboard/scans', label: 'Scans', icon: ScanSearch },
-  { href: '/dashboard/issues', label: 'Issues', icon: AlertCircle },
-  { href: '/dashboard/reports', label: 'Reports', icon: FileText },
-  { href: '/dashboard/certs', label: 'Certificates', icon: Award },
-  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  { href: '/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/assets', labelKey: 'assets', icon: Globe },
+  { href: '/dashboard/scans', labelKey: 'scans', icon: ScanSearch },
+  { href: '/dashboard/issues', labelKey: 'issues', icon: AlertCircle },
+  { href: '/dashboard/reports', labelKey: 'reports', icon: FileText },
+  { href: '/dashboard/certs', labelKey: 'certificates', icon: Award },
+  { href: '/dashboard/settings', labelKey: 'settings', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -42,10 +53,12 @@ interface SidebarProps {
 export function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { dashboard } = useDictionary();
+  const { nav } = dashboard;
 
   const navItems: NavItem[] =
     userRole === 'super_admin'
-      ? [...NAV_ITEMS, { href: '/dashboard/admin', label: 'Platform Admin', icon: Shield }]
+      ? [...NAV_ITEMS, { href: '/dashboard/admin', labelKey: 'platformAdmin', icon: Shield }]
       : NAV_ITEMS;
 
   return (
@@ -54,7 +67,7 @@ export function Sidebar({ userRole }: SidebarProps) {
         'flex flex-col border-r border-gray-200/90 bg-white transition-all duration-200',
         sidebarCollapsed ? 'w-[4.5rem]' : 'w-60',
       )}
-      aria-label="Sidebar navigation"
+      aria-label={nav.sidebarAria}
     >
       <div className="flex h-14 items-center justify-between border-b border-gray-100 px-4">
         {!sidebarCollapsed && (
@@ -68,7 +81,7 @@ export function Sidebar({ userRole }: SidebarProps) {
         <button
           onClick={toggleSidebar}
           className="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-tertiary hover:bg-gray-100 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
-          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={sidebarCollapsed ? nav.expand : nav.collapse}
           aria-expanded={!sidebarCollapsed}
         >
           {sidebarCollapsed ? (
@@ -79,11 +92,12 @@ export function Sidebar({ userRole }: SidebarProps) {
         </button>
       </div>
 
-      <nav className="flex-1 space-y-0.5 p-2" aria-label="Main navigation">
+      <nav className="flex-1 space-y-0.5 p-2" aria-label={nav.sidebarAria}>
         {navItems.map((item) => {
           const isActive =
             item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
           const Icon = item.icon;
+          const label = nav[item.labelKey];
 
           return (
             <Link
@@ -95,10 +109,10 @@ export function Sidebar({ userRole }: SidebarProps) {
                 isActive && 'as-nav-item-active',
                 sidebarCollapsed && 'justify-center px-2',
               )}
-              title={sidebarCollapsed ? item.label : undefined}
+              title={sidebarCollapsed ? label : undefined}
             >
               <Icon className="h-4 w-4 shrink-0 text-current" aria-hidden="true" />
-              {!sidebarCollapsed && <span>{item.label}</span>}
+              {!sidebarCollapsed && <span>{label}</span>}
             </Link>
           );
         })}

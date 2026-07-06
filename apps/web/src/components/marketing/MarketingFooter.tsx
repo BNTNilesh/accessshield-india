@@ -1,187 +1,154 @@
-import Link from 'next/link';
+'use client';
+
+import { LocaleLink } from '@/components/common/LocaleLink';
+import { useDictionary } from '@/lib/i18n/locale-context';
+
+const footerLinkClass =
+  'text-base text-text-secondary hover:text-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-sm';
 
 export function MarketingFooter() {
+  const { common } = useDictionary();
   const currentYear = new Date().getFullYear();
+  const { footer: f, brand } = common;
 
   return (
     <footer className="border-t border-gray-200 bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Compliance */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700">
-              Compliance
-            </h3>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-700">
+              {f.compliance}
+            </h2>
             <ul className="mt-4 space-y-3">
               <li>
-                <Link
-                  href="/rpwd-act"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  RPwD Act 2016
-                </Link>
+                <LocaleLink href="/rpwd-act" className={footerLinkClass}>
+                  {f.links.rpwd}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/is-17802"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  IS 17802
-                </Link>
+                <LocaleLink href="/is-17802" className={footerLinkClass}>
+                  {f.links.is17802}
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/gigw" className="text-base text-text-secondary hover:text-primary-600">
-                  GIGW 3.0
-                </Link>
+                <LocaleLink href="/gigw" className={footerLinkClass}>
+                  {f.links.gigw}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/wcag-2-2-aa"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  WCAG 2.2 AA
-                </Link>
+                <LocaleLink href="/wcag-2-2-aa" className={footerLinkClass}>
+                  {f.links.wcag}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/sebi-accessibility"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  SEBI Accessibility
-                </Link>
+                <LocaleLink href="/sebi-accessibility" className={footerLinkClass}>
+                  {f.links.sebi}
+                </LocaleLink>
               </li>
             </ul>
           </div>
 
-          {/* Product */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700">
-              Product
-            </h3>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-700">
+              {f.product}
+            </h2>
             <ul className="mt-4 space-y-3">
               <li>
-                <Link href="/scan" className="text-base text-text-secondary hover:text-primary-600">
-                  Free Scan
-                </Link>
+                <LocaleLink href="/scan" className={footerLinkClass}>
+                  {f.links.freeScan}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/services"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  Services
-                </Link>
+                <LocaleLink href="/services" className={footerLinkClass}>
+                  {f.links.services}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/widget"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  Accessibility Widget
-                </Link>
+                <LocaleLink href="/widget" className={footerLinkClass}>
+                  {f.links.widget}
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/docs" className="text-base text-text-secondary hover:text-primary-600">
-                  Documentation
-                </Link>
+                <LocaleLink href="/docs" className={footerLinkClass}>
+                  {f.links.docs}
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/blog" className="text-base text-text-secondary hover:text-primary-600">
-                  Blog
-                </Link>
+                <LocaleLink href="/blog" className={footerLinkClass}>
+                  {f.links.blog}
+                </LocaleLink>
               </li>
             </ul>
           </div>
 
-          {/* Company */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700">
-              Company
-            </h3>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-700">
+              {f.company}
+            </h2>
             <ul className="mt-4 space-y-3">
               <li>
-                <Link
-                  href="/about"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  About Us
-                </Link>
+                <LocaleLink href="/about" className={footerLinkClass}>
+                  {f.links.about}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/contact"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  Contact
-                </Link>
+                <LocaleLink href="/contact" className={footerLinkClass}>
+                  {f.links.contact}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/careers"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  Careers
-                </Link>
+                <LocaleLink href="/careers" className={footerLinkClass}>
+                  {f.links.careers}
+                </LocaleLink>
               </li>
               <li>
                 <a
                   href={process.env.NEXT_PUBLIC_CALENDLY_URL || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-base text-text-secondary hover:text-primary-600"
+                  className={footerLinkClass}
                 >
-                  Book a Demo
+                  {f.bookDemo}
+                  <span className="sr-only"> {f.opensNewTab}</span>
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Legal */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700">Legal</h3>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-700">
+              {f.legal}
+            </h2>
             <ul className="mt-4 space-y-3">
               <li>
-                <Link
-                  href="/privacy"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  Privacy Policy
-                </Link>
+                <LocaleLink href="/privacy" className={footerLinkClass}>
+                  {f.links.privacy}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/terms"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  Terms of Service
-                </Link>
+                <LocaleLink href="/terms" className={footerLinkClass}>
+                  {f.links.terms}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/refund"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  Refund Policy
-                </Link>
+                <LocaleLink href="/refund" className={footerLinkClass}>
+                  {f.links.refund}
+                </LocaleLink>
               </li>
               <li>
-                <Link
-                  href="/accessibility-statement"
-                  className="text-base text-text-secondary hover:text-primary-600"
-                >
-                  Accessibility
-                </Link>
+                <LocaleLink href="/accessibility-statement" className={footerLinkClass}>
+                  {f.links.accessibility}
+                </LocaleLink>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
         <div className="mt-12 border-t border-gray-200 pt-8">
           <p className="text-sm text-text-secondary">
-            &copy; {currentYear} AccessShield India. All rights reserved.
-            <span className="ml-4">GSTIN: 29AABCA1234B1ZS</span>
-            <span className="ml-4">Pune, Maharashtra, India</span>
+            &copy; {currentYear} {brand}. {f.copyright}
+            <span className="ml-4">{f.gstin}</span>
+            <span className="ml-4">{f.location}</span>
           </p>
         </div>
       </div>

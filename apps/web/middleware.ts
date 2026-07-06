@@ -2,11 +2,24 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import { parseAccessShieldClaims } from './src/lib/auth/claims';
 import { getSupabaseEnv } from './src/lib/supabase/env';
-
-// Edge middleware cannot query Postgres — JWT claims only here; dashboard RSC reads forwarded headers.
+import {
+  defaultLocale,
+  isLocale,
+  LOCALE_COOKIE,
+  LOCALE_HEADER,
+  LOCALE_QUERY,
+} from './src/lib/i18n/config';
+import type { Locale } from './src/lib/i18n/config';
+import { isLocaleAgnosticPath, pathnameHasHiPrefix, stripLocalePrefix } from './src/lib/i18n/paths';
 
 const PROTECTED_PREFIXES = ['/dashboard'];
 const AUTH_ROUTES = ['/login', '/signup', '/auth'];
+
+function resolveLocale(pathname: string): Locale {
+  if (pathnameHasHiPrefix(pathname)) return 'hi';
+  if (pathname === '/en' || pathname.startsWith('/en/')) return 'en';
+  return defaultLocale;
+}
 
 function forwardRequestHeaders(request: NextRequest, extra: Record<string, string>): Headers {
   const requestHeaders = new Headers(request.headers);
@@ -22,10 +35,73 @@ function copyCookies(from: NextResponse, to: NextResponse): void {
   }
 }
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: { headers: request.headers },
+function localizedAuthPath(path: string, _locale: Locale): string {
+  return path;
+}
+
+function buildLocaleResponse(
+  request: NextRequest,
+  locale: Locale,
+  extraHeaders: Record<string, string> = {},
+): NextResponse {
+  const pathname = request.nextUrl.pathname;
+
+  const requestHeaders = forwardRequestHeaders(request, {
+    [LOCALE_HEADER]: locale,
+    'x-as-pathname': pathname,
+    ...extraHeaders,
   });
+
+  request.cookies.set(LOCALE_COOKIE, locale);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.cookies.set(LOCALE_COOKIE, locale, {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+  });
+
+  return response;
+}
+
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const setLocaleParam = request.nextUrl.searchParams.get(LOCALE_QUERY);
+
+  if (setLocaleParam && isLocale(setLocaleParam)) {
+    const clean = request.nextUrl.clone();
+    clean.searchParams.delete(LOCALE_QUERY);
+    const response = NextResponse.redirect(clean);
+    response.cookies.set(LOCALE_COOKIE, setLocaleParam, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+    return response;
+  }
+
+  if (pathnameHasHiPrefix(pathname) && isLocaleAgnosticPath(stripLocalePrefix(pathname))) {
+    const clean = request.nextUrl.clone();
+    clean.pathname = stripLocalePrefix(pathname);
+    const response = NextResponse.redirect(clean);
+    response.cookies.set(LOCALE_COOKIE, 'hi', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+    return response;
+  }
+
+  const locale = resolveLocale(pathname);
+  const internalPath = pathnameHasHiPrefix(pathname)
+    ? stripLocalePrefix(pathname)
+    : pathname === '/en'
+      ? '/'
+      : pathname.startsWith('/en/')
+        ? pathname.slice(3) || '/'
+        : pathname;
+
+  let response = buildLocaleResponse(request, locale);
 
   const { url, anonKey } = getSupabaseEnv();
 
@@ -36,12 +112,12 @@ export async function middleware(request: NextRequest) {
       },
       set(name: string, value: string, options: CookieOptions) {
         request.cookies.set({ name, value, ...options });
-        response = NextResponse.next({ request: { headers: request.headers } });
+        response = buildLocaleResponse(request, locale);
         response.cookies.set({ name, value, ...options });
       },
       remove(name: string, options: CookieOptions) {
         request.cookies.set({ name, value: '', ...options });
-        response = NextResponse.next({ request: { headers: request.headers } });
+        response = buildLocaleResponse(request, locale);
         response.cookies.set({ name, value: '', ...options });
       },
     },
@@ -60,20 +136,19 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getSession();
 
   const user = authUser ?? session?.user ?? null;
-  const { pathname } = request.nextUrl;
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  const isProtected = PROTECTED_PREFIXES.some((prefix) => internalPath.startsWith(prefix));
+  const isAuthRoute = AUTH_ROUTES.some((route) => internalPath.startsWith(route));
 
   if (isProtected && !user) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/login';
-    loginUrl.searchParams.set('redirectTo', pathname);
+    loginUrl.pathname = localizedAuthPath('/login', locale);
+    loginUrl.searchParams.set('redirectTo', internalPath);
     return NextResponse.redirect(loginUrl);
   }
 
   if (isAuthRoute && user) {
     const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = '/dashboard';
+    dashboardUrl.pathname = localizedAuthPath('/dashboard', locale);
     return NextResponse.redirect(dashboardUrl);
   }
 
@@ -87,8 +162,8 @@ export async function middleware(request: NextRequest) {
     if (userRole) extra['x-user-role'] = userRole;
     if (orgId) extra['x-org-id'] = orgId;
 
-    const requestHeaders = forwardRequestHeaders(request, extra);
-    const nextResponse = NextResponse.next({ request: { headers: requestHeaders } });
+    const nextResponse = buildLocaleResponse(request, locale, extra);
+
     copyCookies(response, nextResponse);
 
     if (userRole) nextResponse.headers.set('x-user-role', userRole);
@@ -101,5 +176,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/signup', '/auth/:path*'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|widget\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|woff2?)).*)',
+  ],
 };

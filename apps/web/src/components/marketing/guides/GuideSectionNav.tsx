@@ -17,6 +17,7 @@ export function GuideSectionNav({ sections }: GuideSectionNavProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
+    if (typeof window.IntersectionObserver === 'undefined') return;
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setPrefersReducedMotion(motionQuery.matches);
 

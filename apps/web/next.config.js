@@ -47,18 +47,39 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      {
-        source: '/api/v1/:path*',
-        destination: `${apiProxyTarget.replace(/\/$/, '')}/api/v1/:path*`,
-      },
-    ];
+    return {
+      // English URLs stay unprefixed in the browser; internally route to /en/...
+      beforeFiles: [
+        { source: '/', destination: '/en' },
+        // Legacy /hi/dashboard links → real dashboard routes (locale via cookie)
+        { source: '/hi/dashboard', destination: '/dashboard' },
+        { source: '/hi/dashboard/:path*', destination: '/dashboard/:path*' },
+        { source: '/hi/login', destination: '/login' },
+        { source: '/hi/signup', destination: '/signup' },
+        {
+          source:
+            '/:path((?!hi$|hi/|en$|en/|dashboard|api|auth|login|onboarding|verify|widget\\.js|favicon\\.ico|_next/|marketing/).*)',
+          destination: '/en/:path',
+        },
+      ],
+      afterFiles: [
+        {
+          source: '/api/v1/:path*',
+          destination: `${apiProxyTarget.replace(/\/$/, '')}/api/v1/:path*`,
+        },
+      ],
+    };
   },
   async redirects() {
     return [
       {
         source: '/pricing',
         destination: '/services',
+        permanent: true,
+      },
+      {
+        source: '/hi/pricing',
+        destination: '/hi/services',
         permanent: true,
       },
     ];

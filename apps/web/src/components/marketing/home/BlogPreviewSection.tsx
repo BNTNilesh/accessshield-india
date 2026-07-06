@@ -1,8 +1,15 @@
-import Link from 'next/link';
 import { Badge } from '@accessshield/ui';
 import { getRecentPosts, type BlogPost } from '@/lib/sanity';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { getLocale } from '@/lib/i18n/server';
+import { localizedHref } from '@/lib/i18n/paths';
+import Link from 'next/link';
 
 export async function BlogPreviewSection() {
+  const locale = getLocale();
+  const { home } = getDictionary(locale);
+  const { blogPreview } = home;
+
   let posts: BlogPost[] = [];
   try {
     posts = await getRecentPosts(3);
@@ -16,7 +23,7 @@ export async function BlogPreviewSection() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
+    return new Date(dateString).toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-IN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -29,17 +36,17 @@ export async function BlogPreviewSection() {
         <div className="flex items-end justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
-              Latest from the compliance desk
+              {blogPreview.title}
             </h2>
             <p className="mt-4 text-lg leading-normal text-text-secondary">
-              Stay updated on Indian accessibility laws and best practices
+              {blogPreview.subtitle}
             </p>
           </div>
           <Link
-            href="/blog"
+            href={localizedHref('/blog', locale)}
             className="hidden text-base font-medium text-primary-600 hover:text-primary-700 sm:block"
           >
-            View all articles →
+            {blogPreview.viewAll}
           </Link>
         </div>
 
@@ -47,7 +54,7 @@ export async function BlogPreviewSection() {
           {posts.map((post) => (
             <Link
               key={post._id}
-              href={`/blog/${post.slug.current}`}
+              href={localizedHref(`/blog/${post.slug.current}`, locale)}
               className="group rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
             >
               <div className="flex items-center gap-3">
@@ -68,10 +75,10 @@ export async function BlogPreviewSection() {
 
         <div className="mt-8 text-center sm:hidden">
           <Link
-            href="/blog"
+            href={localizedHref('/blog', locale)}
             className="text-base font-medium text-primary-600 hover:text-primary-700"
           >
-            View all articles →
+            {blogPreview.viewAll}
           </Link>
         </div>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useLocale } from '@/lib/i18n/locale-context';
 
 function resolveWidgetScriptSrc(): string {
   const cdn = process.env.NEXT_PUBLIC_CDN_URL?.replace(/\/$/, '');
@@ -30,6 +31,8 @@ function resolveWidgetApiUrl(): string | undefined {
  * Uses dynamic script injection so data-* attributes are always present.
  */
 export function MarketingWidgetEmbed() {
+  const locale = useLocale();
+
   useEffect(() => {
     const enabled = process.env.NEXT_PUBLIC_WIDGET_ENABLED === 'true';
     const token = process.env.NEXT_PUBLIC_WIDGET_TOKEN;
@@ -44,7 +47,7 @@ export function MarketingWidgetEmbed() {
     script.async = true;
     script.setAttribute('data-token', token);
     script.setAttribute('data-position', 'bottom-right');
-    script.setAttribute('data-lang', 'en');
+    script.setAttribute('data-lang', locale === 'hi' ? 'hi' : 'en');
 
     const apiUrl = resolveWidgetApiUrl();
     if (apiUrl) {
@@ -52,7 +55,7 @@ export function MarketingWidgetEmbed() {
     }
 
     document.head.appendChild(script);
-  }, []);
+  }, [locale]);
 
   return null;
 }
