@@ -41,6 +41,103 @@ export function flattenElements(elements: MobileElement[]): MobileElement[] {
 }
 
 /**
+ * Check if element is an iOS XCUIElement type.
+ */
+export function isIosElement(el: MobileElement): boolean {
+  return el.className?.startsWith('XCUIElementType') ?? false;
+}
+
+/**
+ * Check if element is an Android element type.
+ */
+export function isAndroidElement(el: MobileElement): boolean {
+  return (
+    el.className?.startsWith('android.') ||
+    el.className?.startsWith('androidx.') ||
+    el.className?.includes('.widget.') ||
+    false
+  );
+}
+
+/**
+ * Get the semantic role for iOS elements, handling XCUI types.
+ */
+export function getIosSemanticRole(el: MobileElement): string | null {
+  const className = el.className;
+  if (!className?.startsWith('XCUIElementType')) {
+    return el.role;
+  }
+
+  const roleMap: Record<string, string> = {
+    XCUIElementTypeButton: 'button',
+    XCUIElementTypeStaticText: 'text',
+    XCUIElementTypeTextField: 'textbox',
+    XCUIElementTypeSecureTextField: 'textbox',
+    XCUIElementTypeTextView: 'textbox',
+    XCUIElementTypeImage: 'image',
+    XCUIElementTypeSwitch: 'switch',
+    XCUIElementTypeSlider: 'slider',
+    XCUIElementTypeTable: 'list',
+    XCUIElementTypeCollectionView: 'list',
+    XCUIElementTypeCell: 'listitem',
+    XCUIElementTypeNavigationBar: 'navigation',
+    XCUIElementTypeTabBar: 'tablist',
+    XCUIElementTypeTab: 'tab',
+    XCUIElementTypeLink: 'link',
+    XCUIElementTypeAlert: 'alertdialog',
+    XCUIElementTypeSheet: 'dialog',
+    XCUIElementTypeSearchField: 'searchbox',
+    XCUIElementTypePicker: 'combobox',
+    XCUIElementTypeDatePicker: 'datepicker',
+    XCUIElementTypeProgressIndicator: 'progressbar',
+    XCUIElementTypeActivityIndicator: 'progressbar',
+  };
+
+  return roleMap[className] ?? null;
+}
+
+/**
+ * Get accessible name for an element, handling platform differences.
+ */
+export function getAccessibleName(el: MobileElement, platform: MobilePlatform): string | null {
+  if (platform === 'android') {
+    return el.contentDesc?.trim() || el.text?.trim() || null;
+  }
+
+  return el.label?.trim() || el.hint?.trim() || el.text?.trim() || null;
+}
+
+/**
+ * Check if iOS element is accessible (should be announced by VoiceOver).
+ */
+export function isIosAccessible(el: MobileElement): boolean {
+  if (!isIosElement(el)) {
+    return el.isFocusable;
+  }
+
+  if (el.isFocusable) {
+    return true;
+  }
+
+  const alwaysAccessibleTypes = [
+    'XCUIElementTypeButton',
+    'XCUIElementTypeLink',
+    'XCUIElementTypeSwitch',
+    'XCUIElementTypeSlider',
+    'XCUIElementTypeTextField',
+    'XCUIElementTypeSecureTextField',
+    'XCUIElementTypeTextView',
+    'XCUIElementTypeSearchField',
+    'XCUIElementTypeCell',
+    'XCUIElementTypeTab',
+    'XCUIElementTypeDatePicker',
+    'XCUIElementTypePicker',
+  ];
+
+  return alwaysAccessibleTypes.includes(el.className ?? '');
+}
+
+/**
  * Check if an element is interactive (clickable, focusable, or has interactive role).
  */
 export function isInteractive(el: MobileElement): boolean {
@@ -241,20 +338,26 @@ export async function checkContentDescriptions(
   const violations: MobileViolation[] = [];
 
   for (const el of elements) {
-    if (!isInteractive(el) || !el.isVisible) continue;
+    const isIos = platform === 'ios';
 
-    const hasAccessibleName =
-      platform === 'android'
-        ? !!(el.contentDesc?.trim() || el.text?.trim())
-        : !!(el.label?.trim() || el.hint?.trim() || el.text?.trim());
+    const shouldCheck = isIos
+      ? (isInteractive(el) || isIosAccessible(el)) && el.isVisible
+      : isInteractive(el) && el.isVisible;
+
+    if (!shouldCheck) continue;
+
+    const hasAccessibleName = !!getAccessibleName(el, platform);
 
     if (!hasAccessibleName) {
       if (hasChildWithText(el)) continue;
 
+      const elementRole = isIos ? getIosSemanticRole(el) || el.role : el.role;
+      const roleHint = elementRole ? ` (${elementRole})` : '';
+
       const description =
         platform === 'android'
-          ? 'Interactive element missing contentDescription. TalkBack users cannot identify this element.'
-          : 'Interactive element missing accessibilityLabel. VoiceOver users cannot identify this element.';
+          ? `Interactive element${roleHint} missing contentDescription. TalkBack users cannot identify this element.`
+          : `Interactive element${roleHint} missing accessibilityLabel. VoiceOver users cannot identify this element.`;
 
       violations.push(
         makeViolation({

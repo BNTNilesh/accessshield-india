@@ -125,6 +125,7 @@ export interface BrowserStackCapabilities {
   'appium:deviceName': string;
   'appium:platformVersion': string;
   'appium:automationName': string;
+  'appium:bundleId'?: string;
   'bstack:options': {
     projectName: string;
     buildName: string;

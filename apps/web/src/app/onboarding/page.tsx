@@ -34,21 +34,24 @@ const step2Schema = z.object({
   maxPages: z.number().min(10).max(500),
 });
 
+type Step1FormData = z.infer<typeof step1Schema>;
+type Step2FormData = z.infer<typeof step2Schema>;
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [orgData, setOrgData] = useState<any>(null);
+  const [orgData, setOrgData] = useState<Step1FormData | null>(null);
   const [assetId, setAssetId] = useState<string | null>(null);
   const [widgetAdded, setWidgetAdded] = useState(false);
 
   const { mutate: createAsset, isPending: isCreatingAsset } = useCreateAsset();
   const { mutate: triggerScan, isPending: isScanning } = useTriggerScan();
 
-  const step1Form = useForm({
+  const step1Form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
   });
 
-  const step2Form = useForm({
+  const step2Form = useForm<Step2FormData>({
     resolver: zodResolver(step2Schema),
     defaultValues: {
       standards: {
@@ -151,7 +154,7 @@ export default function OnboardingPage() {
             role="status"
             aria-live="polite"
           >
-            Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].label}
+            Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1]?.label ?? ''}
           </p>
         </nav>
 

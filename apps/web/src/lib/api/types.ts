@@ -80,6 +80,7 @@ export interface ScanDetail {
     pagesTotal: number;
     currentUrl: string;
   };
+  mobileScanId?: string | null;
 }
 
 export interface CreateScanInput {
@@ -89,6 +90,7 @@ export interface CreateScanInput {
   max_pages?: number;
   scan_type?: ScanType;
   standards?: ComplianceStandard[];
+  exclude_paths?: string[];
 }
 
 export interface CreateScanResult {

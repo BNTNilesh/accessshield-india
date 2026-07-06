@@ -96,6 +96,7 @@ const KNOWN_BACKLOG: Array<{
   },
   {
     priority: 'P2',
+    wcag: '1.1.1 Non-text Content',
     is17802: 'IS-008',
     issue: 'PDF links on guide pages need nearby HTML alternative',
     component: 'Guide pages',

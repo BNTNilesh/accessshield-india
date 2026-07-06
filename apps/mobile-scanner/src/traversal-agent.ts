@@ -18,6 +18,7 @@ import type {
 } from './types.js';
 import { parseAppiumXml, parseElementTree, flattenElementTree } from './xml-parser.js';
 import { uploadScreenshot } from './s3-client.js';
+import { IOSHandler } from './ios-handler.js';
 import { logger as defaultLogger } from './lib/logger.js';
 
 const UI_SETTLE_DELAY_MS = 1500;
@@ -38,6 +39,7 @@ export class TraversalAgent {
   private scanId: string;
   private orgId: string;
   private maxScreens: number;
+  private bundleId: string | null;
   private logger: pino.Logger;
 
   private visitedScreenIds: Set<string>;
@@ -52,6 +54,7 @@ export class TraversalAgent {
     scanId: string,
     orgId: string,
     maxScreens: number,
+    bundleId?: string,
     logger?: pino.Logger,
   ) {
     this.driver = driver;
@@ -59,6 +62,7 @@ export class TraversalAgent {
     this.scanId = scanId;
     this.orgId = orgId;
     this.maxScreens = maxScreens;
+    this.bundleId = bundleId ?? null;
     this.logger = logger ?? defaultLogger;
 
     this.visitedScreenIds = new Set();
@@ -521,9 +525,11 @@ export class TraversalAgent {
       if (this.platform === 'android') {
         await this.driver.back();
       } else {
-        const didTapBack = await this.tapIosBackButton();
-        if (!didTapBack) {
-          await this.driver.execute('mobile: pressButton', { name: 'back' });
+        const wentBack = await IOSHandler.navigateBack(this.driver);
+        if (!wentBack) {
+          this.logger.debug('iOS back navigation failed, resetting to home screen');
+          await this.resetIosToHomeAndRelaunch();
+          return false;
         }
       }
 
@@ -554,31 +560,28 @@ export class TraversalAgent {
   }
 
   /**
-   * Try to find and tap the iOS back button.
+   * Reset iOS app to home screen and re-launch.
+   * Used when back navigation fails and we need to restart traversal branch.
    */
-  private async tapIosBackButton(): Promise<boolean> {
+  private async resetIosToHomeAndRelaunch(): Promise<void> {
     try {
-      const backButton = await this.driver.$(
-        '//XCUIElementTypeButton[contains(@name, "Back") or contains(@label, "Back")]',
-      );
+      await this.driver.execute('mobile: pressButton', { name: 'home' });
+      await this.driver.pause(500);
 
-      if (await backButton.isExisting()) {
-        await backButton.click();
-        return true;
+      if (this.bundleId) {
+        await this.driver.execute('mobile: activateApp', { bundleId: this.bundleId });
+      } else {
+        const appInfo = (await this.driver.execute('mobile: activeAppInfo')) as {
+          bundleId?: string;
+        };
+        if (appInfo?.bundleId) {
+          await this.driver.execute('mobile: activateApp', { bundleId: appInfo.bundleId });
+        }
       }
 
-      const navBackButton = await this.driver.$(
-        '//XCUIElementTypeNavigationBar//XCUIElementTypeButton[1]',
-      );
-
-      if (await navBackButton.isExisting()) {
-        await navBackButton.click();
-        return true;
-      }
-
-      return false;
-    } catch {
-      return false;
+      await this.driver.pause(UI_SETTLE_DELAY_MS);
+    } catch (err) {
+      this.logger.warn({ err }, 'Failed to reset iOS app to home');
     }
   }
 
@@ -592,18 +595,10 @@ export class TraversalAgent {
         await this.driver.execute('mobile: pressButton', { name: 'home' });
         await this.driver.pause(500);
         await this.driver.execute('mobile: activateApp', { appId: currentPackage });
+        await this.driver.pause(UI_SETTLE_DELAY_MS);
       } else {
-        const bundleId = (await this.driver.execute('mobile: activeAppInfo')) as {
-          bundleId?: string;
-        };
-        await this.driver.execute('mobile: pressButton', { name: 'home' });
-        await this.driver.pause(500);
-        if (bundleId?.bundleId) {
-          await this.driver.execute('mobile: activateApp', { bundleId: bundleId.bundleId });
-        }
+        await this.resetIosToHomeAndRelaunch();
       }
-
-      await this.driver.pause(UI_SETTLE_DELAY_MS);
     } catch (err) {
       this.logger.warn({ err }, 'Failed to restart from home');
     }

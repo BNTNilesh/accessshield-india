@@ -184,3 +184,122 @@ export function useDashboardStats() {
     },
   });
 }
+
+/** Mobile Scans */
+export interface MobileScanDetail {
+  id: string;
+  scanId: string;
+  assetId: string;
+  platform: 'android' | 'ios';
+  bundleId: string | null;
+  osVersion: string | null;
+  deviceModel: string | null;
+  framework: string | null;
+  frameworkAutoDetected: boolean;
+  screensDiscovered: number;
+  screensScanned: number;
+  discoveredScreens: string[];
+  testEnvironment: string | null;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function useMobileScan(mobileScanId: string | null) {
+  return useQuery({
+    queryKey: ['mobile-scans', mobileScanId],
+    queryFn: async () => {
+      if (!mobileScanId) throw new Error('Mobile scan ID required');
+      const token = await getAccessToken();
+      const response = await fetch(`/api/v1/mobile-scans/${mobileScanId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch mobile scan');
+      }
+      const result = await response.json();
+      return result.data as MobileScanDetail;
+    },
+    enabled: Boolean(mobileScanId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      const isActive = status === 'running' || status === 'pending';
+      return isActive ? 5000 : false;
+    },
+  });
+}
+
+interface TriggerMobileScanInput {
+  formData: FormData;
+  onProgress?: (percent: number) => void;
+}
+
+interface TriggerMobileScanResult {
+  scanId: string;
+  mobileScanId: string;
+  status: string;
+  message: string;
+}
+
+export function useTriggerMobileScan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      formData,
+      onProgress,
+    }: TriggerMobileScanInput): Promise<TriggerMobileScanResult> => {
+      const token = await getAccessToken();
+
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable && onProgress) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response.data as TriggerMobileScanResult);
+            } catch {
+              reject(new Error('Invalid response from server'));
+            }
+          } else {
+            try {
+              const error = JSON.parse(xhr.responseText);
+              reject(new ApiError(error));
+            } catch {
+              reject(new Error(xhr.statusText || 'Upload failed'));
+            }
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'));
+        });
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload cancelled'));
+        });
+
+        xhr.open('POST', '/api/v1/mobile-scans');
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(formData);
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scans'] });
+      queryClient.invalidateQueries({ queryKey: ['mobile-scans'] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      toast.success('Mobile scan started — estimated 8-12 minutes');
+    },
+    onError: (error: ApiError | Error) => {
+      toast.error(error.message || 'Failed to start mobile scan');
+    },
+  });
+}

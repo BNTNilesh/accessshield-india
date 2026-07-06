@@ -7,8 +7,7 @@
  */
 
 import type { Browser } from 'webdriverio';
-import { scans, violations, assets } from '@accessshield/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { scans, violations, assets, eq, and } from '@accessshield/db';
 import { logger } from './lib/logger.js';
 import { getDatabase } from './lib/db.js';
 import { getRedisClient, connectRedis, closeRedis } from './lib/redis.js';

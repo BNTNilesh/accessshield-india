@@ -5,6 +5,7 @@ import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { Badge, Progress } from '@accessshield/ui';
 import { ViolationFilters } from '@/components/dashboard/scans/ViolationFilters';
 import { ViolationTable } from '@/components/dashboard/scans/ViolationTable';
+import { MobileScanSummary } from '@/components/dashboard/mobile/MobileScanSummary';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { useScan, useViolations } from '@/lib/hooks/useApi';
 import { formatIndianDate } from '@/lib/utils';
@@ -63,7 +64,11 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
   }
 
   const isActive = scan.status === 'running' || scan.status === 'pending';
-  const isMobileScan = scan.assetType === 'mobile_app' || scan.assetUrl?.startsWith('mobile://');
+  const isMobileScan =
+    scan.assetType === 'mobile_app' ||
+    scan.assetUrl?.startsWith('mobile://') ||
+    scan.assetUrl?.startsWith('android://') ||
+    scan.assetUrl?.startsWith('ios://');
   const workerHint = isMobileScan
     ? 'Make sure the mobile scanner worker is running: pnpm --filter @accessshield/mobile-scanner worker'
     : 'Make sure the API scan worker is running: pnpm --filter @accessshield/api dev:worker';
@@ -88,6 +93,9 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
           {scan.violationCount > 0 ? ` · ${scan.violationCount} violations` : ''}
         </p>
       </div>
+
+      {/* Mobile Scan Summary - shown only for mobile scans */}
+      {isMobileScan && scan.mobileScanId && <MobileScanSummary mobileScanId={scan.mobileScanId} />}
 
       {isActive && (
         <div

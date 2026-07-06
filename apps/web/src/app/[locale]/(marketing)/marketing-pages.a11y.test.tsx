@@ -29,7 +29,7 @@ const PAGE_COMPONENTS: Record<string, () => React.ReactNode | Promise<React.Reac
   '/services': ServicesPage,
   '/scan': ScanPage,
   '/widget': WidgetPage,
-  '/about': AboutPage,
+  '/about': () => AboutPage({ params: { locale: 'en' } }),
   '/contact': ContactPage,
   '/careers': CareersPage,
   '/docs': DocsPage,

@@ -5,7 +5,13 @@
  * against screen states captured during app traversal.
  */
 
-import type { MobilePlatform, MobileViolation, ScreenState, ComplianceStandard } from '../types.js';
+import type {
+  MobilePlatform,
+  MobileViolation,
+  ScreenState,
+  ComplianceStandard,
+  MobileFramework,
+} from '../types.js';
 import {
   checkContentDescriptions,
   checkDevanagariEncoding,
@@ -22,6 +28,7 @@ import {
   checkPaymentPinScreens,
   flattenElements,
 } from './is17802-mobile.js';
+import { getFrameworkFixGuidance, type FrameworkGuidance } from '../framework-detector.js';
 import { logger } from '../lib/logger.js';
 
 type RuleFunction = (
@@ -57,10 +64,41 @@ const RULE_REGISTRY: Record<string, RuleConfig> = {
 export class MobileRuleEngine {
   private platform: MobilePlatform;
   private standards: ComplianceStandard[];
+  private framework: MobileFramework;
+  private frameworkGuidance: FrameworkGuidance;
 
-  constructor(platform: MobilePlatform, standards: ComplianceStandard[]) {
+  constructor(
+    platform: MobilePlatform,
+    standards: ComplianceStandard[],
+    framework: MobileFramework = 'unknown',
+  ) {
     this.platform = platform;
     this.standards = standards;
+    this.framework = framework;
+    this.frameworkGuidance = getFrameworkFixGuidance(framework);
+  }
+
+  /**
+   * Update framework after detection (can be called post-construction).
+   */
+  setFramework(framework: MobileFramework): void {
+    this.framework = framework;
+    this.frameworkGuidance = getFrameworkFixGuidance(framework);
+    logger.info({ framework }, 'Rule engine framework updated');
+  }
+
+  /**
+   * Get framework-specific fix guidance.
+   */
+  getFrameworkGuidance(): FrameworkGuidance {
+    return this.frameworkGuidance;
+  }
+
+  /**
+   * Get detected framework.
+   */
+  getFramework(): MobileFramework {
+    return this.framework;
   }
 
   /**
@@ -87,6 +125,7 @@ export class MobileRuleEngine {
         elementCount: allElements.length,
         platform: this.platform,
         standards: this.standards,
+        framework: this.framework,
       },
       'Running IS 17802 mobile rules on screen',
     );
@@ -110,7 +149,8 @@ export class MobileRuleEngine {
         const key = `${violation.ruleId}::${violation.elementId ?? 'screen'}`;
         if (!seenKeys.has(key)) {
           seenKeys.add(key);
-          violations.push(violation);
+          const enrichedViolation = this.enrichViolationWithFrameworkGuidance(violation);
+          violations.push(enrichedViolation);
         }
       }
     }
@@ -120,11 +160,57 @@ export class MobileRuleEngine {
         screenId: screenState.screenId,
         activity: screenState.activityName,
         violationCount: violations.length,
+        framework: this.framework,
       },
       'IS 17802 mobile scan complete',
     );
 
     return violations;
+  }
+
+  /**
+   * Enrich a violation with framework-specific fix guidance.
+   */
+  private enrichViolationWithFrameworkGuidance(violation: MobileViolation): MobileViolation {
+    if (this.framework === 'unknown') {
+      return violation;
+    }
+
+    const guidance = this.frameworkGuidance;
+    let frameworkHint = '';
+
+    if (violation.ruleId === 'M-IS-001' || violation.ruleId === 'M-IS-005') {
+      frameworkHint = ` [${this.getFrameworkDisplayName()}] ${guidance.contentDescriptionFix}`;
+    } else if (violation.ruleId === 'M-IS-003') {
+      frameworkHint = ` [${this.getFrameworkDisplayName()}] ${guidance.touchTargetFix}`;
+    } else if (violation.ruleId === 'M-IS-006' || violation.ruleId === 'M-IS-010') {
+      frameworkHint = ` [${this.getFrameworkDisplayName()}] ${guidance.accessibleFix}`;
+    }
+
+    if (frameworkHint) {
+      return {
+        ...violation,
+        description: violation.description + frameworkHint,
+      };
+    }
+
+    return violation;
+  }
+
+  /**
+   * Get human-readable framework name for violation descriptions.
+   */
+  private getFrameworkDisplayName(): string {
+    const names: Record<MobileFramework, string> = {
+      react_native: 'React Native',
+      flutter: 'Flutter',
+      native_android: 'Android',
+      native_ios: 'iOS',
+      xamarin: 'Xamarin/MAUI',
+      ionic: 'Ionic',
+      unknown: 'Unknown',
+    };
+    return names[this.framework];
   }
 
   /**
