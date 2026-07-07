@@ -24,6 +24,7 @@ from middleware.auth import InternalAuthMiddleware
 from middleware.rate_limiter import RateLimitMiddleware
 from utils.cache import init_cache, cache
 from db.session import init_db, close_db
+import db.session as db_session
 from services.alt_text import AltTextRequest, AltTextResponse, generate_alt_text
 from services.fix_suggestion import FixRequest, FixResponse, generate_fix
 from services.compliance_advisor import (
@@ -82,12 +83,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Redis initialization failed: %s", str(e))
 
-    # Initialize database
+    # Initialize database — required for document scanner consumer
     try:
         init_db()
+        db_session.get_async_session_factory()
         logger.info("Database initialized")
     except Exception as e:
-        logger.warning("Database initialization failed: %s", str(e))
+        logger.error(
+            "Database initialization failed — document scans will not process: %s",
+            str(e),
+        )
 
     # Load knowledge bases
     load_knowledge_bases()

@@ -139,7 +139,7 @@ export function PricingMainPlansSection() {
               </ButtonLink>
             </div>
 
-            <ul className="mt-6 flex-1 space-y-2.5" role="list">
+            <ul className="mt-6 flex-1 space-y-2.5">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex items-start gap-2">
                   <svg

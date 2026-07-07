@@ -12,7 +12,7 @@ export function PricingIndiaComplianceSection() {
         </h2>
         <p className="mt-3 max-w-3xl text-base leading-normal text-text-secondary">{gstNote}</p>
         <nav className="mt-6" aria-label="India compliance guides">
-          <ul className="flex flex-wrap gap-3" role="list">
+          <ul className="flex flex-wrap gap-3">
             {links.map((link) => (
               <li key={link.href}>
                 <Link

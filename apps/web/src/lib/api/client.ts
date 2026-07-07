@@ -10,6 +10,11 @@ import type {
   ScanDetail,
   ScanListItem,
   ViolationRow,
+  DocumentScanJob,
+  DocumentScanResult,
+  DocumentScanListItem,
+  DocumentScanStatusResponse,
+  ListDocumentScansParams,
 } from './types';
 import { ApiError } from './types';
 
@@ -22,6 +27,11 @@ export type {
   ScanDetail,
   ScanListItem,
   ViolationRow,
+  DocumentScanJob,
+  DocumentScanResult,
+  DocumentScanListItem,
+  DocumentScanStatusResponse,
+  ListDocumentScansParams,
 } from './types';
 
 /**
@@ -197,7 +207,7 @@ export async function cancelScan(token: string, scanId: string): Promise<void> {
 export async function downloadReportFile(reportId: string, filename: string): Promise<void> {
   const token = await getAccessToken();
 
-  let response = await fetch(apiUrl(`/api/v1/reports/${reportId}/file`), {
+  const response = await fetch(apiUrl(`/api/v1/reports/${reportId}/file`), {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -259,4 +269,168 @@ export interface DashboardActivity {
 export async function getDashboardStats(token: string): Promise<DashboardStats> {
   const response = await apiFetch<ApiResponse<DashboardStats>>('/api/v1/dashboard/stats', token);
   return response.data;
+}
+
+// ─── Document Scans ───────────────────────────────────────────────────────
+
+/** Upload a document and start accessibility scan */
+export async function uploadDocumentScan(
+  token: string,
+  formData: FormData,
+  onProgress?: (percent: number) => void,
+): Promise<DocumentScanJob> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const baseUrl = getApiBase();
+    const url = baseUrl
+      ? `${baseUrl}/api/v1/document-scans/upload`
+      : '/api/v1/document-scans/upload';
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable && onProgress) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        onProgress(percent);
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          resolve(response.data as DocumentScanJob);
+        } catch {
+          reject(new Error('Invalid response from server'));
+        }
+      } else {
+        try {
+          const error = JSON.parse(xhr.responseText);
+          reject(new ApiError(error));
+        } catch {
+          reject(new Error(xhr.statusText || 'Upload failed'));
+        }
+      }
+    });
+
+    xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+    xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.send(formData);
+  });
+}
+
+/** Get document scan status */
+function normalizeDocumentScanStatus(
+  data: DocumentScanStatusResponse & {
+    jobId?: string;
+    progressPercent?: number;
+    documentName?: string;
+    errorMessage?: string;
+  },
+): DocumentScanStatusResponse {
+  return {
+    job_id: data.job_id ?? data.jobId ?? '',
+    status: data.status,
+    progress_percent: data.progress_percent ?? data.progressPercent ?? 0,
+    document_name: data.document_name ?? data.documentName ?? '',
+    error_message: data.error_message ?? data.errorMessage,
+  };
+}
+
+function normalizeDocumentScanResult(
+  data: DocumentScanResult & Record<string, unknown>,
+): DocumentScanResult {
+  return {
+    id: (data.id as string) ?? '',
+    job_id: (data.job_id as string) ?? (data.jobId as string) ?? '',
+    organisation_id: (data.organisation_id as string) ?? (data.organisationId as string) ?? '',
+    document_name: (data.document_name as string) ?? (data.documentName as string) ?? '',
+    document_type: (data.document_type as string) ?? (data.documentType as string) ?? 'pdf',
+    total_violations: (data.total_violations as number) ?? (data.totalViolations as number) ?? 0,
+    critical_count: (data.critical_count as number) ?? (data.criticalCount as number) ?? 0,
+    serious_count: (data.serious_count as number) ?? (data.seriousCount as number) ?? 0,
+    moderate_count: (data.moderate_count as number) ?? (data.moderateCount as number) ?? 0,
+    minor_count: (data.minor_count as number) ?? (data.minorCount as number) ?? 0,
+    compliance_score: (data.compliance_score as number) ?? (data.complianceScore as number) ?? 0,
+    violations: (data.violations as DocumentScanResult['violations']) ?? [],
+    violations_total:
+      (data.violations_total as number) ??
+      (data.violationsTotal as number) ??
+      (data.violations as unknown[])?.length ??
+      0,
+    violations_page: (data.violations_page as number) ?? (data.violationsPage as number) ?? 1,
+    violations_limit: (data.violations_limit as number) ?? (data.violationsLimit as number) ?? 0,
+    violations_pages: (data.violations_pages as number) ?? (data.violationsPages as number) ?? 1,
+    summary: (data.summary as DocumentScanResult['summary']) ?? {},
+    gigw_checkpoint_results:
+      (data.gigw_checkpoint_results as DocumentScanResult['gigw_checkpoint_results']) ??
+      (data.gigwCheckpointResults as DocumentScanResult['gigw_checkpoint_results']) ??
+      {},
+    ai_summary: (data.ai_summary as string) ?? (data.aiSummary as string) ?? '',
+    scan_duration_seconds:
+      (data.scan_duration_seconds as number) ?? (data.scanDurationSeconds as number) ?? 0,
+    created_at: (data.created_at as string) ?? (data.createdAt as string) ?? '',
+  };
+}
+
+export async function getDocumentScanStatus(
+  token: string,
+  jobId: string,
+): Promise<DocumentScanStatusResponse> {
+  const response = await apiFetch<ApiResponse<DocumentScanStatusResponse>>(
+    `/api/v1/document-scans/${jobId}/status`,
+    token,
+  );
+  return normalizeDocumentScanStatus(response.data);
+}
+
+/** Get document scan results */
+export async function getDocumentScanResults(
+  token: string,
+  jobId: string,
+): Promise<DocumentScanResult> {
+  const response = await apiFetch<ApiResponse<DocumentScanResult>>(
+    `/api/v1/document-scans/${jobId}/results`,
+    token,
+  );
+  return normalizeDocumentScanResult(response.data);
+}
+
+/** Download document scan PDF report */
+export async function downloadDocumentScanReport(jobId: string, filename: string): Promise<void> {
+  const token = await getAccessToken();
+
+  const response = await fetch(apiUrl(`/api/v1/document-scans/${jobId}/report`), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to download report');
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(objectUrl);
+}
+
+/** List document scans for the organisation */
+export async function listDocumentScans(
+  token: string,
+  params?: ListDocumentScansParams,
+): Promise<{ scans: DocumentScanListItem[]; meta: ApiResponse<DocumentScanListItem[]>['meta'] }> {
+  const search = new URLSearchParams();
+  if (params?.page) search.set('page', String(params.page));
+  if (params?.limit) search.set('limit', String(params.limit));
+  if (params?.status) search.set('status', params.status);
+  if (params?.document_type) search.set('document_type', params.document_type);
+
+  const query = search.toString();
+  const path = `/api/v1/document-scans${query ? `?${query}` : ''}`;
+  const response = await apiFetch<ApiResponse<DocumentScanListItem[]>>(path, token);
+  return { scans: response.data, meta: response.meta };
 }

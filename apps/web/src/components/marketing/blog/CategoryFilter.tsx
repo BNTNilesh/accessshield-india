@@ -28,7 +28,7 @@ export function CategoryFilter() {
 
   return (
     <nav aria-label="Article categories">
-      <ul role="list" className="flex flex-wrap gap-3">
+      <ul className="flex flex-wrap gap-3">
         {categories.map((category) => (
           <li key={category.value}>
             <button

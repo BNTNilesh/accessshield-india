@@ -239,16 +239,16 @@ export function MobileUploadModal({ open, onClose, asset, platform }: MobileUplo
         )}
 
         {/* Compliance Standards */}
-        <div>
-          <label className="text-sm font-medium text-text-primary block mb-2">
+        <fieldset>
+          <legend className="text-sm font-medium text-text-primary block mb-2">
             Compliance Standards
-          </label>
+          </legend>
           <div className="space-y-2">
             <Checkbox {...form.register('standards.wcag22')} label="WCAG 2.2 AA" />
             <Checkbox {...form.register('standards.is17802')} label="IS 17802 (India)" />
             <Checkbox {...form.register('standards.sebi')} label="SEBI Guidelines" />
           </div>
-        </div>
+        </fieldset>
 
         {/* Optional Device Info */}
         <div className="grid grid-cols-2 gap-4">

@@ -33,7 +33,7 @@ function OneTimeCard({ service }: { service: OneTimeSku }) {
       </div>
       {service.priceNote && <p className="mt-1 text-xs text-text-tertiary">{service.priceNote}</p>}
       <p className="mt-1 text-xs text-text-tertiary">+ 18% GST</p>
-      <ul className="mt-4 flex-1 space-y-2" role="list">
+      <ul className="mt-4 flex-1 space-y-2">
         {service.features.map((feature) => (
           <li key={feature} className="flex items-start gap-2 text-sm text-text-primary">
             <svg

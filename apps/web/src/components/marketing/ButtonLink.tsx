@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import {
   getButtonStyle,
   getButtonThemeClassName,
@@ -54,6 +54,7 @@ export function ButtonLink({
 export interface ButtonAnchorProps extends ComponentProps<'a'> {
   variant?: ButtonThemeVariant;
   size?: ButtonThemeSize;
+  children: ReactNode;
 }
 
 /** External anchor styled as a theme button. */
@@ -62,6 +63,7 @@ export function ButtonAnchor({
   size = 'md',
   className,
   style,
+  children,
   ...props
 }: ButtonAnchorProps) {
   const v = (variant ?? 'primary') as ButtonThemeVariant;
@@ -73,6 +75,8 @@ export function ButtonAnchor({
       className={cn(getButtonThemeClassName(v, s), className)}
       style={{ ...getButtonStyle(v), ...style }}
       {...props}
-    />
+    >
+      {children}
+    </a>
   );
 }

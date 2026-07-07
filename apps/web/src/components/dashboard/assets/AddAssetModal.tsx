@@ -54,7 +54,6 @@ type AssetMode = 'web' | 'mobile';
 export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
   const [mode, setMode] = useState<AssetMode>('web');
   const [appFile, setAppFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: createAsset, isPending: isCreatingWeb } = useCreateAsset();
@@ -97,7 +96,6 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
     webForm.reset();
     mobileForm.reset();
     setAppFile(null);
-    setUploadProgress(0);
     onClose();
   };
 
@@ -233,17 +231,17 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
               )}
             />
 
-            <div>
-              <label className="text-sm font-medium text-text-primary block mb-2">
+            <fieldset>
+              <legend className="text-sm font-medium text-text-primary block mb-2">
                 Compliance Standards
-              </label>
+              </legend>
               <div className="space-y-2">
                 <Checkbox {...webForm.register('standards.wcag22')} label="WCAG 2.2 AA" />
                 <Checkbox {...webForm.register('standards.is17802')} label="IS 17802 (India)" />
                 <Checkbox {...webForm.register('standards.gigw3')} label="GIGW 3.0 (Government)" />
                 <Checkbox {...webForm.register('standards.sebi')} label="SEBI Guidelines" />
               </div>
-            </div>
+            </fieldset>
 
             <Input
               label="Maximum Pages to Scan"
@@ -364,16 +362,16 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
               )}
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-text-primary block mb-2">
+            <fieldset>
+              <legend className="text-sm font-medium text-text-primary block mb-2">
                 Compliance Standards
-              </label>
+              </legend>
               <div className="space-y-2">
                 <Checkbox {...mobileForm.register('standards.wcag22')} label="WCAG 2.2 AA" />
                 <Checkbox {...mobileForm.register('standards.is17802')} label="IS 17802 (India)" />
                 <Checkbox {...mobileForm.register('standards.sebi')} label="SEBI Guidelines" />
               </div>
-            </div>
+            </fieldset>
 
             <Input
               label="Maximum Screens to Scan"

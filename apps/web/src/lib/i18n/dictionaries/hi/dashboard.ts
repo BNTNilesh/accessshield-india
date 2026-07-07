@@ -8,6 +8,7 @@ export const dashboard: DashboardDict = {
     dashboard: 'Dashboard',
     assets: 'Assets',
     scans: 'Scans',
+    documentScanner: 'Document Scanner',
     issues: 'Issues',
     reports: 'Reports',
     certificates: 'Certificates',

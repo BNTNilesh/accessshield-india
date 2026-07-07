@@ -339,13 +339,13 @@ export function GenerateReportPanel() {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-3">
+                    <fieldset>
+                      <legend className="block text-sm font-semibold text-text-primary mb-3">
                         Report Type{' '}
                         <span className="text-error-700" aria-label="required">
                           *
                         </span>
-                      </label>
+                      </legend>
                       <div className="space-y-2">
                         {REPORT_TYPES.map((type) => (
                           <label
@@ -363,6 +363,7 @@ export function GenerateReportPanel() {
                               checked={reportType === type.value}
                               onChange={(e) => setReportType(e.target.value as ReportType)}
                               disabled={type.enterprise}
+                              aria-label={type.label}
                               className="mt-1 h-4 w-4 shrink-0 text-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
                               required
                             />
@@ -382,7 +383,7 @@ export function GenerateReportPanel() {
                           </label>
                         ))}
                       </div>
-                    </div>
+                    </fieldset>
 
                     <NativeSelect
                       id={assetSelectId}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { Badge, Progress } from '@accessshield/ui';
+import { Progress } from '@accessshield/ui';
 import { ViolationFilters } from '@/components/dashboard/scans/ViolationFilters';
 import { ViolationTable } from '@/components/dashboard/scans/ViolationTable';
 import { MobileScanSummary } from '@/components/dashboard/mobile/MobileScanSummary';

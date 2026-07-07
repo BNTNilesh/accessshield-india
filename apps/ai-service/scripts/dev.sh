@@ -52,6 +52,20 @@ fi
 
 cd "$ROOT"
 
+# Load monorepo env (same source as API/web) so Redis + DATABASE_URL stay in sync
+MONOREPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+if [[ -f "$MONOREPO_ROOT/.env.local" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$MONOREPO_ROOT/.env.local"
+  set +a
+fi
+
+# asyncpg driver required by SQLAlchemy async engine
+if [[ -n "${DATABASE_URL:-}" && "$DATABASE_URL" == postgresql://* ]]; then
+  export DATABASE_URL="postgresql+asyncpg://${DATABASE_URL#postgresql://}"
+fi
+
 PORT="${AI_SERVICE_PORT:-8001}"
 if lsof -ti ":$PORT" >/dev/null 2>&1; then
   echo "Port $PORT already in use. Run 'pnpm dev:stop' from the repo root, then try again." >&2

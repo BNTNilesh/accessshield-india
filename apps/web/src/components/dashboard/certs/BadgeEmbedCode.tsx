@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
 import type { Certificate } from '@/lib/api/types';
-import { Button } from '@accessshield/ui';
 import { CopyButton } from '@accessshield/ui';
 
 const BADGE_VARIANTS = [
@@ -32,8 +30,8 @@ export function BadgeEmbedCode({ certificate }: BadgeEmbedCodeProps) {
   return (
     <div className="space-y-6">
       {/* Variant selector */}
-      <div>
-        <label className="block text-sm font-medium text-text-primary mb-3">Badge Variant</label>
+      <fieldset>
+        <legend className="block text-sm font-medium text-text-primary mb-3">Badge Variant</legend>
         <div className="grid gap-4 sm:grid-cols-3">
           {BADGE_VARIANTS.map((v) => (
             <button
@@ -64,12 +62,17 @@ export function BadgeEmbedCode({ certificate }: BadgeEmbedCodeProps) {
             </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       {/* Badge preview */}
       <div>
-        <label className="block text-sm font-medium text-text-primary mb-3">Preview</label>
-        <div className="flex items-center justify-center rounded-lg border border-border bg-bg-secondary p-6">
+        <p className="block text-sm font-medium text-text-primary mb-3" id="badge-preview-label">
+          Preview
+        </p>
+        <div
+          className="flex items-center justify-center rounded-lg border border-border bg-bg-secondary p-6"
+          aria-labelledby="badge-preview-label"
+        >
           <a
             href={verifyUrl}
             target="_blank"

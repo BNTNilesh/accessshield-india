@@ -40,7 +40,7 @@ type Step2FormData = z.infer<typeof step2Schema>;
 export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [orgData, setOrgData] = useState<Step1FormData | null>(null);
+  const [, setOrgData] = useState<Step1FormData | null>(null);
   const [assetId, setAssetId] = useState<string | null>(null);
   const [widgetAdded, setWidgetAdded] = useState(false);
 
@@ -226,17 +226,17 @@ export default function OnboardingPage() {
                 placeholder="https://example.com"
               />
 
-              <div>
-                <label className="text-sm font-medium text-text-primary block mb-2">
+              <fieldset>
+                <legend className="text-sm font-medium text-text-primary block mb-2">
                   Compliance Standards
-                </label>
+                </legend>
                 <div className="space-y-2">
                   <Checkbox {...step2Form.register('standards.wcag22')} label="WCAG 2.2 AA" />
                   <Checkbox {...step2Form.register('standards.is17802')} label="IS 17802 (India)" />
                   <Checkbox {...step2Form.register('standards.gigw3')} label="GIGW 3.0" />
                   <Checkbox {...step2Form.register('standards.sebi')} label="SEBI Guidelines" />
                 </div>
-              </div>
+              </fieldset>
 
               <Input
                 label="Maximum Pages to Scan"
@@ -282,7 +282,9 @@ export default function OnboardingPage() {
                 onChange={(e) => setWidgetAdded(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600"
               />
-              <span className="text-sm text-gray-700">I've added the widget to my website</span>
+              <span className="text-sm text-gray-700">
+                I&apos;ve added the widget to my website
+              </span>
             </label>
 
             <div className="flex gap-3">
@@ -310,7 +312,7 @@ export default function OnboardingPage() {
             {!isScanning ? (
               <>
                 <p className="text-text-secondary mb-6">
-                  We'll analyze your website for accessibility issues and generate a compliance
+                  We&apos;ll analyze your website for accessibility issues and generate a compliance
                   report. This usually takes 2-5 minutes.
                 </p>
                 <Button onClick={handleStep4} className="w-full">

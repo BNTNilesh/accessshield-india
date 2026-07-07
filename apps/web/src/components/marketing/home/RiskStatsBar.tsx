@@ -7,11 +7,7 @@ export function RiskStatsBar() {
   const { riskStats } = home;
 
   return (
-    <section
-      className="bg-primary-900 px-4 py-12 sm:px-6 lg:px-8"
-      role="region"
-      aria-label={riskStats.title}
-    >
+    <section className="bg-primary-900 px-4 py-12 sm:px-6 lg:px-8" aria-label={riskStats.title}>
       <div className="mx-auto max-w-7xl">
         <p className="mb-8 text-center text-sm font-medium text-primary-100">{riskStats.intro}</p>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">

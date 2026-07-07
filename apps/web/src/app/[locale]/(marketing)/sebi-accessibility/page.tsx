@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
 import { DeadlineBanner } from '@/components/marketing/sebi/DeadlineBanner';
 import { EntityGrid } from '@/components/marketing/sebi/EntityGrid';

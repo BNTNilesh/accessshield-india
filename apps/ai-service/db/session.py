@@ -44,6 +44,17 @@ def init_db() -> tuple[AsyncEngine, async_sessionmaker[AsyncSession]]:
     return engine, async_session
 
 
+def get_async_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Return the async session factory, initialising the DB on first use."""
+    if async_session is None:
+        init_db()
+    if async_session is None:
+        raise RuntimeError(
+            "Database not initialised — set DATABASE_URL to postgresql+asyncpg://..."
+        )
+    return async_session
+
+
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Dependency to get async database session.
 
@@ -53,7 +64,8 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     if async_session is None:
         init_db()
 
-    async with async_session() as session:
+    factory = get_async_session_factory()
+    async with factory() as session:
         yield session
 
 

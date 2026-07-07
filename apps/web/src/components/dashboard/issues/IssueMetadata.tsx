@@ -8,7 +8,6 @@ import type { IssueDetail, IssueSeverity, User as UserType } from '@/lib/api/typ
 import { Select } from '@accessshield/ui';
 import { Input } from '@accessshield/ui';
 import { Badge } from '@accessshield/ui';
-import { cn } from '@/lib/utils';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const SEVERITY_OPTIONS = [

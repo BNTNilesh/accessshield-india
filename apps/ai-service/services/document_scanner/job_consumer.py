@@ -16,6 +16,7 @@ import httpx
 import redis.asyncio as aioredis
 
 from config import settings
+from db.session import get_async_session_factory
 from services.document_scanner.ai_summary import generate_document_summary
 from services.document_scanner.db_writer import (
     mark_job_failed,
@@ -30,6 +31,10 @@ from services.document_scanner.xlsx_engine import XlsxAccessibilityEngine
 logger = logging.getLogger(__name__)
 
 QUEUE_KEY = "document-scan-jobs"
+
+
+class DatabaseUnavailableError(RuntimeError):
+    """Raised when the consumer cannot reach PostgreSQL — job should be re-queued."""
 
 SEVERITY_PENALTY = {
     "critical": 25,
@@ -97,6 +102,11 @@ async def process_job(job_payload: dict) -> None:
     job_id = job_payload.get("job_id", "unknown")
     start_time = time.time()
     tmp_path: str | None = None
+
+    try:
+        factory = get_async_session_factory()
+    except RuntimeError as e:
+        raise DatabaseUnavailableError(str(e)) from e
 
     logger.info(
         "Processing document scan job: job_id=%s type=%s name=%s",
@@ -212,6 +222,13 @@ async def run_consumer() -> None:
                 try:
                     job_payload = json.loads(raw_payload)
                     await process_job(job_payload)
+                except DatabaseUnavailableError as e:
+                    await redis_client.rpush(QUEUE_KEY, raw_payload)
+                    logger.error(
+                        "%s — job re-queued, retrying in 10s",
+                        str(e),
+                    )
+                    await asyncio.sleep(10)
                 except json.JSONDecodeError as e:
                     logger.error("Invalid job payload (not JSON): %s", str(e))
                 except Exception as e:

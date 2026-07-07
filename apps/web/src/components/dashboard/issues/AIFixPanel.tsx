@@ -352,6 +352,7 @@ function AltTextTab({ issue, issueId }: { issue: IssueDetail; issueId: string })
             type="checkbox"
             checked={isDecorative}
             onChange={(e) => setIsDecorative(e.target.checked)}
+            aria-label="Mark as decorative (empty alt text)"
             className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
           />
           <div className="flex-1">

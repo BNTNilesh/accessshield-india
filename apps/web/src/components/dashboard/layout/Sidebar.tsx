@@ -14,6 +14,7 @@ import {
   Shield,
   PanelLeftClose,
   PanelLeft,
+  FileStack,
 } from 'lucide-react';
 import type { UserRole } from '@accessshield/types';
 import { useUIStore } from '@/lib/stores/uiStore';
@@ -24,6 +25,7 @@ type NavLabelKey =
   | 'dashboard'
   | 'assets'
   | 'scans'
+  | 'documentScanner'
   | 'issues'
   | 'reports'
   | 'certificates'
@@ -34,12 +36,19 @@ interface NavItem {
   href: string;
   labelKey: NavLabelKey;
   icon: LucideIcon;
+  badge?: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
   { href: '/dashboard/assets', labelKey: 'assets', icon: Globe },
   { href: '/dashboard/scans', labelKey: 'scans', icon: ScanSearch },
+  {
+    href: '/dashboard/document-scanner',
+    labelKey: 'documentScanner',
+    icon: FileStack,
+    badge: new Date() < new Date('2026-10-01') ? 'New' : undefined,
+  },
   { href: '/dashboard/issues', labelKey: 'issues', icon: AlertCircle },
   { href: '/dashboard/reports', labelKey: 'reports', icon: FileText },
   { href: '/dashboard/certs', labelKey: 'certificates', icon: Award },
@@ -112,7 +121,16 @@ export function Sidebar({ userRole }: SidebarProps) {
               title={sidebarCollapsed ? label : undefined}
             >
               <Icon className="h-4 w-4 shrink-0 text-current" aria-hidden="true" />
-              {!sidebarCollapsed && <span>{label}</span>}
+              {!sidebarCollapsed && (
+                <span className="flex items-center gap-2">
+                  {label}
+                  {item.badge && (
+                    <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                      {item.badge}
+                    </span>
+                  )}
+                </span>
+              )}
             </Link>
           );
         })}

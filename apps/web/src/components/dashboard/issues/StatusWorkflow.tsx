@@ -178,7 +178,7 @@ export function StatusWorkflow({ issueId }: StatusWorkflowProps) {
             disabled={statusMutation.isPending}
           >
             <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-            Won't Fix
+            Won&apos;t Fix
           </Button>
         )}
       </div>

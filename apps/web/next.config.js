@@ -24,6 +24,8 @@ const apiProxyTarget =
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@accessshield/ui', '@accessshield/types', '@accessshield/db'],
+  // Monorepo: let Next/Turbopack resolve packages from the workspace root
+  outputFileTracingRoot: monorepoRoot,
   reactStrictMode: true,
   poweredByHeader: false,
   // .env.local lives at monorepo root — expose to Next.js client, server, and edge middleware
@@ -72,6 +74,26 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: '/document-scanner',
+        destination: '/dashboard/document-scanner',
+        permanent: false,
+      },
+      {
+        source: '/document-scanner/:path*',
+        destination: '/dashboard/document-scanner/:path*',
+        permanent: false,
+      },
+      {
+        source: '/en/document-scanner',
+        destination: '/dashboard/document-scanner',
+        permanent: false,
+      },
+      {
+        source: '/en/document-scanner/:path*',
+        destination: '/dashboard/document-scanner/:path*',
+        permanent: false,
+      },
       {
         source: '/pricing',
         destination: '/services',

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { ScanDetail } from '@/lib/api/types';
+import type { Issue, ScanDetail } from '@/lib/api/types';
 
 export interface ScanProgress {
   status: string;
@@ -10,6 +10,14 @@ export interface ScanProgress {
   pagesTotal: number;
   currentUrl: string;
   score: number | null;
+}
+
+interface AuditLogRow {
+  id: string;
+  action: string;
+  resource_type: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
 }
 
 /**
@@ -84,7 +92,7 @@ export function useNotifications(orgId: string | null): Notification[] {
           filter: `organisation_id=eq.${orgId}`,
         },
         (payload) => {
-          const log = payload.new as any;
+          const log = payload.new as AuditLogRow;
           const notification: Notification = {
             id: log.id,
             action: log.action,
@@ -105,7 +113,7 @@ export function useNotifications(orgId: string | null): Notification[] {
   return notifications;
 }
 
-function formatAuditLogDescription(log: any): string {
+function formatAuditLogDescription(log: AuditLogRow): string {
   const { action, resource_type, metadata } = log;
 
   const descriptions: Record<string, string> = {
@@ -124,7 +132,7 @@ function formatAuditLogDescription(log: any): string {
 /**
  * Subscribe to real-time issue updates for the organization
  */
-export function useIssueUpdates(orgId: string | null, onUpdate: (issue: any) => void): void {
+export function useIssueUpdates(orgId: string | null, onUpdate: (issue: Issue) => void): void {
   useEffect(() => {
     if (!orgId) return;
 
@@ -141,7 +149,7 @@ export function useIssueUpdates(orgId: string | null, onUpdate: (issue: any) => 
           filter: `organisation_id=eq.${orgId}`,
         },
         (payload) => {
-          onUpdate(payload.new);
+          onUpdate(payload.new as Issue);
         },
       )
       .subscribe();

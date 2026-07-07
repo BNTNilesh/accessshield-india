@@ -9,10 +9,22 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from db.session import async_session
+from db.session import get_async_session_factory
 
 logger = logging.getLogger(__name__)
+
+
+def _require_db(job_id: str) -> async_sessionmaker:
+    """Fail loudly when the DB session is unavailable — avoids silently losing jobs."""
+    try:
+        return get_async_session_factory()
+    except RuntimeError as e:
+        raise RuntimeError(
+            f"Database not initialised — cannot update document scan job {job_id}. "
+            f"{e}"
+        ) from e
 
 
 async def save_document_scan_result(
@@ -31,9 +43,7 @@ async def save_document_scan_result(
 
     Follows the update_violation_fix() pattern from db/session.py exactly.
     """
-    if async_session is None:
-        logger.warning("DB not initialised — skipping document scan result save")
-        return
+    _require_db(job_id)
 
     severity_counts = {
         s: sum(1 for v in violations if v.severity.value == s)
@@ -52,10 +62,11 @@ async def save_document_scan_result(
         gigw_results[v.checkpoint_id]["severities"].append(v.severity.value)
 
     result_id = str(uuid.uuid4())
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
 
     try:
-        async with async_session() as session:
+        factory = _require_db(job_id)
+        async with factory() as session:
             await session.execute(
                 text("""
                     INSERT INTO document_scan_results (
@@ -161,10 +172,9 @@ async def save_document_scan_result(
 
 async def mark_job_failed(job_id: str, error_message: str) -> None:
     """Mark a document scan job as failed in the database."""
-    if async_session is None:
-        return
     try:
-        async with async_session() as session:
+        factory = get_async_session_factory()
+        async with factory() as session:
             await session.execute(
                 text("""
                     UPDATE document_scan_jobs
@@ -176,20 +186,26 @@ async def mark_job_failed(job_id: str, error_message: str) -> None:
                 {
                     "job_id": job_id,
                     "error_message": error_message[:1000],
-                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                    "completed_at": datetime.now(timezone.utc),
                 },
             )
             await session.commit()
+    except RuntimeError:
+        logger.error(
+            "Cannot mark job %s as failed — database not initialised: %s",
+            job_id,
+            error_message,
+        )
     except Exception as e:
         logger.error("Failed to mark job as failed: %s", str(e))
 
 
 async def update_job_progress(job_id: str, progress: int) -> None:
     """Update scan job progress percentage."""
-    if async_session is None:
-        return
+    _require_db(job_id)
     try:
-        async with async_session() as session:
+        factory = _require_db(job_id)
+        async with factory() as session:
             await session.execute(
                 text("""
                     UPDATE document_scan_jobs
@@ -201,9 +217,9 @@ async def update_job_progress(job_id: str, progress: int) -> None:
                 {
                     "job_id": job_id,
                     "progress": progress,
-                    "now": datetime.now(timezone.utc).isoformat(),
+                    "now": datetime.now(timezone.utc),
                 },
             )
             await session.commit()
     except Exception as e:
-        logger.debug("Progress update failed (non-critical): %s", str(e))
+        logger.error("Progress update failed: job_id=%s error=%s", job_id, str(e))

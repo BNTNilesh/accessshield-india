@@ -175,6 +175,7 @@ export interface DashboardDict {
     dashboard: string;
     assets: string;
     scans: string;
+    documentScanner: string;
     issues: string;
     reports: string;
     certificates: string;

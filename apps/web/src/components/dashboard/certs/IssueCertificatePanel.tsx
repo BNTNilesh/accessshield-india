@@ -8,7 +8,6 @@ import type { Asset, ScanDetail, CertificateLevel, IssueCertificateInput } from 
 import { Button } from '@accessshield/ui';
 import { Select } from '@accessshield/ui';
 import { RadioGroup } from '@accessshield/ui';
-import { Badge } from '@accessshield/ui';
 import { Alert } from '@accessshield/ui';
 
 const LEVEL_OPTIONS = [

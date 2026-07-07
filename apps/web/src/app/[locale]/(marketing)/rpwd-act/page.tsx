@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge, Button } from '@accessshield/ui';
+import { Badge } from '@accessshield/ui';
 import { SectionNav } from '@/components/marketing/rpwd/SectionNav';
 import { PenaltyCard } from '@/components/marketing/rpwd/PenaltyCard';
 import { CTABanner } from '@/components/marketing/home/CTABanner';
@@ -438,10 +438,10 @@ export default function RPwDActPage() {
                 </h3>
                 <p className="mt-2 text-base leading-normal text-text-secondary">
                   Your accessibility statement should: declare your commitment to accessibility,
-                  specify which standard you conform to (e.g., "WCAG 2.1 AA" or "IS 17802"), list
-                  any known limitations, and provide a clear way for users to report accessibility
-                  issues or request accommodations. Include an email address and phone number for
-                  accessibility queries.
+                  specify which standard you conform to (e.g., &ldquo;WCAG 2.1 AA&rdquo; or
+                  &ldquo;IS 17802&rdquo;), list any known limitations, and provide a clear way for
+                  users to report accessibility issues or request accommodations. Include an email
+                  address and phone number for accessibility queries.
                 </p>
               </div>
             </li>

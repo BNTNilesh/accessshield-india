@@ -14,7 +14,7 @@ export function PricingReportFeaturesSection() {
           Every paid scan produces documentation you can share with leadership and auditors — and a
           clearer picture of who your site is leaving out.
         </p>
-        <ul className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2" role="list">
+        <ul className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
           {PRICING_CATALOG.reportFeatures.map((feature) => (
             <li key={feature} className="flex items-start gap-3">
               <svg

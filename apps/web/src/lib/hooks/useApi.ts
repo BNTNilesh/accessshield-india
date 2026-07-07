@@ -14,15 +14,21 @@ import {
   listViolations,
   getAccessToken,
   getDashboardStats,
+  uploadDocumentScan,
+  getDocumentScanStatus,
+  getDocumentScanResults,
+  listDocumentScans,
   type CreateAssetInput,
   type CreateScanInput,
-  type Asset,
   type ScanDetail,
-  type ScanListItem,
   type ListScansParams,
-  type ViolationRow,
   type DashboardStats,
   type DashboardActivity,
+  type DocumentScanJob,
+  type DocumentScanResult,
+  type DocumentScanListItem,
+  type DocumentScanStatusResponse,
+  type ListDocumentScansParams,
 } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/types';
 
@@ -300,6 +306,90 @@ export function useTriggerMobileScan() {
     },
     onError: (error: ApiError | Error) => {
       toast.error(error.message || 'Failed to start mobile scan');
+    },
+  });
+}
+
+// ─── Document Scans ───────────────────────────────────────────────────────
+
+export type {
+  DocumentScanJob,
+  DocumentScanResult,
+  DocumentScanListItem,
+  DocumentScanStatusResponse,
+  ListDocumentScansParams,
+};
+
+interface UploadDocumentScanInput {
+  formData: FormData;
+  onProgress?: (percent: number) => void;
+}
+
+export function useUploadDocumentScan() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async ({
+      formData,
+      onProgress,
+    }: UploadDocumentScanInput): Promise<DocumentScanJob> => {
+      const token = await getAccessToken();
+      return uploadDocumentScan(token, formData, onProgress);
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['document-scans'] });
+      toast.success('Document scan started');
+      router.push(`/dashboard/document-scanner/results/${result.job_id}`);
+    },
+    onError: (error: ApiError | Error) => {
+      toast.error(error.message || 'Failed to upload document');
+    },
+  });
+}
+
+export function useDocumentScanStatus(jobId: string | null) {
+  return useQuery({
+    queryKey: ['document-scans', jobId, 'status'],
+    queryFn: async () => {
+      if (!jobId) throw new Error('Job ID required');
+      const token = await getAccessToken();
+      return getDocumentScanStatus(token, jobId);
+    },
+    enabled: Boolean(jobId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      const isActive = status === 'queued' || status === 'processing';
+      return isActive ? 3000 : false;
+    },
+  });
+}
+
+export function useDocumentScanResults(jobId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ['document-scans', jobId, 'results'],
+    queryFn: async () => {
+      if (!jobId) throw new Error('Job ID required');
+      const token = await getAccessToken();
+      return getDocumentScanResults(token, jobId);
+    },
+    enabled: Boolean(jobId) && enabled,
+  });
+}
+
+export function useDocumentScans(params?: ListDocumentScansParams) {
+  return useQuery({
+    queryKey: ['document-scans', params],
+    queryFn: async () => {
+      const token = await getAccessToken();
+      return listDocumentScans(token, params);
+    },
+    refetchInterval: (query) => {
+      const scans = query.state.data?.scans ?? [];
+      const hasActive = scans.some(
+        (scan) => scan.status === 'queued' || scan.status === 'processing',
+      );
+      return hasActive ? 5000 : false;
     },
   });
 }

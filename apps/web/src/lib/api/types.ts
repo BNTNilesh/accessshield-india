@@ -456,6 +456,90 @@ export interface UpdateNotificationSettingsInput {
   whatsappNumber?: string;
 }
 
+// ─── Document Scans ───────────────────────────────────────────────────────
+
+export type DocumentType = 'pdf' | 'docx' | 'pptx' | 'xlsx';
+export type DocumentScanStatus = 'queued' | 'processing' | 'completed' | 'failed';
+
+export interface DocumentScanJob {
+  job_id: string;
+  document_name: string;
+  document_type: DocumentType;
+  document_size_bytes: number;
+  status: DocumentScanStatus;
+  progress_percent: number;
+  estimated_duration_seconds: number;
+  created_at: string;
+  poll_url: string;
+  results_url: string;
+}
+
+export interface DocumentViolation {
+  violation_id: string;
+  checkpoint_id: string;
+  standard: string;
+  severity: ViolationSeverity;
+  category: string;
+  description: string;
+  location: string;
+  wcag_criterion: string | null;
+  impact: string;
+  remediation: string;
+  auto_fixable: boolean;
+}
+
+export interface DocumentScanResult {
+  id: string;
+  job_id: string;
+  document_name: string;
+  document_type: DocumentType;
+  total_violations: number;
+  critical_count: number;
+  serious_count: number;
+  moderate_count: number;
+  minor_count: number;
+  compliance_score: number;
+  violations: DocumentViolation[];
+  violations_total: number;
+  violations_page: number;
+  violations_limit: number;
+  violations_pages: number;
+  summary: Record<string, number>;
+  gigw_checkpoint_results: Record<string, { status: string; count: number }>;
+  ai_summary: string;
+  scan_duration_seconds: number;
+  created_at: string;
+}
+
+export interface DocumentScanListItem {
+  id: string;
+  documentName: string;
+  documentType: DocumentType;
+  status: DocumentScanStatus;
+  complianceScore: number | null;
+  criticalCount: number;
+  seriousCount: number;
+  moderateCount: number;
+  minorCount: number;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface DocumentScanStatusResponse {
+  job_id: string;
+  status: DocumentScanStatus;
+  progress_percent: number;
+  document_name: string;
+  error_message?: string;
+}
+
+export interface ListDocumentScansParams {
+  page?: number;
+  limit?: number;
+  status?: DocumentScanStatus;
+  document_type?: DocumentType;
+}
+
 // ─── Widget ──────────────────────────────────────────────────────────────
 
 export interface WidgetSettings {

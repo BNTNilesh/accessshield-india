@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 const ATLASSIAN_TOKEN_URL = 'https://auth.atlassian.com/oauth/token';
-const ATLASSIAN_API_URL = 'https://api.atlassian.com';
 
 /**
  * GET /dashboard/settings/jira/callback

@@ -22,4 +22,4 @@ else
   echo "Warning: $ENV_FILE not found — copy .env.example to .env.local at the monorepo root." >&2
 fi
 
-exec node "${ARGS[@]}" "$NEXT_BIN" dev --turbo --port 3000
+exec node "${ARGS[@]}" "$NEXT_BIN" dev --port 3000

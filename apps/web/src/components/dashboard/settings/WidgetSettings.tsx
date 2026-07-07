@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Code, Save, Copy, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Save, RefreshCw, AlertTriangle } from 'lucide-react';
 import { getAccessToken } from '@/lib/api/client';
 import type {
   WidgetSettings as WidgetSettingsType,

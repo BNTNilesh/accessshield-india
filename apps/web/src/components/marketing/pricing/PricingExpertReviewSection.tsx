@@ -21,7 +21,7 @@ export function PricingExpertReviewSection() {
         {review.priceNote && (
           <p className="mt-1 text-xs text-text-tertiary">{review.priceNote} · + 18% GST</p>
         )}
-        <ul className="mt-4 space-y-2" role="list">
+        <ul className="mt-4 space-y-2">
           {review.features.map((feature) => (
             <li key={feature} className="text-sm text-text-primary">
               · {feature}
