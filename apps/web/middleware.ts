@@ -14,6 +14,11 @@ import { isLocaleAgnosticPath, pathnameHasHiPrefix, stripLocalePrefix } from './
 
 const PROTECTED_PREFIXES = ['/dashboard'];
 const AUTH_ROUTES = ['/login', '/signup', '/auth'];
+const DOCUMENT_SCANNER_MARKETING_PATH = '/document-scanner';
+
+function isDocumentScannerMarketingPath(path: string): boolean {
+  return path === DOCUMENT_SCANNER_MARKETING_PATH;
+}
 
 function resolveLocale(pathname: string): Locale {
   if (pathnameHasHiPrefix(pathname)) return 'hi';
@@ -150,6 +155,14 @@ export async function middleware(request: NextRequest) {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = localizedAuthPath('/dashboard', locale);
     return NextResponse.redirect(dashboardUrl);
+  }
+
+  // Logged-in users skip the marketing landing page and go straight to the scanner app
+  if (user && isDocumentScannerMarketingPath(internalPath)) {
+    const scannerUrl = request.nextUrl.clone();
+    scannerUrl.pathname = '/dashboard/document-scanner';
+    scannerUrl.search = '';
+    return NextResponse.redirect(scannerUrl);
   }
 
   if (user && isProtected) {

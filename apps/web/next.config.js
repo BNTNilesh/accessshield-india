@@ -75,26 +75,6 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/document-scanner',
-        destination: '/dashboard/document-scanner',
-        permanent: false,
-      },
-      {
-        source: '/document-scanner/:path*',
-        destination: '/dashboard/document-scanner/:path*',
-        permanent: false,
-      },
-      {
-        source: '/en/document-scanner',
-        destination: '/dashboard/document-scanner',
-        permanent: false,
-      },
-      {
-        source: '/en/document-scanner/:path*',
-        destination: '/dashboard/document-scanner/:path*',
-        permanent: false,
-      },
-      {
         source: '/pricing',
         destination: '/services',
         permanent: true,

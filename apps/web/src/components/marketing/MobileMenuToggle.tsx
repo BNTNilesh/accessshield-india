@@ -95,6 +95,16 @@ export function MobileMenuToggle() {
               <LocaleLink href="/widget" onClick={handleClose} className={linkClass}>
                 {nav.widget}
               </LocaleLink>
+              <LocaleLink
+                href="/document-scanner"
+                onClick={handleClose}
+                className={`${linkClass} flex items-center gap-2`}
+              >
+                {nav.documentScanner}
+                <span className="inline-flex rounded-full bg-accent-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent-700">
+                  New
+                </span>
+              </LocaleLink>
               <LocaleLink href="/blog" onClick={handleClose} className={linkClass}>
                 {nav.blog}
               </LocaleLink>

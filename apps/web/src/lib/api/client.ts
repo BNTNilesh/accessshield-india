@@ -15,6 +15,7 @@ import type {
   DocumentScanListItem,
   DocumentScanStatusResponse,
   ListDocumentScansParams,
+  DocumentType,
 } from './types';
 import { ApiError } from './types';
 
@@ -321,6 +322,15 @@ export async function uploadDocumentScan(
 }
 
 /** Get document scan status */
+const DOCUMENT_TYPES: DocumentType[] = ['pdf', 'docx', 'pptx', 'xlsx'];
+
+function parseDocumentType(value: unknown): DocumentType {
+  if (typeof value === 'string' && DOCUMENT_TYPES.includes(value as DocumentType)) {
+    return value as DocumentType;
+  }
+  return 'pdf';
+}
+
 function normalizeDocumentScanStatus(
   data: DocumentScanStatusResponse & {
     jobId?: string;
@@ -338,15 +348,12 @@ function normalizeDocumentScanStatus(
   };
 }
 
-function normalizeDocumentScanResult(
-  data: DocumentScanResult & Record<string, unknown>,
-): DocumentScanResult {
+function normalizeDocumentScanResult(data: Record<string, unknown>): DocumentScanResult {
   return {
     id: (data.id as string) ?? '',
     job_id: (data.job_id as string) ?? (data.jobId as string) ?? '',
-    organisation_id: (data.organisation_id as string) ?? (data.organisationId as string) ?? '',
     document_name: (data.document_name as string) ?? (data.documentName as string) ?? '',
-    document_type: (data.document_type as string) ?? (data.documentType as string) ?? 'pdf',
+    document_type: parseDocumentType(data.document_type ?? data.documentType),
     total_violations: (data.total_violations as number) ?? (data.totalViolations as number) ?? 0,
     critical_count: (data.critical_count as number) ?? (data.criticalCount as number) ?? 0,
     serious_count: (data.serious_count as number) ?? (data.seriousCount as number) ?? 0,
@@ -394,7 +401,7 @@ export async function getDocumentScanResults(
     `/api/v1/document-scans/${jobId}/results`,
     token,
   );
-  return normalizeDocumentScanResult(response.data);
+  return normalizeDocumentScanResult(response.data as unknown as Record<string, unknown>);
 }
 
 /** Download document scan PDF report */

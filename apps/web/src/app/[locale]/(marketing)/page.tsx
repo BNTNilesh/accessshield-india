@@ -1,6 +1,7 @@
 import { HeroSection } from '@/components/marketing/home/HeroSection';
 import { LiveTicker } from '@/components/marketing/home/LiveTicker';
 import { RiskStatsBar } from '@/components/marketing/home/RiskStatsBar';
+import { FeaturesSection } from '@/components/marketing/home/FeaturesSection';
 import { WhoWeBuildForSection } from '@/components/marketing/home/WhoWeBuildForSection';
 import { HowItWorksSection } from '@/components/marketing/home/HowItWorksSection';
 import { StandardsSection } from '@/components/marketing/home/StandardsSection';
@@ -45,6 +46,7 @@ export default function HomePage() {
       <HeroSection />
       <LiveTicker />
       <RiskStatsBar />
+      <FeaturesSection />
       <WhoWeBuildForSection />
       <HowItWorksSection />
       <StandardsSection />

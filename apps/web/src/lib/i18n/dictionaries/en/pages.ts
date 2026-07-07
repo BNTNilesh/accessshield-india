@@ -80,6 +80,16 @@ export const pages: PagesDict = {
     description:
       'Let visitors adjust text size, contrast, and navigation — without rebuilding your site.',
   },
+  documentScanner: {
+    meta: {
+      title: 'Document Scanner — PDF, Word, PowerPoint, Excel',
+      description:
+        'Scan government documents for accessibility issues before publishing. Detects untagged PDFs, missing alt text, inaccessible tables, and 40+ WCAG 2.1 AA / GIGW 3.0 issues.',
+    },
+    title: 'Is Your Government PDF Accessible?',
+    description:
+      'Scan PDF, Word, PowerPoint, and Excel files for 40+ WCAG 2.1 AA, GIGW 3.0, and RPwD Act 2016 issues — with plain-English remediation for each.',
+  },
   services: {
     meta: {
       title: 'Services & Pricing',

@@ -126,7 +126,7 @@ export function PricingAddonsSection() {
       <h2 id="extra-addons-heading" className="text-center text-xl font-bold text-text-primary">
         More add-ons
       </h2>
-      <div className="mx-auto mt-8 grid max-w-xl grid-cols-1">
+      <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-6 lg:grid-cols-2">
         {addons.map((addon) => (
           <OneTimeCard key={addon.id} service={addon} />
         ))}

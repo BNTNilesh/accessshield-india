@@ -55,6 +55,7 @@ export const PRICING_CATALOG = {
         'Font size, contrast & dyslexia tools',
         'Keyboard navigation enhancements',
         'Widget updates & uptime monitoring',
+        '10 document scans / month',
       ],
       cta: { text: 'Get started', href: '/signup?plan=widget' },
     },
@@ -69,6 +70,8 @@ export const PRICING_CATALOG = {
       features: [
         'Everything in Widget Only',
         '20 scans per month',
+        '100 document scans / month',
+        'Batch upload (25 files)',
         'PDF reports (WCAG 2.2 + IS 17802)',
         'Violation severity breakdown',
         'Scan history & email export',
@@ -86,6 +89,8 @@ export const PRICING_CATALOG = {
       features: [
         'Everything in Professional',
         'Unlimited WCAG + IS 17802 scans',
+        'Unlimited document scans',
+        'Batch upload (100 files)',
         'Quarterly specialist spot-check',
         'Annual compliance assessment report',
         'Badge renewal & priority support',
@@ -105,6 +110,8 @@ export const PRICING_CATALOG = {
       features: [
         'Website + mobile app monitoring',
         'Everything in Stay Compliant',
+        'Unlimited document scans + API access',
+        'Batch upload (500 files)',
         'SEBI assessment (1/year included)',
         'RPwD & GIGW evidence pack',
         '72-hour regulatory triage',
@@ -186,6 +193,21 @@ export const PRICING_CATALOG = {
         'Included with Regulatory Defense',
       ],
       cta: { text: 'Add mobile scan', href: '/contact?service=mobile-scan' },
+    },
+    {
+      id: 'document-batch-audit',
+      name: 'Document Accessibility Batch Audit',
+      subtitle: 'Up to 500 documents per batch',
+      priceInr: 15000,
+      priceNote: 'Ideal for ministry document libraries and RTI archives',
+      features: [
+        'Up to 500 documents (PDF, Word, PowerPoint, Excel)',
+        'Unified compliance report',
+        'GIGW checkpoint summary',
+        'Priority queue (2hr turnaround)',
+        'Certificate-ready evidence pack',
+      ],
+      cta: { text: 'Get quote', href: '/contact?service=document-batch-audit' },
     },
   ] satisfies OneTimeSku[],
 

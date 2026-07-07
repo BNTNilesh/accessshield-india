@@ -177,12 +177,13 @@ export default function DocumentScanResultsPage() {
   const score = results.compliance_score ?? 0;
   const scoreColor =
     score >= 80 ? 'text-green-700' : score >= 60 ? 'text-orange-600' : 'text-red-700';
+  const documentName = results.document_name ?? 'document-scan';
 
   async function handleDownloadReport() {
     setIsDownloading(true);
     setDownloadError(null);
     try {
-      const safeName = (results.document_name ?? 'document-scan').replace(/[^\w.-]+/g, '_');
+      const safeName = documentName.replace(/[^\w.-]+/g, '_');
       await downloadDocumentScanReport(jobId, `${safeName}-report.pdf`);
     } catch {
       setDownloadError('Failed to download report. Please try again.');

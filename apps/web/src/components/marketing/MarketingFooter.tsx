@@ -69,6 +69,11 @@ export function MarketingFooter() {
                 </LocaleLink>
               </li>
               <li>
+                <LocaleLink href="/document-scanner" className={footerLinkClass}>
+                  {f.links.documentScanner}
+                </LocaleLink>
+              </li>
+              <li>
                 <LocaleLink href="/docs" className={footerLinkClass}>
                   {f.links.docs}
                 </LocaleLink>

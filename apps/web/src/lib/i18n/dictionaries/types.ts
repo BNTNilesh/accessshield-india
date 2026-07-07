@@ -14,6 +14,7 @@ export interface CommonDict {
     home: string;
     services: string;
     widget: string;
+    documentScanner: string;
     blog: string;
     scan: string;
     signIn: string;
@@ -47,6 +48,7 @@ export interface CommonDict {
       freeScan: string;
       services: string;
       widget: string;
+      documentScanner: string;
       docs: string;
       blog: string;
       about: string;
@@ -218,6 +220,7 @@ export interface PagesDict {
   contact: PageContent & { form: Record<string, string> };
   scan: PageContent;
   widget: PageContent;
+  documentScanner: PageContent;
   services: PageContent;
   docs: PageContent;
   careers: PageContent;

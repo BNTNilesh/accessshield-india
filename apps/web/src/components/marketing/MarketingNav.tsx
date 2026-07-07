@@ -35,6 +35,15 @@ export function MarketingNav() {
           <LocaleLink href="/widget" className={navLinkClass}>
             {common.nav.widget}
           </LocaleLink>
+          <LocaleLink
+            href="/document-scanner"
+            className={`${navLinkClass} inline-flex items-center gap-1.5`}
+          >
+            {common.nav.documentScanner}
+            <span className="inline-flex rounded-full bg-accent-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent-700">
+              New
+            </span>
+          </LocaleLink>
           <LocaleLink href="/blog" className={navLinkClass}>
             {common.nav.blog}
           </LocaleLink>

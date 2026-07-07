@@ -80,6 +80,16 @@ export const pages: PagesDict = {
     description:
       'Visitors text size, contrast और navigation adjust कर सकें — पूरी site rebuild किए बिना।',
   },
+  documentScanner: {
+    meta: {
+      title: 'Document Scanner — PDF, Word, PowerPoint, Excel',
+      description:
+        'Publish करने से पहले government documents को accessibility issues के लिए scan करें। Untagged PDFs, missing alt text, inaccessible tables, और 40+ WCAG 2.1 AA / GIGW 3.0 issues detect करें।',
+    },
+    title: 'क्या आपकी Government PDF Accessible है?',
+    description:
+      'PDF, Word, PowerPoint, और Excel files को 40+ WCAG 2.1 AA, GIGW 3.0, और RPwD Act 2016 issues के लिए scan करें — हर issue के लिए simple Hindi में remediation।',
+  },
   services: {
     meta: {
       title: 'Services & Pricing',
