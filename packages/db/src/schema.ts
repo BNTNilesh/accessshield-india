@@ -1,6 +1,8 @@
 import { relations } from 'drizzle-orm';
 import {
+  bigint,
   boolean,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -417,6 +419,104 @@ export const waitlistSignups = pgTable(
   }),
 );
 
+// ─── Document Scanner ────────────────────────────────────────────────────────
+
+export const documentScanJobs = pgTable(
+  'document_scan_jobs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organisationId: orgId(),
+    /** Supabase Auth user ID */
+    userId: uuid('user_id').notNull(),
+    documentName: text('document_name').notNull(),
+    documentType: text('document_type').notNull(),
+    documentSizeBytes: bigint('document_size_bytes', { mode: 'number' }),
+    pageCount: integer('page_count'),
+    s3Key: text('s3_key').notNull(),
+    s3Bucket: text('s3_bucket').notNull().default('accessshield-uploads-prod'),
+    status: text('status').notNull().default('queued'),
+    progressPercent: integer('progress_percent').default(0),
+    standards: text('standards')
+      .array()
+      .notNull()
+      .default(['WCAG_2_1_AA', 'GIGW_3_0', 'PDF_UA', 'IS_17802']),
+    errorMessage: text('error_message'),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    startedAt: timestamp('started_at', { withTimezone: true, mode: 'string' }),
+    completedAt: timestamp('completed_at', { withTimezone: true, mode: 'string' }),
+  },
+  (table) => ({
+    orgIdx: index('idx_doc_jobs_org_id').on(table.organisationId),
+    statusIdx: index('idx_doc_jobs_status').on(table.status),
+    createdIdx: index('idx_doc_jobs_created').on(table.createdAt),
+  }),
+);
+
+export const documentScanResults = pgTable(
+  'document_scan_results',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    jobId: uuid('job_id')
+      .notNull()
+      .unique()
+      .references(() => documentScanJobs.id, { onDelete: 'cascade' }),
+    organisationId: orgId(),
+    documentName: text('document_name').notNull(),
+    documentType: text('document_type').notNull(),
+    totalViolations: integer('total_violations').notNull().default(0),
+    criticalCount: integer('critical_count').notNull().default(0),
+    seriousCount: integer('serious_count').notNull().default(0),
+    moderateCount: integer('moderate_count').notNull().default(0),
+    minorCount: integer('minor_count').notNull().default(0),
+    complianceScore: integer('compliance_score').notNull().default(0),
+    violations: jsonb('violations').notNull().default([]),
+    summary: jsonb('summary').notNull().default({}),
+    gigwCheckpointResults: jsonb('gigw_checkpoint_results').notNull().default({}),
+    aiSummary: text('ai_summary'),
+    scanDurationSeconds: doublePrecision('scan_duration_seconds'),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    jobIdx: index('idx_doc_results_job_id').on(table.jobId),
+    orgIdx: index('idx_doc_results_org_id').on(table.organisationId),
+  }),
+);
+
+export const documentViolations = pgTable(
+  'document_violations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    jobId: uuid('job_id')
+      .notNull()
+      .references(() => documentScanJobs.id, { onDelete: 'cascade' }),
+    organisationId: orgId(),
+    violationId: text('violation_id').notNull(),
+    checkpointId: text('checkpoint_id').notNull(),
+    standard: text('standard').notNull(),
+    severity: text('severity').notNull(),
+    category: text('category').notNull(),
+    description: text('description').notNull(),
+    location: text('location'),
+    wcagCriterion: text('wcag_criterion'),
+    impact: text('impact'),
+    remediation: text('remediation'),
+    autoFixable: boolean('auto_fixable').default(false),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    jobIdx: index('idx_doc_violations_job_id').on(table.jobId),
+    severityIdx: index('idx_doc_violations_severity').on(table.jobId, table.severity),
+    categoryIdx: index('idx_doc_violations_category').on(table.jobId, table.category),
+    checkpointIdx: index('idx_doc_violations_checkpoint').on(table.checkpointId),
+  }),
+);
+
 // ─── Relations ───────────────────────────────────────────────────────────────
 
 export const organisationsRelations = relations(organisations, ({ many }) => ({
@@ -424,6 +524,9 @@ export const organisationsRelations = relations(organisations, ({ many }) => ({
   assets: many(assets),
   scans: many(scans),
   invoices: many(invoices),
+  documentScanJobs: many(documentScanJobs),
+  documentScanResults: many(documentScanResults),
+  documentViolations: many(documentViolations),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -470,4 +573,38 @@ export const issuesRelations = relations(issues, ({ one }) => ({
   asset: one(assets, { fields: [issues.assetId], references: [assets.id] }),
   violation: one(violations, { fields: [issues.violationId], references: [violations.id] }),
   assignee: one(users, { fields: [issues.assignedTo], references: [users.id] }),
+}));
+
+export const documentScanJobsRelations = relations(documentScanJobs, ({ one, many }) => ({
+  organisation: one(organisations, {
+    fields: [documentScanJobs.organisationId],
+    references: [organisations.id],
+  }),
+  result: one(documentScanResults, {
+    fields: [documentScanJobs.id],
+    references: [documentScanResults.jobId],
+  }),
+  violations: many(documentViolations),
+}));
+
+export const documentScanResultsRelations = relations(documentScanResults, ({ one }) => ({
+  organisation: one(organisations, {
+    fields: [documentScanResults.organisationId],
+    references: [organisations.id],
+  }),
+  job: one(documentScanJobs, {
+    fields: [documentScanResults.jobId],
+    references: [documentScanJobs.id],
+  }),
+}));
+
+export const documentViolationsRelations = relations(documentViolations, ({ one }) => ({
+  organisation: one(organisations, {
+    fields: [documentViolations.organisationId],
+    references: [organisations.id],
+  }),
+  job: one(documentScanJobs, {
+    fields: [documentViolations.jobId],
+    references: [documentScanJobs.id],
+  }),
 }));

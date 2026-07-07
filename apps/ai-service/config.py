@@ -40,5 +40,8 @@ class Settings(BaseSettings):
     # Environment
     environment: str = "development"
 
+    # Apache Tika (document text extraction)
+    tika_server_url: str = "http://localhost:9998"
+
 
 settings = Settings()

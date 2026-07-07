@@ -1,8 +1,8 @@
 """Internal API key authentication middleware."""
 
-from fastapi import Request, HTTPException
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
 from config import settings
 
@@ -26,21 +26,27 @@ class InternalAuthMiddleware(BaseHTTPMiddleware):
             HTTPException: If API key is missing or invalid.
         """
         # Allow health and metrics endpoints without auth
-        if request.url.path in ("/health", "/metrics", "/docs", "/openapi.json"):
+        if request.url.path in (
+            "/health",
+            "/metrics",
+            "/docs",
+            "/openapi.json",
+            "/document-scanner/health",
+        ):
             return await call_next(request)
 
         key = request.headers.get("X-Internal-Key")
 
         if not key:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=401,
-                detail="Missing X-Internal-Key header",
+                content={"detail": "Missing X-Internal-Key header"},
             )
 
         if key != settings.internal_ai_service_key:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=401,
-                detail="Invalid internal API key",
+                content={"detail": "Invalid internal API key"},
             )
 
         return await call_next(request)

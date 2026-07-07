@@ -7,20 +7,27 @@ import re
 from typing import Any
 
 
-# Compiled regex patterns for Indian PII
+# Compiled regex patterns for Indian PII — most-specific patterns first to avoid
+# false positives (e.g. Aadhaar matching phone numbers or card numbers).
 PATTERNS = [
+    # Credit/debit card (4 groups — must run before Aadhaar's 3-group pattern)
+    (re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"), "[REDACTED-CARD]"),
+    # Indian phone with +91 prefix
+    (re.compile(r"\+91[6-9]\d{9}\b"), "[REDACTED-PHONE]"),
+    # Indian phone with 91 prefix
+    (re.compile(r"\b91[6-9]\d{9}\b"), "[REDACTED-PHONE]"),
     # Aadhaar number (spaced format: 1234 5678 9012)
     (re.compile(r"\b\d{4}\s\d{4}\s\d{4}\b"), "[REDACTED-AADHAAR]"),
     # Aadhaar number (continuous: 123456789012)
     (re.compile(r"\b\d{12}\b"), "[REDACTED-AADHAAR]"),
     # PAN card (ABCDE1234F)
     (re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b"), "[REDACTED-PAN]"),
-    # Indian phone with prefix (+91, 91, 0)
-    (re.compile(r"\b(?:\+91|91|0)?[6-9]\d{9}\b"), "[REDACTED-PHONE]"),
+    # Indian phone with leading 0
+    (re.compile(r"\b0[6-9]\d{9}\b"), "[REDACTED-PHONE]"),
+    # Plain 10-digit Indian mobile
+    (re.compile(r"\b[6-9]\d{9}\b"), "[REDACTED-PHONE]"),
     # Email address
     (re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"), "[REDACTED-EMAIL]"),
-    # Credit/debit card (with optional spaces or dashes)
-    (re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"), "[REDACTED-CARD]"),
     # IFSC code (ABCD0123456)
     (re.compile(r"\b[A-Z]{4}0[A-Z0-9]{6}\b"), "[REDACTED-IFSC]"),
     # Bank account number (8-18 digits, but avoid matching already-redacted patterns)

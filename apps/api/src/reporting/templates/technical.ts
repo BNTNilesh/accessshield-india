@@ -156,6 +156,19 @@ const TECHNICAL_TEMPLATE = `
 organized by WCAG 2.2 success criterion. Each section provides detailed
 information about affected elements, suggested fixes, and remediation guidance.</p>
 
+{{#if aiFixCount}}
+<blockquote class="callout-success">
+  <strong>AI remediation guidance:</strong> {{aiFixCount}} of {{totalViolations}} violation(s)
+  include AI-suggested code fixes saved from the Issues tracker. Regenerate fixes in
+  Dashboard → Issues before exporting for the most complete report.
+</blockquote>
+{{else}}
+<blockquote class="callout-warning">
+  <strong>AI fixes not included yet:</strong> Open violations in Dashboard → Issues to
+  generate AI-suggested fixes; then regenerate this report to include remediation code.
+</blockquote>
+{{/if}}
+
 <h2>Criteria Covered</h2>
 
 {{#if criteriaGroups.length}}
@@ -240,7 +253,7 @@ information about affected elements, suggested fixes, and remediation guidance.<
   <p class="violation-description">{{description}}</p>
 
   {{#if elementHtml}}
-  <h4>Affected HTML</h4>
+  <h4>Before (current markup)</h4>
   <pre><code>{{escapeHtml elementHtml}}</code></pre>
   {{/if}}
 
@@ -251,7 +264,7 @@ information about affected elements, suggested fixes, and remediation guidance.<
 
   {{#if aiFix}}
   <div class="code-fix">
-    <div class="code-fix-label">Suggested Fix</div>
+    <div class="code-fix-label">AI Suggested Fix</div>
     <pre><code>{{escapeHtml aiFix}}</code></pre>
   </div>
   {{/if}}
@@ -260,6 +273,14 @@ information about affected elements, suggested fixes, and remediation guidance.<
   <h4>Remediation Guidance</h4>
   <p>{{aiExplanation}}</p>
   {{/if}}
+
+  {{#unless aiFix}}
+  {{#if elementHtml}}
+  <p style="font-size: 9pt; color: #6B7280; font-style: italic;">
+    No AI fix saved for this violation. Generate one from Dashboard → Issues.
+  </p>
+  {{/if}}
+  {{/unless}}
 
   {{#if helpUrl}}
   <p style="font-size: 9pt; color: #6B7280;">
@@ -408,11 +429,13 @@ export function renderTechnicalTemplate(data: ReportTemplateData): string {
     data.scan.minorCount;
 
   const criteriaGroups = groupViolationsByCriterion(data.violations);
+  const aiFixCount = data.violations.filter((v) => v.aiFix).length;
 
   const templateData = {
     ...data,
     totalViolations,
     criteriaGroups,
+    aiFixCount,
   };
 
   const template = Handlebars.compile(TECHNICAL_TEMPLATE);

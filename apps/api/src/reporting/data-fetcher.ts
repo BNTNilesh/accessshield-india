@@ -9,6 +9,7 @@ import type { Database } from '@accessshield/db';
 import { assets, organisations, scans, users, violations } from '@accessshield/db';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { logger } from '../lib/logger';
+import { isDevPreviewAiFix, stripDevPreviewComment } from '../lib/dev-mock-ai';
 import type { ReportTemplateData, ReportType, ScanTrendPoint, ViolationSummary } from './types';
 
 /** Custom error for resource not found scenarios */
@@ -197,6 +198,8 @@ export async function fetchReportData(
       selector: violations.selector,
       html: violations.html,
       pageUrl: violations.pageUrl,
+      aiFix: violations.aiFix,
+      aiExplanation: violations.aiExplanation,
     })
     .from(violations)
     .where(and(eq(violations.scanId, scanId), eq(violations.organisationId, organisationId)))
@@ -212,6 +215,11 @@ export async function fetchReportData(
 
   const violationSummaries: ViolationSummary[] = violationRows.map((v) => {
     const primaryCriterion = extractPrimaryCriterion(v.wcagCriteria);
+    const rawFix = v.aiFix?.trim() ? v.aiFix : null;
+    const aiFix = rawFix ? stripDevPreviewComment(rawFix) : null;
+    const aiExplanation = v.aiExplanation?.trim() ? v.aiExplanation : null;
+    const devPreview = isDevPreviewAiFix(aiExplanation, rawFix);
+
     return {
       wcagCriterion: primaryCriterion,
       wcagLevel: determineCriterionLevel(primaryCriterion),
@@ -223,8 +231,11 @@ export async function fetchReportData(
       elementHtml: v.html,
       elementSelector: v.selector,
       screenshotUrl: null,
-      aiFix: null,
-      aiExplanation: null,
+      aiFix,
+      aiExplanation:
+        devPreview && aiExplanation
+          ? `${aiExplanation} (Development preview — regenerate from Issues for production-grade fixes.)`
+          : aiExplanation,
       helpUrl: v.helpUrl,
     };
   });

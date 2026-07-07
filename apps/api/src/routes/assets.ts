@@ -12,7 +12,7 @@ import type { NextFunction, Request, Response, Router as ExpressRouter } from 'e
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
-import { getAssetLimit } from '../lib/plan-limits';
+import { getAssetLimit, isAssetLimitDisabled } from '../lib/plan-limits';
 import { logger } from '../lib/logger';
 import { sendProblem } from '../lib/problem-details';
 import { uploadMobileApp } from '../services/s3-upload';
@@ -100,7 +100,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
         const planTier = org?.planTier ?? 'starter';
         const assetLimit = getAssetLimit(planTier);
 
-        if (assetLimit !== null) {
+        if (assetLimit !== null && !isAssetLimitDisabled()) {
           const [assetCountResult] = await db
             .select({ count: count() })
             .from(assets)
@@ -211,7 +211,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
         const planTier = org?.planTier ?? 'starter';
         const assetLimit = getAssetLimit(planTier);
 
-        if (assetLimit !== null) {
+        if (assetLimit !== null && !isAssetLimitDisabled()) {
           const [assetCountResult] = await db
             .select({ count: count() })
             .from(assets)
@@ -262,7 +262,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
           file.originalname,
         );
 
-        const parsedStandards = (() => {
+        const parsedStandards = ((): Array<'WCAG22' | 'IS17802' | 'SEBI'> => {
           try {
             const raw = standards ? JSON.parse(standards) : {};
             const selected = Object.entries(raw)
@@ -276,7 +276,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
               .filter((value): value is 'WCAG22' | 'IS17802' | 'SEBI' => value !== null);
             return selected.length > 0 ? selected : ['WCAG22', 'IS17802'];
           } catch {
-            return ['WCAG22', 'IS17802'] as Array<'WCAG22' | 'IS17802' | 'SEBI'>;
+            return ['WCAG22', 'IS17802'];
           }
         })();
 

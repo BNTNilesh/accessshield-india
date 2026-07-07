@@ -2,6 +2,8 @@
 
 AI-powered digital accessibility compliance SaaS platform for Indian organisations. Built for WCAG 2.2 AA, RPwD Act 2016, and GIGW 3.0 compliance.
 
+**Architecture documentation:** [docs/architecture/README.md](docs/architecture/README.md) — system overview, data flows, deployment topology, and operational runbook for architects and TPMs.
+
 ## Monorepo Structure
 
 ```

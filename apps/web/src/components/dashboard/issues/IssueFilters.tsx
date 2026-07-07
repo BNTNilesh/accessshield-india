@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Input } from '@accessshield/ui';
 import { Select } from '@accessshield/ui';
 import { Button } from '@accessshield/ui';
 import { X, Search } from 'lucide-react';
 import { Badge } from '@accessshield/ui';
+import { useAssets } from '@/lib/hooks/useApi';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All statuses' },
@@ -47,6 +48,15 @@ export function IssueFilters({ searchParams }: IssueFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [searchValue, setSearchValue] = useState(searchParams.search ?? '');
+  const { data: assets = [], isLoading: assetsLoading } = useAssets();
+
+  const assetOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All assets' },
+      ...assets.map((asset) => ({ value: asset.id, label: asset.name })),
+    ],
+    [assets],
+  );
 
   const activeFilterCount = Object.entries(searchParams).filter(
     ([key, value]) => value && value !== 'all' && key !== 'search',
@@ -55,8 +65,9 @@ export function IssueFilters({ searchParams }: IssueFiltersProps) {
   function updateFilters(updates: Record<string, string | undefined>) {
     const params = new URLSearchParams();
 
-    // Merge existing params with updates
-    Object.entries({ ...searchParams, ...updates }).forEach(([key, value]) => {
+    // Merge existing params with updates; reset pagination when filters change
+    const merged = { ...searchParams, ...updates, page: undefined };
+    Object.entries(merged).forEach(([key, value]) => {
       if (value && value !== 'all') {
         params.set(key, value);
       }
@@ -92,11 +103,12 @@ export function IssueFilters({ searchParams }: IssueFiltersProps) {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Search */}
-        <form onSubmit={handleSearchSubmit} className="sm:col-span-2">
+      <div className="space-y-4">
+        {/* Search — full width */}
+        <form onSubmit={handleSearchSubmit}>
           <Input
             type="search"
+            label="Search"
             placeholder="Search by title or description"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
@@ -105,59 +117,74 @@ export function IssueFilters({ searchParams }: IssueFiltersProps) {
           />
         </form>
 
-        {/* Status */}
-        <Select
-          label="Status"
-          options={STATUS_OPTIONS}
-          value={searchParams.status ?? 'all'}
-          onValueChange={(value) => updateFilters({ status: value === 'all' ? undefined : value })}
-        />
+        {/* Primary filters — equal columns */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Select
+            label="Status"
+            options={STATUS_OPTIONS}
+            value={searchParams.status ?? 'all'}
+            onValueChange={(value) =>
+              updateFilters({ status: value === 'all' ? undefined : value })
+            }
+          />
 
-        {/* Severity */}
-        <Select
-          label="Severity"
-          options={SEVERITY_OPTIONS}
-          value={searchParams.severity ?? 'all'}
-          onValueChange={(value) =>
-            updateFilters({ severity: value === 'all' ? undefined : value })
-          }
-        />
+          <Select
+            label="Severity"
+            options={SEVERITY_OPTIONS}
+            value={searchParams.severity ?? 'all'}
+            onValueChange={(value) =>
+              updateFilters({ severity: value === 'all' ? undefined : value })
+            }
+          />
 
-        {/* Assignee */}
-        <Select
-          label="Assignee"
-          options={ASSIGNEE_OPTIONS}
-          value={searchParams.assignee ?? 'all'}
-          onValueChange={(value) =>
-            updateFilters({ assignee: value === 'all' ? undefined : value })
-          }
-        />
+          <Select
+            label="Assignee"
+            options={ASSIGNEE_OPTIONS}
+            value={searchParams.assignee ?? 'all'}
+            onValueChange={(value) =>
+              updateFilters({ assignee: value === 'all' ? undefined : value })
+            }
+          />
 
-        {/* WCAG Criterion */}
-        <Input
-          type="text"
-          label="WCAG Criterion"
-          placeholder="e.g., 1.1.1"
-          value={searchParams.wcagCriterion ?? ''}
-          onChange={(e) => updateFilters({ wcagCriterion: e.target.value || undefined })}
-        />
+          <Select
+            label="Asset"
+            options={assetOptions}
+            value={searchParams.assetId ?? 'all'}
+            onValueChange={(value) =>
+              updateFilters({ assetId: value === 'all' ? undefined : value })
+            }
+            disabled={assetsLoading}
+            searchable
+            placeholder="All assets"
+          />
+        </div>
 
-        {/* Date range */}
-        <Input
-          type="date"
-          label="From date"
-          value={searchParams.dateFrom ?? ''}
-          onChange={(e) => updateFilters({ dateFrom: e.target.value || undefined })}
-          pattern="\d{2}/\d{2}/\d{4}"
-        />
+        {/* WCAG + date range */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Input
+            type="text"
+            label="WCAG Criterion"
+            placeholder="e.g., 1.1.1"
+            value={searchParams.wcagCriterion ?? ''}
+            onChange={(e) => updateFilters({ wcagCriterion: e.target.value || undefined })}
+          />
 
-        <Input
-          type="date"
-          label="To date"
-          value={searchParams.dateTo ?? ''}
-          onChange={(e) => updateFilters({ dateTo: e.target.value || undefined })}
-          pattern="\d{2}/\d{2}/\d{4}"
-        />
+          <Input
+            type="date"
+            label="From date"
+            value={searchParams.dateFrom ?? ''}
+            onChange={(e) => updateFilters({ dateFrom: e.target.value || undefined })}
+            pattern="\d{2}/\d{2}/\d{4}"
+          />
+
+          <Input
+            type="date"
+            label="To date"
+            value={searchParams.dateTo ?? ''}
+            onChange={(e) => updateFilters({ dateTo: e.target.value || undefined })}
+            pattern="\d{2}/\d{2}/\d{4}"
+          />
+        </div>
       </div>
     </div>
   );

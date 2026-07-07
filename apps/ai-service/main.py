@@ -1,5 +1,6 @@
 """AccessShield India AI Service — FastAPI entry point."""
 
+import asyncio
 import json
 import logging
 import uuid
@@ -36,6 +37,8 @@ from services.statement_generator import (
     StatementResponse,
     generate_statement,
 )
+from services.document_scanner.job_consumer import run_consumer
+from services.document_scanner.router import router as document_scanner_router
 
 # Configure logging
 logging.basicConfig(
@@ -95,10 +98,17 @@ async def lifespan(app: FastAPI):
         settings.environment,
     )
 
+    doc_scanner_task = asyncio.create_task(run_consumer())
+
     yield
 
     # Shutdown
     logger.info("Shutting down AI Service...")
+    doc_scanner_task.cancel()
+    try:
+        await doc_scanner_task
+    except asyncio.CancelledError:
+        pass
     if cache:
         await cache.close()
     await close_db()
@@ -125,6 +135,8 @@ app.add_middleware(
 )
 app.add_middleware(InternalAuthMiddleware)
 app.add_middleware(RateLimitMiddleware)
+
+app.include_router(document_scanner_router)
 
 
 @app.exception_handler(Exception)

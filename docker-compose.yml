@@ -50,6 +50,17 @@ services:
       timeout: 10s
       retries: 5
 
+  tika:
+    image: apache/tika:2.9.2.1
+    ports:
+      - '9998:9998'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:9998/tika']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   mobile-scanner:
     build:
       context: .

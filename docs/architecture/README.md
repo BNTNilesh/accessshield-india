@@ -1,0 +1,108 @@
+# AccessShield India — Architecture Documentation
+
+Architecture reference for **Senior Architects** and **Technical Project Managers**. Covers local development and production target topology, with explicit labels for implemented vs planned components.
+
+**Last updated:** July 2026  
+**Monorepo:** Turborepo + pnpm 9 at repository root
+
+---
+
+## How to Read This Set
+
+| Document                                                       | Purpose                                                                    |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [01-system-overview.md](./01-system-overview.md)               | C4 context and container views; product capabilities; compliance standards |
+| [02-monorepo-and-packages.md](./02-monorepo-and-packages.md)   | Apps, shared packages, API route map, web route structure                  |
+| [03-data-and-multi-tenancy.md](./03-data-and-multi-tenancy.md) | Database schema, ER diagram, tenant isolation layers                       |
+| [04-auth-and-security.md](./04-auth-and-security.md)           | Supabase JWT flow, RBAC, secrets, service-to-service auth                  |
+| [05-scan-pipelines.md](./05-scan-pipelines.md)                 | Web, document, and mobile scan job flows                                   |
+| [06-ai-and-integrations.md](./06-ai-and-integrations.md)       | AI microservice, external SaaS integration matrix                          |
+| [07-deployment-topology.md](./07-deployment-topology.md)       | Local dev vs production deployment (AWS, Vercel, Supabase)                 |
+| [08-operational-runbook.md](./08-operational-runbook.md)       | Startup order, ports, health checks, common failures                       |
+
+**Suggested reading order:** 01 → 02 → 03 → 04, then 05–08 as needed for your role.
+
+---
+
+## Glossary
+
+| Term                  | Definition                                                                                            |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Organisation**      | Tenant root entity. All customer data is scoped by `organisation_id`.                                 |
+| **Asset**             | Something to scan or monitor: website, web app, mobile app, or document.                              |
+| **Scan**              | A single accessibility audit run against an asset (web or mobile).                                    |
+| **Violation**         | A rule failure found during a scan (axe-core, IS 17802, GIGW, mobile rules).                          |
+| **Issue**             | Remediation ticket derived from violations; supports workflow, comments, AI fixes.                    |
+| **Plan tier**         | Subscription level: `starter`, `professional`, `enterprise`, `government`. Gates features and limits. |
+| **Widget**            | Embeddable JS SDK on customer sites; Shadow DOM, CDN-delivered.                                       |
+| **Document scan job** | Async PDF/DOCX/PPTX/XLSX accessibility audit (separate from web `scans` table).                       |
+
+---
+
+## Diagram Legend
+
+| Symbol / label                 | Meaning                                                |
+| ------------------------------ | ------------------------------------------------------ |
+| Solid boxes and arrows         | **Implemented** in the current codebase                |
+| `(planned)` in titles or notes | Designed but not fully wired                           |
+| `(stub)`                       | Route or UI exists; backend returns placeholder or 404 |
+| Dashed style in text           | Future production target (e.g. AWS MQ, ElastiCache)    |
+
+All diagrams use [Mermaid](https://mermaid.js.org/) for GitHub and wiki compatibility.
+
+---
+
+## Related Repository Docs
+
+| Resource                         | Path                                                           |
+| -------------------------------- | -------------------------------------------------------------- |
+| Quick start                      | [`README.md`](../../README.md)                                 |
+| Environment template             | [`.env.example`](../../.env.example)                           |
+| Coding conventions               | [`.cursorrules`](../../.cursorrules)                           |
+| Drizzle schema (source of truth) | [`packages/db/src/schema.ts`](../../packages/db/src/schema.ts) |
+| API entry point                  | [`apps/api/src/index.ts`](../../apps/api/src/index.ts)         |
+| Docker Compose (local infra)     | [`docker-compose.yml`](../../docker-compose.yml)               |
+
+---
+
+## Architecture at a Glance
+
+```mermaid
+flowchart TB
+  subgraph clients [Clients]
+    CustomerAdmin[CustomerAdmin]
+    PublicUser[PublicUser]
+    HostSiteVisitor[HostSiteVisitor]
+  end
+
+  subgraph platform [AccessShield_Platform]
+    Web[web_Nextjs_3000]
+    API[api_Express_4000]
+    AI[ai_service_FastAPI_8001]
+    Widget[widget_CDN]
+    WebWorker[api_scan_worker]
+    MobileWorker[mobile_scanner]
+  end
+
+  subgraph external [External_Systems]
+    Supabase[Supabase_Auth]
+    Sanity[Sanity_CMS]
+    Anthropic[Anthropic_Claude]
+    AWS[AWS_S3_Secrets_CloudFront]
+    BrowserStack[BrowserStack]
+  end
+
+  CustomerAdmin --> Web
+  PublicUser --> Web
+  HostSiteVisitor --> Widget
+  Web --> API
+  Web --> Supabase
+  Widget --> API
+  API --> AI
+  API --> WebWorker
+  API --> MobileWorker
+  AI --> Anthropic
+  MobileWorker --> BrowserStack
+```
+
+**Interpretation:** Users interact via the Next.js portal or marketing site. The API orchestrates scans and tenant data. Background workers process web and mobile jobs via RabbitMQ; document scans use Redis + the AI service. Supabase handles authentication; AWS stores artifacts in production.

@@ -4,7 +4,7 @@
 
 import type { Database } from '@accessshield/db';
 import { organisations, scans, users, widgetPreferences } from '@accessshield/db';
-import type { ApiResponse } from '@accessshield/types';
+import type { ApiResponse, PaginationMeta } from '@accessshield/types';
 import { and, count, desc, eq, gte, ilike, isNull, or } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
@@ -169,9 +169,17 @@ export function createAdminRouter(db: Database, secrets: AppSecrets, redis: Redi
         .from(organisations)
         .where(conditions);
 
+      const total = totalResult?.count ?? 0;
+      const meta: PaginationMeta = {
+        page,
+        pageSize: limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      };
+
       const response: ApiResponse<typeof enriched> = {
         data: enriched,
-        meta: { page, limit, total: totalResult?.count ?? 0 },
+        meta,
         timestamp: new Date().toISOString(),
       };
 

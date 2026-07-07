@@ -30,6 +30,7 @@ import { createPublicScanRouter } from './routes/public-scan';
 import { createPublicWaitlistRouter } from './routes/public-waitlist';
 import { createPublicSignupRouter } from './routes/public-signup';
 import { createAdminRouter } from './routes/admin';
+import { createDocumentScansRouter } from './routes/document-scans';
 
 const PORT = Number(process.env.PORT ?? 4000);
 
@@ -100,6 +101,9 @@ async function bootstrap() {
 
   const scannerRouter = createScannerRouter(db, redis);
   app.use('/api/v1/scans', scannerRouter);
+
+  const documentScansRouter = createDocumentScansRouter(db, redis);
+  app.use('/api/v1/document-scans', documentScansRouter);
 
   const reportingRouter = createReportingRouter(db);
   app.use('/api/v1/reports', reportingRouter);

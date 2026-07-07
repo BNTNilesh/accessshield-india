@@ -37,19 +37,75 @@ export const PLAN_SCAN_LIMITS: Record<string, number | null> = {
   enterprise: null,
 };
 
+export interface PlanFeatures {
+  aiRemediation: boolean;
+  sebiReport: boolean;
+  widgetSdk: boolean;
+  documentScanning: boolean;
+  /** 0 = unlimited */
+  documentScansPerMonth: number;
+}
+
+const STARTER_PLAN_FEATURES: PlanFeatures = {
+  aiRemediation: false,
+  sebiReport: false,
+  widgetSdk: false,
+  documentScanning: true,
+  documentScansPerMonth: 10,
+};
+
 /** Feature flags by plan — enforced in middleware / UI where applicable */
-export const PLAN_FEATURES: Record<
-  string,
-  { aiRemediation: boolean; sebiReport: boolean; widgetSdk: boolean }
-> = {
-  trial: { aiRemediation: false, sebiReport: false, widgetSdk: false },
-  starter: { aiRemediation: false, sebiReport: false, widgetSdk: false },
-  widget: { aiRemediation: false, sebiReport: false, widgetSdk: true },
-  professional: { aiRemediation: true, sebiReport: false, widgetSdk: true },
-  government: { aiRemediation: true, sebiReport: true, widgetSdk: false },
-  compliance_shield: { aiRemediation: true, sebiReport: false, widgetSdk: true },
-  regulatory_defense: { aiRemediation: true, sebiReport: true, widgetSdk: true },
-  enterprise: { aiRemediation: true, sebiReport: true, widgetSdk: true },
+export const PLAN_FEATURES: Record<string, PlanFeatures> = {
+  trial: {
+    aiRemediation: false,
+    sebiReport: false,
+    widgetSdk: false,
+    documentScanning: false,
+    documentScansPerMonth: 0,
+  },
+  starter: STARTER_PLAN_FEATURES,
+  widget: {
+    aiRemediation: false,
+    sebiReport: false,
+    widgetSdk: true,
+    documentScanning: false,
+    documentScansPerMonth: 0,
+  },
+  professional: {
+    aiRemediation: true,
+    sebiReport: false,
+    widgetSdk: true,
+    documentScanning: true,
+    documentScansPerMonth: 100,
+  },
+  government: {
+    aiRemediation: true,
+    sebiReport: true,
+    widgetSdk: false,
+    documentScanning: true,
+    documentScansPerMonth: 0,
+  },
+  compliance_shield: {
+    aiRemediation: true,
+    sebiReport: false,
+    widgetSdk: true,
+    documentScanning: true,
+    documentScansPerMonth: 0,
+  },
+  regulatory_defense: {
+    aiRemediation: true,
+    sebiReport: true,
+    widgetSdk: true,
+    documentScanning: true,
+    documentScansPerMonth: 0,
+  },
+  enterprise: {
+    aiRemediation: true,
+    sebiReport: true,
+    widgetSdk: true,
+    documentScanning: true,
+    documentScansPerMonth: 0,
+  },
 };
 
 export function isScanLimitDisabled(): boolean {
@@ -57,6 +113,11 @@ export function isScanLimitDisabled(): boolean {
     return true;
   }
   return process.env.NODE_ENV !== 'production';
+}
+
+/** Dev bypass for asset count limits — same flag as scan limits. */
+export function isAssetLimitDisabled(): boolean {
+  return isScanLimitDisabled();
 }
 
 export function getAssetLimit(planTier: string): number | null {
@@ -67,6 +128,6 @@ export function getScanLimit(planTier: string): number | null {
   return PLAN_SCAN_LIMITS[planTier] ?? PLAN_SCAN_LIMITS.starter ?? 1;
 }
 
-export function getPlanFeatures(planTier: string) {
-  return PLAN_FEATURES[planTier] ?? PLAN_FEATURES.starter;
+export function getPlanFeatures(planTier: string): PlanFeatures {
+  return PLAN_FEATURES[planTier] ?? STARTER_PLAN_FEATURES;
 }
