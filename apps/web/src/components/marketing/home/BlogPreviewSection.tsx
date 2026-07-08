@@ -1,12 +1,11 @@
-import { Badge } from '@accessshield/ui';
-import { getRecentPosts, type BlogPost } from '@/lib/sanity';
+import type { Locale } from '@/lib/i18n/config';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
-import { getLocale } from '@/lib/i18n/server';
 import { localizedHref } from '@/lib/i18n/paths';
 import Link from 'next/link';
+import { Badge } from '@accessshield/ui';
+import { getRecentPosts, type BlogPost } from '@/lib/sanity';
 
-export async function BlogPreviewSection() {
-  const locale = getLocale();
+export async function BlogPreviewSection({ locale }: { locale: Locale }) {
   const { home } = getDictionary(locale);
   const { blogPreview } = home;
 

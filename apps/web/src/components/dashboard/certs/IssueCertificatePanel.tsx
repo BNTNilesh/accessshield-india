@@ -9,6 +9,7 @@ import { Button } from '@accessshield/ui';
 import { Select } from '@accessshield/ui';
 import { RadioGroup } from '@accessshield/ui';
 import { Alert } from '@accessshield/ui';
+import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const LEVEL_OPTIONS = [
   { value: 'WCAG22_AA' as const, label: 'WCAG 2.2 AA' },
@@ -56,7 +57,7 @@ export function IssueCertificatePanel() {
   const [notes, setNotes] = useState('');
   const [confirmed, setConfirmed] = useState(false);
 
-  const { data: assets = [] } = useQuery({
+  const { data: assets = [], isLoading: assetsLoading } = useQuery({
     queryKey: ['assets'],
     queryFn: async () => {
       const token = await getAccessToken();
@@ -122,6 +123,14 @@ export function IssueCertificatePanel() {
         year: 'numeric',
       })} — Score: ${scan.score}/100`,
     }));
+
+  if (assetsLoading) {
+    return (
+      <div className="rounded-lg border border-border bg-white p-6">
+        <LoadingState message="Please wait, loading assets…" variant="inline" size="sm" />
+      </div>
+    );
+  }
 
   if (qualifiedAssets.length === 0) {
     return (

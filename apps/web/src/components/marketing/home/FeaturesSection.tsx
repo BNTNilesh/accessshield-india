@@ -1,8 +1,8 @@
-'use client';
-
 import Link from 'next/link';
 import { FileText, Globe, Smartphone, ArrowRight, type LucideIcon } from 'lucide-react';
 import { Badge } from '@accessshield/ui';
+import type { Locale } from '@/lib/i18n/config';
+import { localizedHref } from '@/lib/i18n/paths';
 
 interface FeatureCard {
   id: string;
@@ -73,7 +73,7 @@ function CheckIcon() {
   );
 }
 
-export function FeaturesSection() {
+export function FeaturesSection({ locale }: { locale: Locale }) {
   return (
     <section
       className="border-y border-gray-200 bg-bg-secondary px-4 py-16 sm:px-6 sm:py-24 lg:px-8"
@@ -151,7 +151,7 @@ export function FeaturesSection() {
                 </ul>
 
                 <Link
-                  href={feature.href}
+                  href={localizedHref(feature.href, locale)}
                   className="mt-6 inline-flex items-center gap-1 text-base font-medium text-primary-600 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-sm"
                 >
                   {feature.linkText}

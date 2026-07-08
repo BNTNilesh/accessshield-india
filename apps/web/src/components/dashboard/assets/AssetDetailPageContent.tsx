@@ -6,17 +6,16 @@ import { AssetOverview } from '@/components/dashboard/assets/AssetOverview';
 import { AssetConfiguration } from '@/components/dashboard/assets/AssetConfiguration';
 import { AssetWidget } from '@/components/dashboard/assets/AssetWidget';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
-import { useAssets } from '@/lib/hooks/useApi';
+import { useAsset } from '@/lib/hooks/useApi';
 
 export function AssetDetailPageContent({ id }: { id: string }) {
-  const { data: assets = [], isLoading } = useAssets();
-  const asset = assets.find((a) => a.id === id);
+  const { data: asset, isLoading, isError } = useAsset(id);
 
   if (isLoading) {
-    return <LoadingState message="Loading asset details…" variant="page" />;
+    return <LoadingState message="Please wait, loading asset details…" variant="page" />;
   }
 
-  if (!asset) {
+  if (isError || !asset) {
     return (
       <div className="py-12 text-center">
         <h1 className="text-2xl font-bold text-text-primary">Asset not found</h1>
@@ -50,6 +49,7 @@ export function AssetDetailPageContent({ id }: { id: string }) {
       <Tabs
         defaultValue="overview"
         ariaLabel="Asset sections"
+        lazyMount
         items={[
           {
             value: 'overview',
@@ -64,7 +64,7 @@ export function AssetDetailPageContent({ id }: { id: string }) {
           {
             value: 'widget',
             label: 'Widget',
-            content: <AssetWidget assetId={id} />,
+            content: <AssetWidget asset={asset} />,
           },
         ]}
       />

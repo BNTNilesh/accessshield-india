@@ -72,6 +72,67 @@ export function createAssetsRouter(db: Database): ExpressRouter {
     },
   );
 
+  const assetIdParamsSchema = z.object({
+    id: z.string().uuid(),
+  });
+
+  /**
+   * GET /assets/:id — Single asset for the authenticated organisation
+   */
+  router.get(
+    '/:id',
+    requireRoles('auditor', 'developer', 'accessibility_officer', 'customer_admin'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const parseResult = assetIdParamsSchema.safeParse(req.params);
+        if (!parseResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid asset ID');
+          return;
+        }
+
+        const orgId = req.user!.org_id;
+        const { id: assetId } = parseResult.data;
+
+        const [asset] = await db
+          .select({
+            id: assets.id,
+            organisationId: assets.organisationId,
+            name: assets.name,
+            url: assets.url,
+            type: assets.type,
+            description: assets.description,
+            isActive: assets.isActive,
+            lastScannedAt: assets.lastScannedAt,
+            createdAt: assets.createdAt,
+            updatedAt: assets.updatedAt,
+          })
+          .from(assets)
+          .where(
+            and(
+              eq(assets.id, assetId),
+              eq(assets.organisationId, orgId),
+              eq(assets.isActive, true),
+            ),
+          )
+          .limit(1);
+
+        if (!asset) {
+          sendProblem(res, 404, 'not-found', 'Asset not found');
+          return;
+        }
+
+        const response: ApiResponse<typeof asset> = {
+          data: asset,
+          timestamp: new Date().toISOString(),
+        };
+
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   /**
    * POST /assets — Register a new asset for scanning
    */

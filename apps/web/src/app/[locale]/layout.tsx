@@ -4,8 +4,6 @@ import type { Locale } from '@/lib/i18n/config';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { LocaleProvider } from '@/lib/i18n/locale-context';
 
-export const dynamic = 'force-dynamic';
-
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'hi' }];
 }

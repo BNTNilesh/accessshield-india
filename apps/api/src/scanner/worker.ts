@@ -35,8 +35,11 @@ import { buildScanScoreResult } from './score';
 import type { RawViolation, ScanJobMessage, ScanProgress, ScanCancelMessage } from './types';
 import { syncIssuesFromViolations } from '../services/issue-sync';
 
-/** Concurrent page scan limit */
-const CONCURRENT_PAGES = 3;
+/** Concurrent page scan limit — override via SCAN_CONCURRENT_PAGES (1–10, default 6). */
+const CONCURRENT_PAGES = Math.max(1, Math.min(10, Number(process.env.SCAN_CONCURRENT_PAGES) || 6));
+
+/** Screenshots are expensive and not persisted yet — opt in with SCAN_SCREENSHOTS=true */
+const SCREENSHOTS_ENABLED = process.env.SCAN_SCREENSHOTS === 'true';
 
 /** RabbitMQ queue names */
 const SCANS_QUEUE = 'scans';
@@ -324,25 +327,14 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
 
           await closeScanContext(context);
 
-          let desktopScreenshotUrl: string | null = null;
-          let mobileScreenshotUrl: string | null = null;
+          if (SCREENSHOTS_ENABLED) {
+            if (desktopScreenshot) {
+              await uploadScreenshot(desktopScreenshot, orgId, scanId, `${pageSlug}-desktop.png`);
+            }
 
-          if (desktopScreenshot) {
-            desktopScreenshotUrl = await uploadScreenshot(
-              desktopScreenshot,
-              orgId,
-              scanId,
-              `${pageSlug}-desktop.png`,
-            );
-          }
-
-          if (mobileScreenshot) {
-            mobileScreenshotUrl = await uploadScreenshot(
-              mobileScreenshot,
-              orgId,
-              scanId,
-              `${pageSlug}-mobile.png`,
-            );
+            if (mobileScreenshot) {
+              await uploadScreenshot(mobileScreenshot, orgId, scanId, `${pageSlug}-mobile.png`);
+            }
           }
 
           for (const violation of pageViolations) {
@@ -484,7 +476,7 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
       }
     }
 
-    await syncIssuesFromViolations(db, orgId);
+    await syncIssuesFromViolations(db, orgId, scanId);
 
     const [previousScan] = await db
       .select({ id: scans.id })

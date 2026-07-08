@@ -4,13 +4,13 @@ import { TopBar } from '@/components/dashboard/layout/TopBar';
 import { DashboardActivityBar } from '@/components/dashboard/common/DashboardActivityBar';
 import { DashboardProviders } from '@/providers/DashboardProviders';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { getServerDashboardRole } from '@/lib/dashboard/session';
+import { getDashboardRole } from '@/lib/dashboard/session';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { LocaleProvider } from '@/lib/i18n/locale-context';
 import { getLocale } from '@/lib/i18n/server';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const userRole = await getServerDashboardRole();
+  const userRole = getDashboardRole();
   const locale = getLocale();
   const dictionary = getDictionary(locale);
 

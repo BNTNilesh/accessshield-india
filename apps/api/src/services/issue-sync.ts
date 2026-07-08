@@ -17,7 +17,16 @@ function buildIssueTitle(ruleId: string, wcagCriteria: string[] | null): string 
  * Create issues for violations that do not yet have a linked issue row.
  * Safe to call repeatedly — skips violations already linked.
  */
-export async function syncIssuesFromViolations(db: Database, orgId: string): Promise<number> {
+export async function syncIssuesFromViolations(
+  db: Database,
+  orgId: string,
+  scanId?: string,
+): Promise<number> {
+  const conditions = [eq(violations.organisationId, orgId), isNull(issues.id)];
+  if (scanId) {
+    conditions.push(eq(violations.scanId, scanId));
+  }
+
   const orphans = await db
     .select({
       violationId: violations.id,
@@ -30,7 +39,7 @@ export async function syncIssuesFromViolations(db: Database, orgId: string): Pro
     .from(violations)
     .innerJoin(scans, eq(violations.scanId, scans.id))
     .leftJoin(issues, eq(issues.violationId, violations.id))
-    .where(and(eq(violations.organisationId, orgId), isNull(issues.id)));
+    .where(and(...conditions));
 
   if (orphans.length === 0) {
     return 0;

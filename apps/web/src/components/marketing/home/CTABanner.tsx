@@ -2,6 +2,7 @@
 
 import { Badge } from '@accessshield/ui';
 import { ButtonAnchor, ButtonLink } from '@/components/marketing/ButtonLink';
+import { MARKETING_IMAGES } from '@/lib/marketing/images';
 import { MarketingImage } from '@/components/marketing/visuals/MarketingImage';
 import { useDictionary } from '@/lib/i18n/locale-context';
 
@@ -14,7 +15,7 @@ export function CTABanner() {
     <section className="relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <div className="absolute inset-0" aria-hidden="true">
         <MarketingImage
-          src="/marketing/enterprise-govt-compliance.png"
+          src={MARKETING_IMAGES.enterpriseCompliance}
           alt=""
           fill
           sizes="100vw"

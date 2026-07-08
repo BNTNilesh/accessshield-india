@@ -545,6 +545,9 @@ export interface ListDocumentScansParams {
 export interface WidgetSettings {
   id: string;
   organisationId: string;
+  assetId?: string | null;
+  assetName?: string | null;
+  assetUrl?: string | null;
   token: string;
   allowedDomains: string[];
   position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';

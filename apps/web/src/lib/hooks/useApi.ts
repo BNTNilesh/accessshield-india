@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   listAssets,
+  getAsset,
   createAsset,
   createMobileAsset,
   deleteAsset,
@@ -40,6 +41,18 @@ export function useAssets() {
       const token = await getAccessToken();
       return listAssets(token);
     },
+  });
+}
+
+export function useAsset(assetId: string | null) {
+  return useQuery({
+    queryKey: ['assets', assetId],
+    queryFn: async () => {
+      if (!assetId) throw new Error('Asset ID required');
+      const token = await getAccessToken();
+      return getAsset(token, assetId);
+    },
+    enabled: Boolean(assetId),
   });
 }
 

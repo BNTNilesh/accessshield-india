@@ -66,56 +66,50 @@ export function createDashboardRouter(db: Database): ExpressRouter {
         const scoreDelta =
           latestScore !== null && previousScore !== null ? latestScore - previousScore : null;
 
-        // Count open issues
-        const openIssuesResult = await db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(issues)
-          .where(and(eq(issues.organisationId, orgId), eq(issues.status, 'open')));
+        const [openIssuesResult, criticalIssuesResult, assetsCountResult, activityRows] =
+          await Promise.all([
+            db
+              .select({ count: sql<number>`count(*)::int` })
+              .from(issues)
+              .where(and(eq(issues.organisationId, orgId), eq(issues.status, 'open'))),
+            db
+              .select({ count: sql<number>`count(*)::int` })
+              .from(issues)
+              .where(
+                and(
+                  eq(issues.organisationId, orgId),
+                  eq(issues.status, 'open'),
+                  eq(issues.severity, 'critical'),
+                ),
+              ),
+            db
+              .select({ count: sql<number>`count(*)::int` })
+              .from(assets)
+              .where(and(eq(assets.organisationId, orgId), eq(assets.isActive, true))),
+            db
+              .select({
+                id: auditLogs.id,
+                action: auditLogs.action,
+                resourceType: auditLogs.resourceType,
+                resourceId: auditLogs.resourceId,
+                userId: auditLogs.userId,
+                metadata: auditLogs.metadata,
+                createdAt: auditLogs.createdAt,
+              })
+              .from(auditLogs)
+              .leftJoin(users, eq(auditLogs.userId, users.id))
+              .where(eq(auditLogs.organisationId, orgId))
+              .orderBy(desc(auditLogs.createdAt))
+              .limit(10),
+          ]);
 
         const openIssues = openIssuesResult[0]?.count ?? 0;
-
-        // Count critical open issues
-        const criticalIssuesResult = await db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(issues)
-          .where(
-            and(
-              eq(issues.organisationId, orgId),
-              eq(issues.status, 'open'),
-              eq(issues.severity, 'critical'),
-            ),
-          );
-
         const criticalIssues = criticalIssuesResult[0]?.count ?? 0;
-
-        // Count active assets
-        const assetsCountResult = await db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(assets)
-          .where(and(eq(assets.organisationId, orgId), eq(assets.isActive, true)));
-
         const assetsCount = assetsCountResult[0]?.count ?? 0;
 
         // Get last scan date
         const lastScan = recentScans[0];
         const lastScanDate = lastScan?.completedAt ?? null;
-
-        // Get recent activity from audit logs
-        const activityRows = await db
-          .select({
-            id: auditLogs.id,
-            action: auditLogs.action,
-            resourceType: auditLogs.resourceType,
-            resourceId: auditLogs.resourceId,
-            userId: auditLogs.userId,
-            metadata: auditLogs.metadata,
-            createdAt: auditLogs.createdAt,
-          })
-          .from(auditLogs)
-          .leftJoin(users, eq(auditLogs.userId, users.id))
-          .where(eq(auditLogs.organisationId, orgId))
-          .orderBy(desc(auditLogs.createdAt))
-          .limit(10);
 
         const recentActivity: Activity[] = activityRows.map((row) => ({
           id: row.id,

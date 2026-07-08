@@ -11,7 +11,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
-import { syncIssuesFromViolations } from '../services/issue-sync';
 import { generateIssueAiAltText, generateIssueAiFix } from '../services/ai-enrichment';
 import { isDevPreviewAiFix, stripDevPreviewComment } from '../lib/dev-mock-ai';
 
@@ -46,7 +45,6 @@ export function createIssuesRouter(db: Database): ExpressRouter {
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
         const orgId = req.user!.org_id;
-        await syncIssuesFromViolations(db, orgId);
 
         const base = eq(issues.organisationId, orgId);
 
@@ -111,8 +109,6 @@ export function createIssuesRouter(db: Database): ExpressRouter {
           });
           return;
         }
-
-        await syncIssuesFromViolations(db, orgId);
 
         const {
           page,

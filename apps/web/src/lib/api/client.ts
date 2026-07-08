@@ -102,6 +102,12 @@ export async function listAssets(token: string): Promise<Asset[]> {
   return response.data;
 }
 
+/** Fetch a single asset by ID */
+export async function getAsset(token: string, assetId: string): Promise<Asset> {
+  const response = await apiFetch<ApiResponse<Asset>>(`/api/v1/assets/${assetId}`, token);
+  return response.data;
+}
+
 /** Register a new scannable asset */
 export async function createAsset(token: string, input: CreateAssetInput): Promise<Asset> {
   const response = await apiFetch<ApiResponse<Asset>>('/api/v1/assets', token, {

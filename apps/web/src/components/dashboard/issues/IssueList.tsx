@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { AlertCircle, AlertTriangle, Info, Minus, User, Calendar } from 'lucide-react';
 import { getAccessToken } from '@/lib/api/client';
 import type { Issue, IssueFilters } from '@/lib/api/types';
@@ -69,7 +70,17 @@ async function fetchIssues(token: string, filters: IssueFilters) {
 }
 
 export function IssueList({ searchParams }: IssueListProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const page = Number(searchParams.page) || 1;
+
+  function goToPage(nextPage: number) {
+    const params = new URLSearchParams(
+      Object.entries(searchParams).filter(([, value]) => value !== undefined) as [string, string][],
+    );
+    params.set('page', String(nextPage));
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ['issues', searchParams],
@@ -80,7 +91,7 @@ export function IssueList({ searchParams }: IssueListProps) {
   });
 
   if (isLoading) {
-    return <LoadingState message="Loading issues…" variant="page" />;
+    return <LoadingState message="Please wait, loading issues…" variant="card" />;
   }
 
   if (!data || data.issues.length === 0) {
@@ -287,11 +298,7 @@ export function IssueList({ searchParams }: IssueListProps) {
               variant="outline"
               size="sm"
               disabled={(meta.page ?? 1) === 1}
-              onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                params.set('page', String((meta.page ?? 1) - 1));
-                window.location.search = params.toString();
-              }}
+              onClick={() => goToPage((meta.page ?? 1) - 1)}
             >
               Previous
             </Button>
@@ -299,11 +306,7 @@ export function IssueList({ searchParams }: IssueListProps) {
               variant="outline"
               size="sm"
               disabled={to >= (meta.total ?? 0)}
-              onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                params.set('page', String((meta.page ?? 1) + 1));
-                window.location.search = params.toString();
-              }}
+              onClick={() => goToPage((meta.page ?? 1) + 1)}
             >
               Next
             </Button>

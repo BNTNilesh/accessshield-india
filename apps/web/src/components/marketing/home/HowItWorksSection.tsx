@@ -1,12 +1,11 @@
-'use client';
-
 import { Award, ClipboardList, ScanSearch, Wrench, type LucideIcon } from 'lucide-react';
-import { useDictionary } from '@/lib/i18n/locale-context';
+import type { Locale } from '@/lib/i18n/config';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 const STEP_ICONS: LucideIcon[] = [ScanSearch, ClipboardList, Wrench, Award];
 
-export function HowItWorksSection() {
-  const { home } = useDictionary();
+export function HowItWorksSection({ locale }: { locale: Locale }) {
+  const { home } = getDictionary(locale);
   const { howItWorks } = home;
 
   return (

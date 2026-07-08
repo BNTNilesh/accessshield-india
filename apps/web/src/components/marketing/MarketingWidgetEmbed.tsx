@@ -26,9 +26,19 @@ function resolveWidgetApiUrl(): string | undefined {
   return apiUrl;
 }
 
+function scheduleIdle(callback: () => void): () => void {
+  if (typeof window.requestIdleCallback === 'function') {
+    const id = window.requestIdleCallback(callback, { timeout: 4000 });
+    return () => window.cancelIdleCallback(id);
+  }
+
+  const id = window.setTimeout(callback, 2000);
+  return () => window.clearTimeout(id);
+}
+
 /**
  * Loads the AccessShield accessibility widget on marketing pages only.
- * Uses dynamic script injection so data-* attributes are always present.
+ * Deferred until idle so hero/LCP content is not competing for bandwidth.
  */
 export function MarketingWidgetEmbed() {
   const locale = useLocale();
@@ -41,20 +51,27 @@ export function MarketingWidgetEmbed() {
     if (document.getElementById('accessshield-widget')) return;
     if (document.querySelector('script[data-token]')) return;
 
-    const script = document.createElement('script');
-    script.id = 'accessshield-widget-loader';
-    script.src = resolveWidgetScriptSrc();
-    script.async = true;
-    script.setAttribute('data-token', token);
-    script.setAttribute('data-position', 'bottom-right');
-    script.setAttribute('data-lang', locale === 'hi' ? 'hi' : 'en');
+    const cancel = scheduleIdle(() => {
+      if (document.getElementById('accessshield-widget')) return;
+      if (document.querySelector('script[data-token]')) return;
 
-    const apiUrl = resolveWidgetApiUrl();
-    if (apiUrl) {
-      script.setAttribute('data-api-url', apiUrl);
-    }
+      const script = document.createElement('script');
+      script.id = 'accessshield-widget-loader';
+      script.src = resolveWidgetScriptSrc();
+      script.async = true;
+      script.setAttribute('data-token', token);
+      script.setAttribute('data-position', 'bottom-right');
+      script.setAttribute('data-lang', locale === 'hi' ? 'hi' : 'en');
 
-    document.head.appendChild(script);
+      const apiUrl = resolveWidgetApiUrl();
+      if (apiUrl) {
+        script.setAttribute('data-api-url', apiUrl);
+      }
+
+      document.head.appendChild(script);
+    });
+
+    return cancel;
   }, [locale]);
 
   return null;

@@ -43,5 +43,8 @@ class Settings(BaseSettings):
     # Apache Tika (document text extraction)
     tika_server_url: str = "http://localhost:9998"
 
+    # Skip Claude summary on document scans for faster completion (set false to enable)
+    skip_document_ai_summary: bool = True
+
 
 settings = Settings()

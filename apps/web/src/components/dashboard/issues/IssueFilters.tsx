@@ -155,7 +155,7 @@ export function IssueFilters({ searchParams }: IssueFiltersProps) {
             }
             disabled={assetsLoading}
             searchable
-            placeholder="All assets"
+            placeholder={assetsLoading ? 'Please wait, loading assets…' : 'All assets'}
           />
         </div>
 

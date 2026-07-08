@@ -25,7 +25,7 @@ import SebiPage from '@/app/[locale]/(marketing)/sebi-accessibility/page';
 import BlogPage from '@/app/[locale]/(marketing)/blog/page';
 
 const PAGE_COMPONENTS: Record<string, () => React.ReactNode | Promise<React.ReactNode>> = {
-  '/': HomePage,
+  '/': () => HomePage({ params: { locale: 'en' } }),
   '/services': ServicesPage,
   '/scan': ScanPage,
   '/widget': WidgetPage,

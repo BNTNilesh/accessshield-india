@@ -5,15 +5,21 @@ import { expect } from 'vitest';
 import { AnnouncerProvider, SkipLink } from '@accessshield/ui';
 import { MarketingNav } from '@/components/marketing/MarketingNav';
 import { MarketingFooter } from '@/components/marketing/MarketingFooter';
+import { LocaleProvider } from '@/lib/i18n/locale-context';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 export function MarketingTestShell({ children }: { children: ReactNode }): ReactElement {
+  const dictionary = getDictionary('en');
+
   return (
-    <AnnouncerProvider>
-      <SkipLink href="#main-content" />
-      <MarketingNav />
-      <main id="main-content">{children}</main>
-      <MarketingFooter />
-    </AnnouncerProvider>
+    <LocaleProvider locale="en" dictionary={dictionary}>
+      <AnnouncerProvider>
+        <SkipLink href="#main-content" />
+        <MarketingNav />
+        <main id="main-content">{children}</main>
+        <MarketingFooter />
+      </AnnouncerProvider>
+    </LocaleProvider>
   );
 }
 

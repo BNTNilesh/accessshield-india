@@ -4,9 +4,9 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 import type { Database } from '@accessshield/db';
-import { widgetPreferences } from '@accessshield/db';
+import { assets, widgetPreferences } from '@accessshield/db';
 import type { ApiResponse } from '@accessshield/types';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
 import type { Redis } from 'ioredis';
@@ -20,6 +20,9 @@ const LANGUAGES = ['en', 'hi'] as const;
 interface WidgetSettingsResponse {
   id: string;
   organisationId: string;
+  assetId: string | null;
+  assetName: string | null;
+  assetUrl: string | null;
   token: string;
   allowedDomains: string[];
   position: (typeof POSITIONS)[number];
@@ -30,8 +33,19 @@ interface WidgetSettingsResponse {
   updatedAt: string;
 }
 
+interface TokenContext {
+  orgId: string;
+  assetId: string | null;
+}
+
+const ASSET_LOOKUP_PREFIX = 'asset:';
+
 function tokenKey(orgId: string): string {
   return `widget:token:${orgId}`;
+}
+
+function assetTokenKey(assetId: string): string {
+  return `widget:token:asset:${assetId}`;
 }
 
 function tokenLookupKey(token: string): string {
@@ -42,9 +56,44 @@ function domainsKey(orgId: string): string {
   return `widget:domains:${orgId}`;
 }
 
+function assetDomainsKey(assetId: string): string {
+  return `widget:domains:asset:${assetId}`;
+}
+
 function deriveDefaultToken(orgId: string): string {
   const secret = process.env.JWT_SECRET ?? 'dev-widget-secret';
   return createHash('sha256').update(`${orgId}:${secret}`).digest('hex').slice(0, 32);
+}
+
+/** Stable per-asset token — matches dashboard embed code format. */
+function deriveAssetToken(assetId: string): string {
+  return `as_${assetId.slice(0, 8)}`;
+}
+
+function assetLookupValue(orgId: string, assetId: string): string {
+  return `${ASSET_LOOKUP_PREFIX}${orgId}:${assetId}`;
+}
+
+function parseTokenLookup(value: string): TokenContext | null {
+  if (value.startsWith(ASSET_LOOKUP_PREFIX)) {
+    const rest = value.slice(ASSET_LOOKUP_PREFIX.length);
+    const separator = rest.indexOf(':');
+    if (separator === -1) return null;
+    const orgId = rest.slice(0, separator);
+    const assetId = rest.slice(separator + 1);
+    if (!orgId || !assetId) return null;
+    return { orgId, assetId };
+  }
+
+  return { orgId: value, assetId: null };
+}
+
+function hostnameFromUrl(url: string): string | null {
+  try {
+    return normalizeHostname(new URL(url).hostname);
+  } catch {
+    return null;
+  }
 }
 
 async function getOrCreateToken(redis: Redis, orgId: string): Promise<string> {
@@ -65,14 +114,45 @@ async function setOrgToken(redis: Redis, orgId: string, token: string): Promise<
   await redis.set(tokenLookupKey(token), orgId);
 }
 
+async function registerAssetToken(
+  redis: Redis,
+  orgId: string,
+  assetId: string,
+  token: string,
+): Promise<void> {
+  const existing = await redis.get(assetTokenKey(assetId));
+  if (existing && existing !== token) {
+    await redis.del(tokenLookupKey(existing));
+  }
+  await redis.set(assetTokenKey(assetId), token);
+  await redis.set(tokenLookupKey(token), assetLookupValue(orgId, assetId));
+}
+
+async function getOrCreateAssetToken(
+  redis: Redis,
+  orgId: string,
+  assetId: string,
+): Promise<string> {
+  const stored = await redis.get(assetTokenKey(assetId));
+  if (stored) return stored;
+
+  const token = deriveAssetToken(assetId);
+  await registerAssetToken(redis, orgId, assetId, token);
+  return token;
+}
+
 async function findOrgByToken(redis: Redis, token: string): Promise<string | null> {
   const fromLookup = await redis.get(tokenLookupKey(token));
-  if (fromLookup) return fromLookup;
+  if (fromLookup) {
+    const ctx = parseTokenLookup(fromLookup);
+    return ctx?.orgId ?? null;
+  }
 
   // Backfill lookup for tokens created before reverse index existed
   const keys = await redis.keys('widget:token:*');
   for (const key of keys) {
     if (key.startsWith('widget:token:lookup:')) continue;
+    if (key.startsWith('widget:token:asset:')) continue;
     const orgId = key.slice('widget:token:'.length);
     const stored = await redis.get(key);
     if (stored === token) {
@@ -80,6 +160,49 @@ async function findOrgByToken(redis: Redis, token: string): Promise<string | nul
       return orgId;
     }
   }
+  return null;
+}
+
+async function resolveAssetByDeterministicToken(
+  db: Database,
+  redis: Redis,
+  token: string,
+): Promise<TokenContext | null> {
+  if (!token.startsWith('as_') || token.length < 11) return null;
+
+  const prefix = token.slice(3);
+  const matches = await db
+    .select({
+      id: assets.id,
+      organisationId: assets.organisationId,
+    })
+    .from(assets)
+    .where(sql`${assets.id}::text like ${`${prefix}%`}`)
+    .limit(2);
+
+  if (matches.length !== 1) return null;
+
+  const { id: assetId, organisationId: orgId } = matches[0]!;
+  await registerAssetToken(redis, orgId, assetId, token);
+  return { orgId, assetId };
+}
+
+async function resolveTokenContext(
+  redis: Redis,
+  db: Database,
+  token: string,
+): Promise<TokenContext | null> {
+  const lookupRaw = await redis.get(tokenLookupKey(token));
+  if (lookupRaw) {
+    return parseTokenLookup(lookupRaw);
+  }
+
+  const assetCtx = await resolveAssetByDeterministicToken(db, redis, token);
+  if (assetCtx) return assetCtx;
+
+  const orgId = await resolveOrgByToken(redis, db, token);
+  if (orgId) return { orgId, assetId: null };
+
   return null;
 }
 
@@ -157,8 +280,12 @@ function domainAllowed(allowedDomains: string[], hostname: string | null): boole
   });
 }
 
-async function getAllowedDomains(redis: Redis, orgId: string): Promise<string[]> {
-  const raw = await redis.get(domainsKey(orgId));
+async function getAllowedDomains(
+  redis: Redis,
+  scope: { orgId: string; assetId?: string | null },
+): Promise<string[]> {
+  const key = scope.assetId ? assetDomainsKey(scope.assetId) : domainsKey(scope.orgId);
+  const raw = await redis.get(key);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -168,22 +295,39 @@ async function getAllowedDomains(redis: Redis, orgId: string): Promise<string[]>
   }
 }
 
-async function getPrefsForVerify(db: Database, orgId: string): Promise<{ isEnabled: boolean }> {
+async function setAllowedDomains(
+  redis: Redis,
+  scope: { orgId: string; assetId?: string | null },
+  allowedDomains: string[],
+): Promise<void> {
+  const key = scope.assetId ? assetDomainsKey(scope.assetId) : domainsKey(scope.orgId);
+  await redis.set(key, JSON.stringify(allowedDomains));
+}
+
+async function getPrefsForVerify(
+  db: Database,
+  orgId: string,
+  assetId: string | null = null,
+): Promise<{ isEnabled: boolean }> {
+  const whereClause = assetId
+    ? and(eq(widgetPreferences.organisationId, orgId), eq(widgetPreferences.assetId, assetId))
+    : and(eq(widgetPreferences.organisationId, orgId), isNull(widgetPreferences.assetId));
+
   const [existing] = await db
     .select({ isEnabled: widgetPreferences.isEnabled })
     .from(widgetPreferences)
-    .where(and(eq(widgetPreferences.organisationId, orgId), isNull(widgetPreferences.assetId)))
+    .where(whereClause)
     .limit(1);
 
   return existing ?? { isEnabled: true };
 }
 
-async function getOrCreatePrefs(db: Database, orgId: string) {
-  const [existing] = await db
-    .select()
-    .from(widgetPreferences)
-    .where(and(eq(widgetPreferences.organisationId, orgId), isNull(widgetPreferences.assetId)))
-    .limit(1);
+async function getOrCreatePrefs(db: Database, orgId: string, assetId: string | null = null) {
+  const whereClause = assetId
+    ? and(eq(widgetPreferences.organisationId, orgId), eq(widgetPreferences.assetId, assetId))
+    : and(eq(widgetPreferences.organisationId, orgId), isNull(widgetPreferences.assetId));
+
+  const [existing] = await db.select().from(widgetPreferences).where(whereClause).limit(1);
 
   if (existing) return existing;
 
@@ -191,7 +335,7 @@ async function getOrCreatePrefs(db: Database, orgId: string) {
     .insert(widgetPreferences)
     .values({
       organisationId: orgId,
-      assetId: null,
+      assetId,
     })
     .returning();
 
@@ -202,10 +346,44 @@ async function getOrCreatePrefs(db: Database, orgId: string) {
   return created;
 }
 
+async function getAssetForOrg(
+  db: Database,
+  orgId: string,
+  assetId: string,
+): Promise<{ id: string; name: string; url: string } | null> {
+  const [asset] = await db
+    .select({
+      id: assets.id,
+      name: assets.name,
+      url: assets.url,
+    })
+    .from(assets)
+    .where(and(eq(assets.id, assetId), eq(assets.organisationId, orgId), eq(assets.isActive, true)))
+    .limit(1);
+
+  return asset ?? null;
+}
+
+async function ensureDefaultAssetDomains(
+  redis: Redis,
+  assetId: string,
+  assetUrl: string,
+): Promise<string[]> {
+  const existing = await getAllowedDomains(redis, { orgId: '', assetId });
+  if (existing.length > 0) return existing;
+
+  const hostname = hostnameFromUrl(assetUrl);
+  if (!hostname) return [];
+
+  await setAllowedDomains(redis, { orgId: '', assetId }, [hostname]);
+  return [hostname];
+}
+
 function toResponse(
   prefs: typeof widgetPreferences.$inferSelect,
   token: string,
   allowedDomains: string[],
+  assetMeta?: { name: string; url: string } | null,
 ): WidgetSettingsResponse {
   const position = POSITIONS.includes(prefs.position as (typeof POSITIONS)[number])
     ? (prefs.position as (typeof POSITIONS)[number])
@@ -218,6 +396,9 @@ function toResponse(
   return {
     id: prefs.id,
     organisationId: prefs.organisationId,
+    assetId: prefs.assetId,
+    assetName: assetMeta?.name ?? null,
+    assetUrl: assetMeta?.url ?? null,
     token,
     allowedDomains,
     position,
@@ -240,6 +421,10 @@ const updateWidgetSchema = z.object({
   isEnabled: z.boolean().optional(),
 });
 
+const assetIdParamsSchema = z.object({
+  assetId: z.string().uuid(),
+});
+
 const verifyQuerySchema = z.object({
   token: z.string().min(8).max(128),
 });
@@ -259,9 +444,9 @@ export function createPublicWidgetRouter(db: Database, redis: Redis): ExpressRou
       }
 
       const { token } = parseResult.data;
-      const orgId = await resolveOrgByToken(redis, db, token);
+      const ctx = await resolveTokenContext(redis, db, token);
 
-      if (!orgId) {
+      if (!ctx) {
         const response: ApiResponse<{ valid: boolean }> = {
           data: { valid: false },
           timestamp: new Date().toISOString(),
@@ -271,8 +456,8 @@ export function createPublicWidgetRouter(db: Database, redis: Redis): ExpressRou
       }
 
       const [prefs, allowedDomains] = await Promise.all([
-        getPrefsForVerify(db, orgId),
-        getAllowedDomains(redis, orgId),
+        getPrefsForVerify(db, ctx.orgId, ctx.assetId),
+        getAllowedDomains(redis, { orgId: ctx.orgId, assetId: ctx.assetId }),
       ]);
 
       const hostname = requestHostname(req);
@@ -304,7 +489,7 @@ export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
         const [prefs, token, allowedDomains] = await Promise.all([
           getOrCreatePrefs(db, orgId),
           getOrCreateToken(redis, orgId),
-          getAllowedDomains(redis, orgId),
+          getAllowedDomains(redis, { orgId }),
         ]);
 
         const response: ApiResponse<WidgetSettingsResponse> = {
@@ -337,7 +522,7 @@ export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
           parseResult.data;
 
         if (allowedDomains !== undefined) {
-          await redis.set(domainsKey(orgId), JSON.stringify(allowedDomains));
+          await setAllowedDomains(redis, { orgId }, allowedDomains);
         }
 
         const prefs = await getOrCreatePrefs(db, orgId);
@@ -357,7 +542,7 @@ export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
           .returning();
 
         const token = await getOrCreateToken(redis, orgId);
-        const domains = await getAllowedDomains(redis, orgId);
+        const domains = await getAllowedDomains(redis, { orgId });
 
         const response: ApiResponse<WidgetSettingsResponse> = {
           data: toResponse(updated ?? prefs, token, domains),
@@ -382,11 +567,122 @@ export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
 
         const [prefs, allowedDomains] = await Promise.all([
           getOrCreatePrefs(db, orgId),
-          getAllowedDomains(redis, orgId),
+          getAllowedDomains(redis, { orgId }),
         ]);
 
         const response: ApiResponse<WidgetSettingsResponse> = {
           data: toResponse(prefs, newToken, allowedDomains),
+          timestamp: new Date().toISOString(),
+        };
+
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get(
+    '/assets/:assetId/settings',
+    requireRoles('auditor', 'developer', 'accessibility_officer', 'customer_admin'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const paramsResult = assetIdParamsSchema.safeParse(req.params);
+        if (!paramsResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid asset ID', undefined, {
+            errors: paramsResult.error.flatten().fieldErrors,
+          });
+          return;
+        }
+
+        const orgId = req.user!.org_id;
+        const { assetId } = paramsResult.data;
+
+        const asset = await getAssetForOrg(db, orgId, assetId);
+        if (!asset) {
+          sendProblem(res, 404, 'not-found', 'Asset not found');
+          return;
+        }
+
+        const [prefs, token] = await Promise.all([
+          getOrCreatePrefs(db, orgId, assetId),
+          getOrCreateAssetToken(redis, orgId, assetId),
+        ]);
+
+        const allowedDomains = await ensureDefaultAssetDomains(redis, assetId, asset.url);
+
+        const response: ApiResponse<WidgetSettingsResponse> = {
+          data: toResponse(prefs, token, allowedDomains, asset),
+          timestamp: new Date().toISOString(),
+        };
+
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.patch(
+    '/assets/:assetId/settings',
+    requireRoles('customer_admin', 'accessibility_officer', 'developer'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const paramsResult = assetIdParamsSchema.safeParse(req.params);
+        if (!paramsResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid asset ID', undefined, {
+            errors: paramsResult.error.flatten().fieldErrors,
+          });
+          return;
+        }
+
+        const bodyResult = updateWidgetSchema.safeParse(req.body);
+        if (!bodyResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid request body', undefined, {
+            errors: bodyResult.error.flatten().fieldErrors,
+          });
+          return;
+        }
+
+        const orgId = req.user!.org_id;
+        const { assetId } = paramsResult.data;
+
+        const asset = await getAssetForOrg(db, orgId, assetId);
+        if (!asset) {
+          sendProblem(res, 404, 'not-found', 'Asset not found');
+          return;
+        }
+
+        const { allowedDomains, position, defaultLanguage, primaryColor, isEnabled } =
+          bodyResult.data;
+
+        if (allowedDomains !== undefined) {
+          await setAllowedDomains(redis, { orgId, assetId }, allowedDomains);
+        }
+
+        const prefs = await getOrCreatePrefs(db, orgId, assetId);
+
+        const dbUpdates: Partial<typeof widgetPreferences.$inferInsert> = {
+          updatedAt: new Date().toISOString(),
+        };
+        if (position !== undefined) dbUpdates.position = position;
+        if (defaultLanguage !== undefined) dbUpdates.language = defaultLanguage;
+        if (primaryColor !== undefined) dbUpdates.primaryColor = primaryColor;
+        if (isEnabled !== undefined) dbUpdates.isEnabled = isEnabled;
+
+        const [updated] = await db
+          .update(widgetPreferences)
+          .set(dbUpdates)
+          .where(eq(widgetPreferences.id, prefs.id))
+          .returning();
+
+        const [token, domains] = await Promise.all([
+          getOrCreateAssetToken(redis, orgId, assetId),
+          getAllowedDomains(redis, { orgId, assetId }),
+        ]);
+
+        const response: ApiResponse<WidgetSettingsResponse> = {
+          data: toResponse(updated ?? prefs, token, domains, asset),
           timestamp: new Date().toISOString(),
         };
 

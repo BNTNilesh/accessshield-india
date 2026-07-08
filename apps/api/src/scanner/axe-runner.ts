@@ -182,7 +182,9 @@ function buildAxeTags(config: ScanJobConfig): string[] {
     tags.push('wcag2a', 'wcag2aa', 'wcag2aaa', 'wcag21a', 'wcag21aa', 'wcag22aa');
   }
 
-  tags.push('best-practice');
+  if (process.env.SCAN_AXE_BEST_PRACTICE === 'true') {
+    tags.push('best-practice');
+  }
 
   return [...new Set(tags)];
 }

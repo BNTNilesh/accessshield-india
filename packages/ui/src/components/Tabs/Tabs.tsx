@@ -1,7 +1,7 @@
 'use client';
 
 import * as TabsPrimitive from '@radix-ui/react-tabs';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { cn, focusRing } from '../../lib/cn';
 
 export interface TabItem {
@@ -18,6 +18,8 @@ export interface TabsProps {
   onValueChange?: (value: string) => void;
   ariaLabel?: string;
   className?: string;
+  /** When true, tab panels mount only after first visit — avoids eager API calls. */
+  lazyMount?: boolean;
 }
 
 export function Tabs({
@@ -27,14 +29,25 @@ export function Tabs({
   onValueChange,
   ariaLabel = 'Tabs',
   className,
+  lazyMount = false,
 }: TabsProps) {
   const defaultTab = defaultValue ?? items[0]?.value;
+  const [mountedTabs, setMountedTabs] = useState<Set<string>>(
+    () => new Set(defaultTab ? [defaultTab] : []),
+  );
+
+  function handleValueChange(next: string) {
+    if (lazyMount) {
+      setMountedTabs((prev) => new Set(prev).add(next));
+    }
+    onValueChange?.(next);
+  }
 
   return (
     <TabsPrimitive.Root
       defaultValue={defaultTab}
       value={value}
-      onValueChange={onValueChange}
+      onValueChange={handleValueChange}
       className={className}
     >
       <TabsPrimitive.List aria-label={ariaLabel} className="flex gap-1 border-b border-border">
@@ -61,7 +74,7 @@ export function Tabs({
           className="pt-4 focus-visible:outline-none"
           tabIndex={0}
         >
-          {item.content}
+          {!lazyMount || mountedTabs.has(item.value) ? item.content : null}
         </TabsPrimitive.Content>
       ))}
     </TabsPrimitive.Root>

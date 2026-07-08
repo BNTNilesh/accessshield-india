@@ -36,6 +36,8 @@ export function LoadingState({
   variant = 'card',
   className,
 }: LoadingStateProps) {
+  const displayMessage =
+    variant === 'page' && message === 'Loading…' ? 'Please wait, loading…' : message;
   return (
     <div
       role="status"
@@ -55,7 +57,9 @@ export function LoadingState({
         )}
         aria-hidden="true"
       />
-      <p className={cn('mt-4 font-medium text-text-secondary', MESSAGE_SIZE[size])}>{message}</p>
+      <p className={cn('mt-4 font-medium text-text-secondary', MESSAGE_SIZE[size])}>
+        {displayMessage}
+      </p>
     </div>
   );
 }

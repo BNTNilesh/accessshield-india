@@ -1,9 +1,8 @@
-'use client';
+import type { Locale } from '@/lib/i18n/config';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 
-import { useDictionary } from '@/lib/i18n/locale-context';
-
-export function RiskStatsBar() {
-  const { home } = useDictionary();
+export function RiskStatsBar({ locale }: { locale: Locale }) {
+  const { home } = getDictionary(locale);
   const { riskStats } = home;
 
   return (

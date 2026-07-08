@@ -60,7 +60,9 @@ export function IssueStats() {
   });
 
   if (isLoading || !stats) {
-    return <LoadingState message="Loading issue statistics…" variant="inline" size="sm" />;
+    return (
+      <LoadingState message="Please wait, loading issue statistics…" variant="inline" size="sm" />
+    );
   }
 
   return (

@@ -1,9 +1,8 @@
-'use client';
+import type { Locale } from '@/lib/i18n/config';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 
-import { useDictionary } from '@/lib/i18n/locale-context';
-
-export function TestimonialsSection() {
-  const { home } = useDictionary();
+export function TestimonialsSection({ locale }: { locale: Locale }) {
+  const { home } = getDictionary(locale);
   const { testimonials } = home;
 
   return (

@@ -1,10 +1,10 @@
-'use client';
-
+import type { Locale } from '@/lib/i18n/config';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { MARKETING_IMAGES } from '@/lib/marketing/images';
 import { MarketingImage } from '@/components/marketing/visuals/MarketingImage';
-import { useDictionary } from '@/lib/i18n/locale-context';
 
-export function WhoWeBuildForSection() {
-  const { home } = useDictionary();
+export function WhoWeBuildForSection({ locale }: { locale: Locale }) {
+  const { home } = getDictionary(locale);
   const w = home.whoWeBuildFor;
 
   return (
@@ -28,7 +28,7 @@ export function WhoWeBuildForSection() {
         <figure className="relative mx-auto mt-12 max-w-5xl overflow-hidden rounded-2xl border border-gray-200 shadow-lg">
           <div className="relative aspect-[21/9] w-full">
             <MarketingImage
-              src="/marketing/accessibility-users-banner.png"
+              src={MARKETING_IMAGES.accessibilityBanner}
               alt={w.imageAlt}
               fill
               sizes="(max-width: 1280px) 100vw, 1024px"

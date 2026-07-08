@@ -23,7 +23,10 @@ const apiProxyTarget =
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@accessshield/ui', '@accessshield/types', '@accessshield/db'],
+  transpilePackages: ['@accessshield/ui', '@accessshield/types'],
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@accessshield/ui'],
+  },
   // Monorepo: let Next/Turbopack resolve packages from the workspace root
   outputFileTracingRoot: monorepoRoot,
   reactStrictMode: true,
@@ -41,6 +44,7 @@ const nextConfig = {
     NEXT_PUBLIC_SANITY_DATASET: process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production',
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',

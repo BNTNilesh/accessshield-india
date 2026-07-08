@@ -4,6 +4,7 @@ import { Building2, FileCheck, Landmark, ShieldCheck } from 'lucide-react';
 import { Badge } from '@accessshield/ui';
 import { ButtonAnchor, ButtonLink } from '@/components/marketing/ButtonLink';
 import { MarketingImage } from '@/components/marketing/visuals/MarketingImage';
+import { MARKETING_IMAGES } from '@/lib/marketing/images';
 import { useDictionary } from '@/lib/i18n/locale-context';
 
 const SECTOR_ICONS = [Building2, Landmark, ShieldCheck, FileCheck];
@@ -137,7 +138,7 @@ export function HeroSection() {
           <figure className="relative mx-auto w-full max-w-xl lg:mx-0">
             <div className="relative aspect-[5/4] w-full overflow-hidden rounded-2xl border-2 border-primary-200 shadow-2xl">
               <MarketingImage
-                src="/marketing/hero-enterprise-accessibility.png"
+                src={MARKETING_IMAGES.hero}
                 alt={hero.visual.imageAlt}
                 fill
                 priority

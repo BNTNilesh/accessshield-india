@@ -32,6 +32,8 @@ const NAVIGATION_TIMEOUT = 30000;
 /** Page load wait time after navigation */
 const PAGE_SETTLE_TIME = 1000;
 
+const SCREENSHOTS_ENABLED = process.env.SCAN_SCREENSHOTS === 'true';
+
 /**
  * Create a new Playwright browser instance.
  * Configured for headless operation in containerized environments.
@@ -297,14 +299,15 @@ export async function scanPage(
       extractLandmarkRegions(page),
     ]);
 
-    const desktopScreenshot = await takeScreenshot(page);
+    const desktopScreenshot = SCREENSHOTS_ENABLED ? await takeScreenshot(page) : null;
 
-    await page.setViewportSize(MOBILE_VIEWPORT);
-    await page.waitForTimeout(500);
-
-    const mobileScreenshot = await takeScreenshot(page);
-
-    await page.setViewportSize(DESKTOP_VIEWPORT);
+    let mobileScreenshot: Buffer | null = null;
+    if (SCREENSHOTS_ENABLED) {
+      await page.setViewportSize(MOBILE_VIEWPORT);
+      await page.waitForTimeout(500);
+      mobileScreenshot = await takeScreenshot(page);
+      await page.setViewportSize(DESKTOP_VIEWPORT);
+    }
 
     const scanDurationMs = Date.now() - startTime;
 

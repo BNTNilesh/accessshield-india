@@ -133,14 +133,10 @@ export async function middleware(request: NextRequest) {
   });
 
   const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
-
-  const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const user = authUser ?? session?.user ?? null;
+  const user = session?.user ?? null;
   const isProtected = PROTECTED_PREFIXES.some((prefix) => internalPath.startsWith(prefix));
   const isAuthRoute = AUTH_ROUTES.some((route) => internalPath.startsWith(route));
 

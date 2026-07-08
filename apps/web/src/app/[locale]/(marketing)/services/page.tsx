@@ -12,10 +12,14 @@ import { PricingIndiaComplianceSection } from '@/components/marketing/pricing/Pr
 import { FAQSection } from '@/components/marketing/pricing/FAQSection';
 import { MarketingVisual } from '@/components/marketing/visuals';
 import { MarketingImage } from '@/components/marketing/visuals/MarketingImage';
+import { MARKETING_IMAGES } from '@/lib/marketing/images';
 import { PRICING_CATALOG } from '@/lib/pricing/catalog';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { localeFromParams } from '@/lib/i18n/server';
 import { localizedHref } from '@/lib/i18n/paths';
+
+/** ISR — pricing/services content refreshes hourly. */
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -117,7 +121,7 @@ export default function ServicesPage() {
           >
             <div className="relative aspect-[4/3] w-full">
               <MarketingImage
-                src="/marketing/enterprise-govt-compliance.png"
+                src={MARKETING_IMAGES.enterpriseCompliance}
                 alt="Indian enterprise and government stakeholders reviewing digital accessibility compliance in a conference room"
                 fill
                 sizes="(max-width: 1024px) 100vw, 400px"

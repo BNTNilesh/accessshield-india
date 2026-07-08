@@ -147,12 +147,18 @@ async def process_job(job_payload: dict) -> None:
         )
 
         compliance_score = calculate_score(violations)
-        ai_summary = await generate_document_summary(
-            document_name=job_payload.get("document_name", "Unknown"),
-            document_type=document_type,
-            violations=violations,
-            compliance_score=compliance_score,
-        )
+        if settings.skip_document_ai_summary:
+            ai_summary = (
+                f"Document scan complete. Compliance score: {compliance_score}/100. "
+                f"{len(violations)} issue(s) found."
+            )
+        else:
+            ai_summary = await generate_document_summary(
+                document_name=job_payload.get("document_name", "Unknown"),
+                document_type=document_type,
+                violations=violations,
+                compliance_score=compliance_score,
+            )
         await update_job_progress(job_id, 90)
 
         scan_duration = round(time.time() - start_time, 2)

@@ -23,6 +23,18 @@ def _resolve_pdf_object(obj: Any) -> Any:
 class PDFAccessibilityEngine(BaseDocumentEngine):
     """Runs PDF/UA, WCAG 2.1 AA, and GIGW 3.0 checks against a PDF file."""
 
+    def __init__(self, file_path: str):
+        super().__init__(file_path)
+        self._pdf_reader = None
+
+    def _get_pdf_reader(self):
+        """Lazy-load and cache PdfReader — avoids re-parsing the file on every check."""
+        if self._pdf_reader is None:
+            from pypdf import PdfReader
+
+            self._pdf_reader = PdfReader(self.file_path)
+        return self._pdf_reader
+
     async def run_all_checks(self) -> list[DocumentViolation]:
         checks = [
             ("pdf_tagging", self.check_pdf_tagging),
@@ -51,9 +63,7 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
         CRITICAL: Untagged PDFs are completely inaccessible to screen readers.
         Maps to: PDF/UA-1.2, WCAG 1.3.1, GIGW 5.2.7
         """
-        from pypdf import PdfReader
-
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
         root = _resolve_pdf_object(reader.trailer.get("/Root", {}))
         mark_info = _resolve_pdf_object(root.get("/MarkInfo", {}))
         is_tagged = bool(mark_info.get("/Marked", False)) if isinstance(mark_info, dict) else False
@@ -87,9 +97,7 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
 
     async def check_document_title(self) -> None:
         """Maps to: WCAG 2.4.2, GIGW 5.2.28"""
-        from pypdf import PdfReader
-
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
         info = reader.metadata
         title = ""
         if info:
@@ -120,9 +128,7 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
 
     async def check_document_language(self) -> None:
         """Maps to: WCAG 3.1.1, GIGW 5.2.38"""
-        from pypdf import PdfReader
-
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
         root = _resolve_pdf_object(reader.trailer.get("/Root", {}))
         lang = root.get("/Lang", "") or ""
 
@@ -155,8 +161,6 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
         Detects PDFs that are scanned images with no text layer.
         Maps to: GIGW 5.4.9, WCAG 1.1.1
         """
-        from pypdf import PdfReader
-
         tika_url = settings.tika_server_url
 
         extracted_text = ""
@@ -167,11 +171,11 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
             extracted_text = tika_result.get("content", "") or ""
         except Exception as tika_error:
             logger.warning("Tika unavailable, falling back to pypdf: %s", tika_error)
-            reader = PdfReader(self.file_path)
+            reader = self._get_pdf_reader()
             for page in reader.pages:
                 extracted_text += page.extract_text() or ""
 
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
         page_count = len(reader.pages)
         words_per_page = len(extracted_text.split()) / max(page_count, 1)
 
@@ -207,9 +211,7 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
 
     async def check_image_alt_text(self) -> None:
         """Maps to: WCAG 1.1.1, GIGW 5.2.1"""
-        from pypdf import PdfReader
-
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
 
         for page_num, page in enumerate(reader.pages, 1):
             try:
@@ -312,9 +314,7 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
 
     async def check_heading_structure(self) -> None:
         """Maps to: WCAG 1.3.1, GIGW 5.2.7"""
-        from pypdf import PdfReader
-
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
         page_count = len(reader.pages)
 
         if page_count < 2:
@@ -441,9 +441,7 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
 
     async def check_links(self) -> None:
         """Maps to: WCAG 2.4.4, GIGW 5.2.30"""
-        from pypdf import PdfReader
-
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
         for page_num, page in enumerate(reader.pages, 1):
             try:
                 annotations = page.get("/Annots", [])
@@ -467,9 +465,7 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
 
     async def check_form_field_labels(self) -> None:
         """Maps to: WCAG 3.3.2, GIGW 5.2.45"""
-        from pypdf import PdfReader
-
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
         try:
             fields = reader.get_fields() or {}
             for field_name, field_data in fields.items():
@@ -507,9 +503,7 @@ class PDFAccessibilityEngine(BaseDocumentEngine):
 
     async def check_security_settings(self) -> None:
         """Maps to: PDF/UA-1.7 — no security restrictions blocking assistive tech"""
-        from pypdf import PdfReader
-
-        reader = PdfReader(self.file_path)
+        reader = self._get_pdf_reader()
         if reader.is_encrypted:
             self.add_violation(
                 violation_id="pdf_encrypted_001",
