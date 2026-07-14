@@ -32,6 +32,7 @@
   "devDependencies": {
     "@accessshield/config": "workspace:*",
     "@accessshield/types": "workspace:*",
+    "dotenv": "^16.4.5",
     "drizzle-kit": "^0.22.7",
     "eslint": "^8.57.0",
     "typescript": "^5.5.2"

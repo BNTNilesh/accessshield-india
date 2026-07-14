@@ -421,6 +421,9 @@ importers:
       '@accessshield/types':
         specifier: workspace:*
         version: link:../types
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       drizzle-kit:
         specifier: ^0.22.7
         version: 0.22.8

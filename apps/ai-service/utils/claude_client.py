@@ -1,4 +1,4 @@
-"""Anthropic Claude API wrapper with retry logic and error handling."""
+"""HuggingFace Inference API wrapper with retry logic and error handling."""
 
 import asyncio
 import json
@@ -6,7 +6,7 @@ import logging
 import time
 from typing import Any, Optional
 
-import anthropic
+import httpx
 
 from config import settings
 
@@ -14,12 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 class ClaudeClient:
-    """Wrapper for Anthropic Claude API with retry logic."""
+    """Wrapper for HuggingFace API with retry logic, maintaining the same interface."""
 
     def __init__(self) -> None:
-        """Initialize the Anthropic client."""
-        self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        self.model = settings.claude_model
+        """Initialize the client."""
+        self.api_key = settings.huggingface_api_key
+        self.model = settings.ai_model
+        self.url = "https://router.huggingface.co/v1/chat/completions"
 
     async def complete(
         self,
@@ -30,7 +31,7 @@ class ClaudeClient:
         expect_json: bool = False,
         messages: Optional[list[dict[str, Any]]] = None,
     ) -> str:
-        """Call Claude API with retry logic.
+        """Call HuggingFace API with retry logic.
 
         Args:
             system: System prompt.
@@ -44,11 +45,11 @@ class ClaudeClient:
             Response text as string.
 
         Raises:
-            ValueError: If Claude returns invalid JSON when expect_json=True.
-            anthropic.APIError: On unrecoverable API errors.
+            ValueError: If the API returns invalid JSON when expect_json=True.
+            RuntimeError: On unrecoverable API errors.
         """
         logger.debug(
-            "Claude request: model=%s, max_tokens=%d, temperature=%.2f",
+            "HuggingFace request: model=%s, max_tokens=%d, temperature=%.2f",
             self.model,
             max_tokens,
             temperature,
@@ -57,20 +58,20 @@ class ClaudeClient:
         start_time = time.time()
 
         # Build messages list
+        msg_list = [{"role": "system", "content": system}]
         if messages:
-            msg_list = messages
+            msg_list.extend(messages)
         else:
-            msg_list = [{"role": "user", "content": user}]
+            msg_list.append({"role": "user", "content": user})
 
         response_text = await self._call_with_retry(
-            system=system,
             messages=msg_list,
             max_tokens=max_tokens,
             temperature=temperature,
         )
 
         latency_ms = int((time.time() - start_time) * 1000)
-        logger.info("Claude response: latency_ms=%d", latency_ms)
+        logger.info("HuggingFace response: latency_ms=%d", latency_ms)
 
         if expect_json:
             response_text = self._extract_json(response_text)
@@ -79,9 +80,8 @@ class ClaudeClient:
             except json.JSONDecodeError:
                 # Retry with explicit JSON instruction
                 logger.warning("Invalid JSON response, retrying with explicit instruction")
-                retry_system = system + "\n\nRespond with valid JSON only, no markdown."
+                msg_list[0]["content"] = system + "\n\nRespond with valid JSON only, no markdown."
                 response_text = await self._call_with_retry(
-                    system=retry_system,
                     messages=msg_list,
                     max_tokens=max_tokens,
                     temperature=temperature,
@@ -90,68 +90,70 @@ class ClaudeClient:
                 try:
                     json.loads(response_text)
                 except json.JSONDecodeError as e:
-                    raise ValueError("Claude returned invalid JSON") from e
+                    raise ValueError("HuggingFace returned invalid JSON") from e
 
         return response_text
 
     async def _call_with_retry(
         self,
-        system: str,
         messages: list[dict[str, Any]],
         max_tokens: int,
         temperature: float,
     ) -> str:
-        """Execute API call with retry logic.
-
-        Retry logic:
-        - On APITimeoutError: retry once after 2s
-        - On RateLimitError: retry after 60s
-        - On other APIError: raise immediately
-        """
-        loop = asyncio.get_event_loop()
+        """Execute API call with retry logic."""
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        
+        data = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }
 
         for attempt in range(2):
             try:
-                response = await loop.run_in_executor(
-                    None,
-                    lambda: self.client.messages.create(
-                        model=self.model,
-                        max_tokens=max_tokens,
-                        temperature=temperature,
-                        system=system,
-                        messages=messages,
-                    ),
-                )
-                return response.content[0].text
-
-            except anthropic.APITimeoutError:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        self.url,
+                        headers=headers,
+                        json=data,
+                        timeout=30.0,
+                    )
+                    
+                    if response.status_code == 429:
+                        if attempt == 0:
+                            logger.warning("HuggingFace rate limited, retrying in 10s")
+                            await asyncio.sleep(10)
+                            continue
+                        raise RuntimeError("Rate limited")
+                        
+                    response.raise_for_status()
+                    result = response.json()
+                    if "choices" in result and len(result["choices"]) > 0:
+                        return result["choices"][0]["message"]["content"]
+                    else:
+                        raise RuntimeError(f"Unexpected response format: {result}")
+                        
+            except httpx.TimeoutException:
                 if attempt == 0:
-                    logger.warning("Claude API timeout, retrying in 2s")
+                    logger.warning("HuggingFace API timeout, retrying in 2s")
                     await asyncio.sleep(2)
                     continue
-                raise
-
-            except anthropic.RateLimitError:
-                if attempt == 0:
-                    logger.warning("Claude rate limited, retrying in 60s")
-                    await asyncio.sleep(60)
-                    continue
-                raise
-
-            except anthropic.APIError:
-                raise
+                raise RuntimeError("API Timeout")
+                
+            except httpx.HTTPStatusError as e:
+                raise RuntimeError(f"API Error: {e.response.text}") from e
+                
+            except Exception as e:
+                raise RuntimeError(f"Unexpected error: {str(e)}") from e
 
         raise RuntimeError("Unexpected retry loop exit")
 
     def _extract_json(self, text: str) -> str:
-        """Extract JSON from response, stripping markdown code fences.
-
-        Args:
-            text: Raw response text.
-
-        Returns:
-            Cleaned JSON string.
-        """
+        """Extract JSON from response, stripping markdown code fences."""
         text = text.strip()
 
         # Remove markdown code fences

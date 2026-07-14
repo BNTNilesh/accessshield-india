@@ -185,7 +185,7 @@ function AIFixTab({
 
         {devPreview && status === 'success' && !isRegenerating && (
           <p className="text-sm text-error-700" role="alert">
-            Regeneration completed but Claude was not used. Ensure{' '}
+            Regeneration completed but the AI was not used. Ensure{' '}
             <code className="rounded bg-error-100 px-1 text-xs">INTERNAL_AI_SERVICE_KEY</code> is
             set in the repo root{' '}
             <code className="rounded bg-error-100 px-1 text-xs">.env.local</code> and restart the
@@ -229,7 +229,7 @@ function AIFixTab({
               disabled={isRegenerating}
               aria-busy={isRegenerating}
             >
-              {isRegenerating ? 'Regenerating…' : 'Regenerate with Claude'}
+              {isRegenerating ? 'Regenerating…' : 'Regenerate with AI'}
             </Button>
           )}
           {issue.jiraIssueKey ? (
@@ -251,8 +251,8 @@ function AIFixTab({
       <div className="py-8 text-center" role="alert">
         <p className="text-base text-error-700">{errorMessage}</p>
         <p className="mt-2 text-sm text-text-secondary">
-          Check that the API and AI service are running. For full AI fixes, set ANTHROPIC_API_KEY in
-          apps/ai-service/.env.
+          Check that the API and AI service are running. For full AI fixes, set HUGGINGFACE_API_KEY
+          in apps/ai-service/.env.
         </p>
         <Button variant="primary" size="md" className="mt-6" onClick={onRetry}>
           Try again

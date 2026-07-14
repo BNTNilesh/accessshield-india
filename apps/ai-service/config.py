@@ -12,8 +12,8 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    # Anthropic API
-    anthropic_api_key: str
+    # HuggingFace API
+    huggingface_api_key: str = "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"
 
     # Internal service authentication
     internal_ai_service_key: str
@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     # PostgreSQL (async URL format)
     database_url: str
 
-    # Claude model configuration
-    claude_model: str = "claude-sonnet-4-5-20250929"
+    # AI model configuration
+    ai_model: str = "google/gemma-4-31B-it:deepinfra"
     max_tokens_alt_text: int = 256
     max_tokens_fix: int = 1024
     max_tokens_advice: int = 512

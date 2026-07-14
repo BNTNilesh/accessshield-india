@@ -79,6 +79,7 @@ export async function extractBundleIdFromIpa(ipaBuffer: Buffer): Promise<string 
                     logger.warn({ parseErr }, 'Failed to parse Info.plist from IPA');
                   }
                   zipfile.close();
+                  resolve(foundBundleId);
                 });
               },
             );

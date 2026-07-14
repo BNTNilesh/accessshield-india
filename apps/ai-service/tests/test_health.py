@@ -15,9 +15,9 @@ class TestHealthEndpoint:
             mock_settings.environment = "development"
             mock_settings.redis_url = "redis://localhost:6379"
             mock_settings.database_url = "postgresql+asyncpg://localhost/test"
-            mock_settings.anthropic_api_key = "test-key"
+            mock_settings.huggingface_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
-            mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.ai_model = "claude-sonnet-4-20250514"
             
             # Import after mocking
             from main import app
@@ -33,9 +33,9 @@ class TestHealthEndpoint:
             mock_settings.environment = "development"
             mock_settings.redis_url = "redis://localhost:6379"
             mock_settings.database_url = "postgresql+asyncpg://localhost/test"
-            mock_settings.anthropic_api_key = "test-key"
+            mock_settings.huggingface_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
-            mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.ai_model = "claude-sonnet-4-20250514"
             
             with patch("main.cache", None):
                 from main import app
@@ -57,9 +57,9 @@ class TestMetricsEndpoint:
             mock_settings.environment = "development"
             mock_settings.redis_url = "redis://localhost:6379"
             mock_settings.database_url = "postgresql+asyncpg://localhost/test"
-            mock_settings.anthropic_api_key = "test-key"
+            mock_settings.huggingface_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
-            mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.ai_model = "claude-sonnet-4-20250514"
             
             from main import app
             
@@ -78,9 +78,9 @@ class TestAuthMiddleware:
             mock_settings.environment = "development"
             mock_settings.redis_url = "redis://localhost:6379"
             mock_settings.database_url = "postgresql+asyncpg://localhost/test"
-            mock_settings.anthropic_api_key = "test-key"
+            mock_settings.huggingface_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
-            mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.ai_model = "claude-sonnet-4-20250514"
             
             from main import app
             
@@ -103,9 +103,9 @@ class TestAuthMiddleware:
             mock_settings.environment = "development"
             mock_settings.redis_url = "redis://localhost:6379"
             mock_settings.database_url = "postgresql+asyncpg://localhost/test"
-            mock_settings.anthropic_api_key = "test-key"
+            mock_settings.huggingface_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
-            mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.ai_model = "claude-sonnet-4-20250514"
             mock_settings.cache_ttl_seconds = 86400
             
             from main import app

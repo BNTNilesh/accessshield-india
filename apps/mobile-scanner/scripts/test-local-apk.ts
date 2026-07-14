@@ -5,8 +5,9 @@
  * Tests an APK file directly using local Appium without going through the full queue.
  * Usage: tsx scripts/test-local-apk.ts /path/to/your/app.apk
  */
+import { loadLocalEnv } from '../src/lib/env.js';
+loadLocalEnv();
 
-import 'dotenv/config';
 import { writeFileSync } from 'node:fs';
 import { remote } from 'webdriverio';
 import { MobileRuleEngine, calculateScore, countBySeverity } from '../src/rule-engine.js';

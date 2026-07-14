@@ -15,11 +15,9 @@ if [[ ! -f "$WIDGET_PUBLIC" ]]; then
   cp "$ROOT/apps/widget/dist/widget.min.js" "$WIDGET_PUBLIC"
 fi
 
-ARGS=()
 if [[ -f "$ENV_FILE" ]]; then
-  ARGS=(--env-file="$ENV_FILE")
+  exec node --env-file="$ENV_FILE" "$NEXT_BIN" dev --turbo --port 3000
 else
   echo "Warning: $ENV_FILE not found — copy .env.example to .env.local at the monorepo root." >&2
+  exec node "$NEXT_BIN" dev --turbo --port 3000
 fi
-
-exec node "${ARGS[@]}" "$NEXT_BIN" dev --port 3000

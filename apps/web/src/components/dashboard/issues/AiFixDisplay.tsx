@@ -19,15 +19,15 @@ export function DevPreviewBanner({ className = '' }: DevPreviewBannerProps) {
         <div>
           <p className="text-sm font-semibold text-warning-700">Development preview</p>
           <p className="mt-1 text-sm leading-normal text-warning-700">
-            This fix was generated locally because the API could not reach Claude. Check that{' '}
+            This fix was generated locally because the API could not reach the AI. Check that{' '}
             <code className="rounded bg-white/60 px-1 py-0.5 text-xs">INTERNAL_AI_SERVICE_KEY</code>{' '}
             is in the repo root{' '}
             <code className="rounded bg-white/60 px-1 py-0.5 text-xs">.env.local</code>, the API is
             restarted, and{' '}
             <code className="rounded bg-white/60 px-1 py-0.5 text-xs">apps/ai-service</code> is
             running with a valid{' '}
-            <code className="rounded bg-white/60 px-1 py-0.5 text-xs">ANTHROPIC_API_KEY</code>. Then
-            click Regenerate with Claude.
+            <code className="rounded bg-white/60 px-1 py-0.5 text-xs">HUGGINGFACE_API_KEY</code>.
+            Then click Regenerate with AI.
           </p>
         </div>
       </div>
