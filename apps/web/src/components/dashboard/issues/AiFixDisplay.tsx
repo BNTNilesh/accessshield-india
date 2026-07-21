@@ -19,15 +19,7 @@ export function DevPreviewBanner({ className = '' }: DevPreviewBannerProps) {
         <div>
           <p className="text-sm font-semibold text-warning-700">Development preview</p>
           <p className="mt-1 text-sm leading-normal text-warning-700">
-            This fix was generated locally because the API could not reach the AI. Check that{' '}
-            <code className="rounded bg-white/60 px-1 py-0.5 text-xs">INTERNAL_AI_SERVICE_KEY</code>{' '}
-            is in the repo root{' '}
-            <code className="rounded bg-white/60 px-1 py-0.5 text-xs">.env.local</code>, the API is
-            restarted, and{' '}
-            <code className="rounded bg-white/60 px-1 py-0.5 text-xs">apps/ai-service</code> is
-            running with a valid{' '}
-            <code className="rounded bg-white/60 px-1 py-0.5 text-xs">HUGGINGFACE_API_KEY</code>.
-            Then click Regenerate with AI.
+            This fix was generated locally.
           </p>
         </div>
       </div>
@@ -81,8 +73,7 @@ export function FixBeforeAfter({
         </div>
         {unchanged && (
           <p className="mt-2 text-sm text-text-secondary" role="note">
-            No automated change was applied for this rule. Review manually or connect the AI
-            service.
+            No automated change applied.
           </p>
         )}
       </div>

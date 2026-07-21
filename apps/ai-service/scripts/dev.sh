@@ -4,6 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VENV="$ROOT/.venv"
 
+# Ensure Homebrew bins are first in PATH to avoid broken framework pythons
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 find_python() {
   # Prefer stable versions with prebuilt wheels; avoid broken default python3 (often 3.14+)
   # Prefer 3.12/3.11 (pinned deps tested there); 3.13 needs pillow>=11 / asyncpg>=0.30

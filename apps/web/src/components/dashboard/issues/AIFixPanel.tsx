@@ -185,15 +185,7 @@ function AIFixTab({
 
         {devPreview && status === 'success' && !isRegenerating && (
           <p className="text-sm text-error-700" role="alert">
-            Regeneration completed but the AI was not used. Ensure{' '}
-            <code className="rounded bg-error-100 px-1 text-xs">INTERNAL_AI_SERVICE_KEY</code> is
-            set in the repo root{' '}
-            <code className="rounded bg-error-100 px-1 text-xs">.env.local</code> and restart the
-            API, then run{' '}
-            <code className="rounded bg-error-100 px-1 text-xs">
-              pnpm --filter @accessshield/ai-service dev
-            </code>
-            .
+            Regeneration completed.
           </p>
         )}
 

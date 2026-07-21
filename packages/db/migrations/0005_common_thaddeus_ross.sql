@@ -1,0 +1,2 @@
+ALTER TABLE "organisations" ADD COLUMN "ai_provider" varchar(50) DEFAULT 'deepinfra' NOT NULL;--> statement-breakpoint
+ALTER TABLE "organisations" ADD COLUMN "ai_model" varchar(100) DEFAULT 'google/gemma-4-31B-it:deepinfra' NOT NULL;

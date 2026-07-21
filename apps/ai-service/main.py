@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import (
@@ -201,20 +201,26 @@ async def metrics() -> Response:
 
 
 @app.post("/ai/alt-text", response_model=AltTextResponse)
-async def alt_text_endpoint(request: AltTextRequest) -> AltTextResponse:
+async def alt_text_endpoint(
+    request: AltTextRequest,
+    x_ai_provider: str | None = Header(None, alias="X-AI-Provider"),
+    x_ai_model: str | None = Header(None, alias="X-AI-Model")
+) -> AltTextResponse:
     """Generate AI alt text for an image.
 
     Requires headers:
     - X-Internal-Key: Internal service API key
     - X-Org-Id: Organisation ID for rate limiting
     - X-Org-Plan: Organisation plan tier
+    - X-AI-Provider: AI Provider (deepinfra or local-mlx)
+    - X-AI-Model: AI Model
     """
     import time
 
     start_time = time.time()
 
     try:
-        response = await generate_alt_text(request)
+        response = await generate_alt_text(request, provider=x_ai_provider, model=x_ai_model)
 
         # Track metrics
         ai_requests_total.labels(
@@ -236,20 +242,26 @@ async def alt_text_endpoint(request: AltTextRequest) -> AltTextResponse:
 
 
 @app.post("/ai/fix", response_model=FixResponse)
-async def fix_endpoint(request: FixRequest) -> FixResponse:
+async def fix_endpoint(
+    request: FixRequest,
+    x_ai_provider: str | None = Header(None, alias="X-AI-Provider"),
+    x_ai_model: str | None = Header(None, alias="X-AI-Model")
+) -> FixResponse:
     """Generate AI fix suggestion for an accessibility violation.
 
     Requires headers:
     - X-Internal-Key: Internal service API key
     - X-Org-Id: Organisation ID for rate limiting
     - X-Org-Plan: Organisation plan tier
+    - X-AI-Provider: AI Provider (deepinfra or local-mlx)
+    - X-AI-Model: AI Model
     """
     import time
 
     start_time = time.time()
 
     try:
-        response = await generate_fix(request)
+        response = await generate_fix(request, provider=x_ai_provider, model=x_ai_model)
 
         ai_requests_total.labels(
             endpoint="/ai/fix",
@@ -270,20 +282,26 @@ async def fix_endpoint(request: FixRequest) -> FixResponse:
 
 
 @app.post("/ai/advise", response_model=AdviceResponse)
-async def advise_endpoint(request: AdviceRequest) -> AdviceResponse:
+async def advise_endpoint(
+    request: AdviceRequest,
+    x_ai_provider: str | None = Header(None, alias="X-AI-Provider"),
+    x_ai_model: str | None = Header(None, alias="X-AI-Model")
+) -> AdviceResponse:
     """Get plain-English compliance advice for a violation.
 
     Requires headers:
     - X-Internal-Key: Internal service API key
     - X-Org-Id: Organisation ID for rate limiting
     - X-Org-Plan: Organisation plan tier
+    - X-AI-Provider: AI Provider (deepinfra or local-mlx)
+    - X-AI-Model: AI Model
     """
     import time
 
     start_time = time.time()
 
     try:
-        response = await get_advice(request)
+        response = await get_advice(request, provider=x_ai_provider, model=x_ai_model)
 
         ai_requests_total.labels(
             endpoint="/ai/advise",
@@ -306,6 +324,8 @@ async def advise_endpoint(request: AdviceRequest) -> AdviceResponse:
 @app.post("/ai/accessibility-statement", response_model=StatementResponse)
 async def accessibility_statement_endpoint(
     request: StatementRequest,
+    x_ai_provider: str | None = Header(None, alias="X-AI-Provider"),
+    x_ai_model: str | None = Header(None, alias="X-AI-Model")
 ) -> StatementResponse:
     """Generate accessibility statement in English and Hindi.
 
@@ -313,13 +333,15 @@ async def accessibility_statement_endpoint(
     - X-Internal-Key: Internal service API key
     - X-Org-Id: Organisation ID for rate limiting
     - X-Org-Plan: Organisation plan tier
+    - X-AI-Provider: AI Provider (deepinfra or local-mlx)
+    - X-AI-Model: AI Model
     """
     import time
 
     start_time = time.time()
 
     try:
-        response = await generate_statement(request)
+        response = await generate_statement(request, provider=x_ai_provider, model=x_ai_model)
 
         ai_requests_total.labels(
             endpoint="/ai/accessibility-statement",

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from config import settings
 from utils.cache import cache, AICache
-from utils.claude_client import claude_client
+from utils.model_router import get_client
 from utils.dlp import scrub, truncate
 from db.session import update_violation_fix
 
@@ -60,11 +60,17 @@ Respond ONLY with valid JSON:
 }}"""
 
 
-async def generate_fix(request: FixRequest) -> FixResponse:
+async def generate_fix(
+    request: FixRequest,
+    provider: str | None = None,
+    model: str | None = None,
+) -> FixResponse:
     """Generate AI fix suggestion for an accessibility violation.
 
     Args:
-        request: Fix suggestion request.
+        request: Fix generation request.
+        provider: AI provider string ('deepinfra' or 'local-mlx').
+        model: Optional model string.
 
     Returns:
         Generated fix response.
@@ -103,8 +109,9 @@ async def generate_fix(request: FixRequest) -> FixResponse:
             f"Page context: {clean_context}"
         )
 
-        # Call Claude
-        response_text = await claude_client.complete(
+        # Call AI Client
+        client = get_client(provider or "deepinfra", model or "")
+        response_text = await client.complete(
             system=system_prompt,
             user=user_message,
             max_tokens=settings.max_tokens_fix,

@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from config import settings
 from utils.cache import cache, AICache
-from utils.claude_client import claude_client
+from utils.model_router import get_client
 from utils.dlp import scrub, truncate
 from db.session import update_violation_alt_text
 
@@ -59,11 +59,17 @@ ALLOWED_MEDIA_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
-async def generate_alt_text(request: AltTextRequest) -> AltTextResponse:
+async def generate_alt_text(
+    request: AltTextRequest,
+    provider: str | None = None,
+    model: str | None = None,
+) -> AltTextResponse:
     """Generate AI alt text for an image.
 
     Args:
         request: Alt text generation request.
+        provider: AI provider string ('deepinfra' or 'local-mlx').
+        model: Optional model string.
 
     Returns:
         Generated alt text response.
@@ -127,8 +133,9 @@ async def generate_alt_text(request: AltTextRequest) -> AltTextResponse:
             },
         ]
 
-        # Call Claude
-        response_text = await claude_client.complete(
+        # Call AI Client
+        client = get_client(provider or "deepinfra", model or "")
+        response_text = await client.complete(
             system=system_prompt,
             user="",
             max_tokens=settings.max_tokens_alt_text,

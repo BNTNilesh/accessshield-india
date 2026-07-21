@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from config import settings
 from utils.cache import cache, AICache
-from utils.claude_client import claude_client
+from utils.model_router import get_client
 from utils.dlp import scrub_dict
 
 logger = logging.getLogger(__name__)
@@ -78,11 +78,17 @@ Write entirely in Hindi using Devanagari Unicode script. This is required by IS 
 No jargon. Length: 400-600 words."""
 
 
-async def generate_statement(request: StatementRequest) -> StatementResponse:
+async def generate_statement(
+    request: StatementRequest,
+    provider: str | None = None,
+    model: str | None = None,
+) -> StatementResponse:
     """Generate accessibility statement in English and Hindi.
 
     Args:
-        request: Statement generation request.
+        request: Statement request.
+        provider: AI provider string ('deepinfra' or 'local-mlx').
+        model: Optional model string.
 
     Returns:
         Generated statement response.
@@ -120,7 +126,7 @@ async def generate_statement(request: StatementRequest) -> StatementResponse:
         )
 
         # Build user message
-        user_message = (
+        user_prompt = (
             f"Generate accessibility statement for:\n"
             f"Organisation: {scrubbed.get('organisation_name', '')}\n"
             f"Website: {scrubbed.get('website_url', '')}\n"
@@ -133,25 +139,27 @@ async def generate_statement(request: StatementRequest) -> StatementResponse:
             f"Last audit: {scrubbed.get('last_audit_date', '')}"
         )
 
-        # Generate both statements concurrently
-        en_task = asyncio.create_task(
-            claude_client.complete(
-                system=SYSTEM_PROMPT_EN,
-                user=user_message,
-                max_tokens=settings.max_tokens_statement,
-                temperature=0.3,
-            )
-        )
-        hi_task = asyncio.create_task(
-            claude_client.complete(
-                system=SYSTEM_PROMPT_HI,
-                user=user_message,
-                max_tokens=settings.max_tokens_statement,
-                temperature=0.3,
-            )
+        client = get_client(provider or "deepinfra", model or "")
+
+        # Generate English statement
+        task_en = client.complete(
+            system=SYSTEM_PROMPT_EN,
+            user=user_prompt,
+            max_tokens=settings.max_tokens_statement,
+            temperature=0.1,
+            expect_json=False,
         )
 
-        statement_en, statement_hi = await asyncio.gather(en_task, hi_task)
+        # Generate Hindi statement
+        task_hi = client.complete(
+            system=SYSTEM_PROMPT_HI,
+            user=user_prompt,
+            max_tokens=settings.max_tokens_statement,
+            temperature=0.1,
+            expect_json=False,
+        )
+
+        statement_en, statement_hi = await asyncio.gather(task_en, task_hi)
 
         response = StatementResponse(
             statement_en=statement_en,

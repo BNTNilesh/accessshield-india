@@ -97,6 +97,10 @@ export const organisations = pgTable(
     billingEmail: varchar('billing_email', { length: 255 }),
     isActive: boolean('is_active').notNull().default(true),
     planTier: varchar('plan_tier', { length: 50 }).notNull().default('starter'),
+    aiProvider: varchar('ai_provider', { length: 50 }).notNull().default('deepinfra'),
+    aiModel: varchar('ai_model', { length: 100 })
+      .notNull()
+      .default('google/gemma-4-31B-it:deepinfra'),
     ...timestamps,
   },
   (table) => ({
