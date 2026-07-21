@@ -10,7 +10,7 @@ import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const AI_PROVIDER_OPTIONS = [
   { value: 'deepinfra', label: 'DeepInfra (Hugging Face Cloud)' },
-  { value: 'local-mlx', label: 'Local MLX (M2 Apple Silicon)' },
+  { value: 'local', label: 'Local (Mac/PC via Llama)' },
 ];
 
 async function fetchOrganisation(token: string) {
@@ -87,7 +87,7 @@ export function AISettingsForm() {
           label="Model Identifier"
           defaultValue={org.aiModel ?? 'google/gemma-4-31B-it:deepinfra'}
           required
-          helpText="For DeepInfra: 'google/gemma-4-31B-it:deepinfra'. For Local MLX: 'mlx-community/Qwen2.5-Coder-3B-Instruct-4bit'"
+          helpText="For DeepInfra: 'google/gemma-4-31B-it:deepinfra'. For Local: 'bartowski/Qwen2.5-Coder-3B-Instruct-GGUF'"
         />
 
         <div className="pt-4">

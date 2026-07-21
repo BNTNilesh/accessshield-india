@@ -3,10 +3,10 @@
 from typing import Any, Protocol, Optional
 
 from utils.claude_client import claude_client
-from utils.mlx_client import MLXClient
+from utils.local_client import LocalClient
 
-# Store MLX clients by model name to avoid reloading if multiple models are used
-_mlx_clients = {}
+# Store local clients by model name to avoid reloading if multiple models are used
+_local_clients = {}
 
 
 class AIClient(Protocol):
@@ -27,17 +27,25 @@ def get_client(provider: str, model: str = "") -> AIClient:
     """Get the appropriate AI client based on the provider and model.
 
     Args:
-        provider: 'deepinfra' or 'local-mlx'.
+        provider: 'deepinfra', 'local', or 'local-mlx'.
         model: Optional model string.
 
     Returns:
         The configured AIClient instance.
     """
-    if provider == "local-mlx":
-        model_name = model if model else "mlx-community/Qwen2.5-Coder-3B-Instruct-4bit"
-        if model_name not in _mlx_clients:
-            _mlx_clients[model_name] = MLXClient(model_name=model_name)
-        return _mlx_clients[model_name]
+    # Fix legacy model strings from database
+    if "Qwen2.5-Coder-3B-Instruct-4bit" in model:
+        if provider in ("local", "local-mlx"):
+            model = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
+        else:
+            # If they had it set to deepinfra but with the local model name by mistake
+            model = "google/gemma-4-31B-it:deepinfra"
+
+    if provider in ("local", "local-mlx"):
+        model_name = model if model else "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
+        if model_name not in _local_clients:
+            _local_clients[model_name] = LocalClient(model_name=model_name)
+        return _local_clients[model_name]
     
     # Default to DeepInfra / HuggingFace router
     # Update claude_client's model if explicitly provided
