@@ -134,7 +134,7 @@ async def generate_alt_text(
         ]
 
         # Call AI Client
-        client = get_client(provider or "deepinfra", model or "")
+        client = get_client(provider or settings.ai_provider, model or settings.ai_model)
         response_text = await client.complete(
             system=system_prompt,
             user="",

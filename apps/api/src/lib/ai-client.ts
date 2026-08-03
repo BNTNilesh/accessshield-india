@@ -76,7 +76,7 @@ export async function requestAiFix(
     method: 'POST',
     headers: aiHeaders(orgId, planTier, internalKey, aiProvider, aiModel),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(180_000),
   });
 
   if (!response.ok) {
@@ -109,7 +109,7 @@ export async function requestAiAltText(
     method: 'POST',
     headers: aiHeaders(orgId, planTier, internalKey, aiProvider, aiModel),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(180_000),
   });
 
   if (!response.ok) {

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class LocalClient:
     """Wrapper for local model inference with the same interface as ClaudeClient."""
 
-    def __init__(self, model_name: str = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF") -> None:
+    def __init__(self, model_name: str = "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF") -> None:
         """Initialize the client."""
         self.model_name = model_name
         self._llm = None
@@ -28,13 +28,36 @@ class LocalClient:
                     logger.info("Loading Local model: %s", self.model_name)
                     
                     def _load_model():
-                        return Llama.from_pretrained(
-                            repo_id=self.model_name,
-                            filename="*Q4_K_M.gguf",
-                            n_ctx=4096,
-                            n_gpu_layers=-1, # use all available GPU layers
-                            verbose=False
-                        )
+                        repo_id = self.model_name
+                        if "Qwen2.5-Coder-1.5B" in repo_id:
+                            repo_id = "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
+                        elif "Qwen2.5-0.5B" in repo_id:
+                            repo_id = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
+                        elif "Qwopus" in repo_id:
+                            repo_id = "Jackrong/Qwopus3.6-35B-A3B-Coder-MTP-GGUF"
+                        elif "/" not in repo_id:
+                            repo_id = f"Qwen/{repo_id}-GGUF"
+
+                        file_patterns = [
+                            "*q4_k_m.gguf",
+                            "*Q4_K_M.gguf",
+                            "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+                            "*.gguf"
+                        ]
+                        last_err = None
+                        for pattern in file_patterns:
+                            try:
+                                return Llama.from_pretrained(
+                                    repo_id=repo_id,
+                                    filename=pattern,
+                                    n_ctx=4096,
+                                    n_gpu_layers=-1, # use all available Metal GPU layers on Mac
+                                    verbose=False
+                                )
+                            except Exception as err:
+                                last_err = err
+                                logger.warning("Failed pattern %s for %s: %s", pattern, repo_id, err)
+                        raise ValueError(f"Could not load GGUF model for {self.model_name}: {last_err}")
                     
                     self._llm = await asyncio.to_thread(_load_model)
                     logger.info("Local model loaded successfully")

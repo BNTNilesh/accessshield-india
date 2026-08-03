@@ -79,15 +79,15 @@ export function AISettingsForm() {
           name="aiProvider"
           label="AI Inference Provider"
           options={AI_PROVIDER_OPTIONS}
-          defaultValue={org.aiProvider ?? 'deepinfra'}
+          defaultValue={org.aiProvider ?? 'local'}
         />
 
         <Input
           name="aiModel"
           label="Model Identifier"
-          defaultValue={org.aiModel ?? 'google/gemma-4-31B-it:deepinfra'}
+          defaultValue={org.aiModel ?? 'Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF'}
           required
-          helpText="For DeepInfra: 'google/gemma-4-31B-it:deepinfra'. For Local: 'bartowski/Qwen2.5-Coder-3B-Instruct-GGUF'"
+          helpText="For Local: 'Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF'. For DeepInfra: 'google/gemma-4-31B-it:deepinfra'"
         />
 
         <div className="pt-4">

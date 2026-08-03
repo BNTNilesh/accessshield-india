@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     database_url: str
 
     # AI model configuration
-    ai_model: str = "google/gemma-4-31B-it:deepinfra"
+    ai_provider: str = "local"
+    ai_model: str = "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
     max_tokens_alt_text: int = 256
     max_tokens_fix: int = 1024
     max_tokens_advice: int = 512

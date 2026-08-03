@@ -139,7 +139,7 @@ async def generate_statement(
             f"Last audit: {scrubbed.get('last_audit_date', '')}"
         )
 
-        client = get_client(provider or "deepinfra", model or "")
+        client = get_client(provider or settings.ai_provider, model or settings.ai_model)
 
         # Generate English statement
         task_en = client.complete(

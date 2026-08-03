@@ -33,16 +33,12 @@ def get_client(provider: str, model: str = "") -> AIClient:
     Returns:
         The configured AIClient instance.
     """
-    # Fix legacy model strings from database
-    if "Qwen2.5-Coder-3B-Instruct-4bit" in model:
-        if provider in ("local", "local-mlx"):
-            model = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
-        else:
-            # If they had it set to deepinfra but with the local model name by mistake
-            model = "google/gemma-4-31B-it:deepinfra"
+    # Normalize legacy or unoptimized models for fast Apple Silicon local inferencing
+    if not model or "Qwopus" in model or "35B" in model:
+        model = "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
 
     if provider in ("local", "local-mlx"):
-        model_name = model if model else "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
+        model_name = model if model else "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
         if model_name not in _local_clients:
             _local_clients[model_name] = LocalClient(model_name=model_name)
         return _local_clients[model_name]
